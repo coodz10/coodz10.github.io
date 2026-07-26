@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi Sono — coodz_10</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0a1a;
+      --ink: #f1eefb;
+      --ink-dim: #8f89b8;
+      --violet: #7c6cf0;
+      --cyan: #4fd1ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: linear-gradient(-45deg, #0b0a1a, #150f2d, #0b0a1a, #0c1a2f);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--ink);
+      font-family: 'Sora', sans-serif;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    #stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .65;
+    }
+
+    @keyframes shine {
+      to {
+        background-position: -200% center;
+      }
+    }
+
+    .glow {
+      text-shadow: 0 0 20px rgba(124, 108, 240, .5);
+      background: linear-gradient(to right, #fff 20%, #4fd1ff 40%, #7c6cf0 60%, #fff 80%);
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: shine 5s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes slideUpFade {
+      0% {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: slideUpFade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+
+    .delay-1 {
+      animation-delay: 0.1s;
+    }
+
+    .delay-2 {
+      animation-delay: 0.3s;
+    }
+
+    .delay-3 {
+      animation-delay: 0.5s;
+    }
+
+    .hud-bar {
+      border-bottom: 1px solid rgba(124, 108, 240, .18);
+      background: rgba(11, 10, 26, .7);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    ::selection {
+      background: rgba(124, 108, 240, .4);
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body class="relative flex flex-col min-h-screen">
+
+  <canvas id="stars"></canvas>
+
+  <!-- HUD NAV -->
+  <nav class="hud-bar fixed top-0 inset-x-0 z-30 animate-in">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between mono text-xs">
+      <span class="text-[var(--ink-dim)]">coodz_10 <span class="text-[var(--cyan)]">// ONLINE</span></span>
+      <div class="flex items-center gap-4 sm:gap-6 text-[var(--ink-dim)]">
+        <a href="index.html" class="hover:text-white transition-colors">[ home ]</a>
+        <a href="about.html" class="text-white transition-colors"><span class="lang-it">[ chi_sono ]</span><span
+            class="lang-en hidden">[ about_me ]</span></a>
+        <a href="experiences.html" class="hover:text-white transition-colors"><span class="lang-it">[ esperienze
+            ]</span><span class="lang-en hidden">[ experiences ]</span></a>
+        <a href="contact.html" class="hover:text-white transition-colors"><span class="lang-it">[ contatti ]</span><span
+            class="lang-en hidden">[ contact ]</span></a>
+        <div class="flex items-center ml-2 border-l border-[rgba(124,108,240,.3)] pl-4 gap-3 text-xs">
+          <button onclick="setLanguage('it')" id="lang-btn-it" class="text-white transition-colors">&bull; IT</button>
+          <button onclick="setLanguage('en')" id="lang-btn-en"
+            class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CHI SONO -->
+  <main class="relative z-10 flex-grow max-w-6xl mx-auto px-6 pt-32 pb-24 flex flex-col justify-center">
+    <div class="mb-10 sm:mb-16 animate-in delay-1">
+      <p class="mono text-xs text-[var(--cyan)] tracking-widest mb-6">
+        <span class="lang-it">LOG_ENTRY_00 // CHI_SONO</span>
+        <span class="lang-en hidden">LOG_ENTRY_00 // ABOUT_ME</span>
+      </p>
+      <h2
+        class="text-6xl sm:text-8xl md:text-[9rem] lg:text-[11rem] font-extrabold text-white glow tracking-tighter leading-none">
+        coodz_10</h2>
+    </div>
+    <div class="max-w-4xl border-l-2 border-[rgba(124,108,240,.3)] pl-6 sm:pl-10 ml-2 animate-in delay-2">
+      <p class="text-xl md:text-2xl lg:text-3xl leading-relaxed text-[var(--ink-dim)]">
+        <span class="lang-it">
+          Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows
+          all'infrastruttura server, dalla sicurezza informatica allo sviluppo di strumenti custom.
+          Mi occupo anche di <span class="text-white font-semibold">screen share</span>: analizzo processi Windows,
+          registro di sistema, USN Journal e Prefetch per trovare cheat nascosti e ricostruire
+          l'attività recente di una macchina. Mi piace capire come funzionano davvero le cose e
+          trasformare quella curiosità in soluzioni concrete — che si tratti di un'indagine
+          forense o di tenere online un network con centinaia di giocatori connessi.
+        </span>
+        <span class="lang-en hidden">
+          I have a strong passion for 360° IT: from Windows system optimization to server infrastructure, from
+          cybersecurity to custom tools development. I also do <span class="text-white font-semibold">screen
+            share</span>: I analyze Windows processes, the registry, USN Journal and Prefetch to find hidden cheats and
+          reconstruct the recent activity of a machine.<br><br>I like to understand how things really work and turn that
+          curiosity into concrete solutions — whether it's a forensic investigation or keeping a network with hundreds
+          of connected players online.
+        </span>
+      </p>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.15)] mt-10 animate-in delay-3">
+    <div
+      class="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 mono text-xs text-[var(--ink-dim)]">
+      <span>END_TRANSMISSION // COODZ_10</span>
+      <div class="flex gap-6">
+
+        <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer"
+          class="hover:text-white transition-colors">[ Discord ]</a>
+      </div>
+      <span>© <span id="year"></span></span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Animated starfield with twinkling and shooting stars
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    let shootingStars = [];
+
+    function initStars() {
+      canvas.width = window.innerWidth;
+      canvas.height = document.body.scrollHeight;
+      canvas.style.height = canvas.height + 'px';
+      stars = [];
+      const count = Math.floor((canvas.width * canvas.height) / 16000);
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.2 + 0.3,
+          alpha: Math.random() * 0.6 + 0.2,
+          dAlpha: (Math.random() * 0.01 + 0.005) * (Math.random() > 0.5 ? 1 : -1)
+        });
+      }
+    }
+
+    function spawnShootingStar() {
+      if (Math.random() < 0.04) {
+        shootingStars.push({
+          x: Math.random() * canvas.width * 1.5,
+          y: -50,
+          len: Math.random() * 80 + 30,
+          speed: Math.random() * 15 + 15,
+          alpha: 1
+        });
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Twinkling stars
+      stars.forEach(s => {
+        s.alpha += s.dAlpha;
+        if (s.alpha > 0.8 || s.alpha < 0.1) s.dAlpha *= -1;
+        ctx.globalAlpha = s.alpha;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Shooting stars
+      spawnShootingStar();
+      ctx.lineWidth = 2;
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        let ss = shootingStars[i];
+        ss.x -= ss.speed;
+        ss.y += ss.speed;
+        ss.alpha -= 0.02;
+
+        if (ss.alpha <= 0 || ss.y > canvas.height || ss.x < 0) {
+          shootingStars.splice(i, 1);
+          continue;
+        }
+
+        ctx.globalAlpha = ss.alpha;
+        ctx.strokeStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(ss.x, ss.y);
+        ctx.lineTo(ss.x + ss.len, ss.y - ss.len);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(animate);
+    }
+
+    initStars();
+    animate();
+    window.addEventListener('resize', initStars);
+  </script>
+
+
+  <script>
+    let currentLang = localStorage.getItem('lang') || 'it';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('lang', lang);
+
+      // Update visibility using tailwind .hidden class
+      document.querySelectorAll('.lang-it').forEach(el => {
+        if (lang === 'it') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+      document.querySelectorAll('.lang-en').forEach(el => {
+        if (lang === 'en') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+
+      // Update bullets style
+      const btnIt = document.getElementById('lang-btn-it');
+      const btnEn = document.getElementById('lang-btn-en');
+      if (btnIt && btnEn) {
+        if (lang === 'it') {
+          btnIt.className = 'text-white transition-colors';
+          btnEn.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        } else {
+          btnEn.className = 'text-white transition-colors';
+          btnIt.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        }
+      }
+    }
+
+    setLanguage(currentLang);
+  </script>
+</body>
+
+
+</html>
