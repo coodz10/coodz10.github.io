@@ -1,8 +1,8 @@
 (function() {
-  // Playlist using root-absolute paths for seamless playback across root & /servers/ subfolder
-  const playlist = [
-    '/music/Giovani_Re.mp3',
-    '/music/tiktok.mp3'
+  // Default playlist fallback
+  let playlist = [
+    'music/Giovani_Re.mp3',
+    'music/tiktok.mp3'
   ];
 
   let audio = document.getElementById('bg-audio');
@@ -11,6 +11,27 @@
 
   if (!audio) return;
   audio.volume = 0.85;
+
+  // Dynamically load music/playlist.json so new MP3s are recognized without changing code
+  async function loadPlaylistJSON() {
+    try {
+      const isSubfolder = location.pathname.includes('/servers/');
+      const jsonPath = isSubfolder ? '../music/playlist.json' : 'music/playlist.json';
+      const res = await fetch(jsonPath);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          playlist = data.map(track => {
+            if (track.startsWith('http') || track.startsWith('/')) return track;
+            const cleanName = track.replace(/^music\//, '').replace(/^\//, '');
+            return isSubfolder ? '../music/' + cleanName : 'music/' + cleanName;
+          });
+        }
+      }
+    } catch (err) {
+      // Fallback to default playlist if JSON fetch is unavailable
+    }
+  }
 
   window.syncAudioUI = function() {
     const navOn = document.getElementById('nav-audio-on');
@@ -32,8 +53,13 @@
     }
   };
 
-  function playRandomTrack() {
-    if (!audio || playlist.length === 0) return;
+  async function playRandomTrack() {
+    if (!audio) return;
+    if (currentTrackIndex === -1) {
+      await loadPlaylistJSON();
+    }
+    if (playlist.length === 0) return;
+
     let nextIndex;
     if (playlist.length > 1) {
       do {
@@ -44,14 +70,7 @@
     }
 
     currentTrackIndex = nextIndex;
-    
-    // Resolve path dynamically if running on local file system or subfolder
-    let trackPath = playlist[currentTrackIndex];
-    if (location.protocol === 'file:' && location.pathname.includes('/servers/')) {
-      trackPath = '..' + trackPath;
-    }
-
-    audio.src = trackPath;
+    audio.src = playlist[currentTrackIndex];
 
     audio.play().then(() => {
       failedAttempts = 0;
@@ -108,9 +127,15 @@
     }
   }
 
-  // Top Navbar Audio Button Event Listener
+  // Top Navbar Audio Buttons Event Listener (Play/Pause & Skip Next Track)
   document.addEventListener('click', (e) => {
     const navBtn = e.target.closest('#nav-audio-btn');
+    const navNext = e.target.closest('#nav-audio-next');
+
+    if (navNext) {
+      playRandomTrack();
+      return;
+    }
 
     if (navBtn) {
       if (audio.paused) {
