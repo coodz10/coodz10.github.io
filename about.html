@@ -442,8 +442,10 @@
 
 
 
+
+
 <script>
-  // Clean Modern Cosmic Starfield & Ambient Glow Engine
+  // Clean Static Cosmic Starfield & Twinkling Animation
   (function() {
     const canvas = document.getElementById('stars');
     if (!canvas) return;
@@ -451,7 +453,6 @@
 
     let stars = [];
     let shootingStars = [];
-    let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -464,23 +465,16 @@
       stars = [];
       const count = Math.floor((canvas.width * canvas.height) / 12000);
       for (let i = 0; i < count; i++) {
-        const depth = Math.random() * 1.5 + 0.5;
         stars.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          depth: depth,
-          r: (Math.random() * 1.2 + 0.4) * (depth * 0.7),
+          r: Math.random() * 1.2 + 0.3,
           alpha: Math.random() * 0.65 + 0.2,
           dAlpha: (Math.random() * 0.008 + 0.003) * (Math.random() > 0.5 ? 1 : -1),
           color: Math.random() > 0.3 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#a78bfa')
         });
       }
     }
-
-    document.addEventListener('mousemove', (e) => {
-      mouse.targetX = (e.clientX - window.innerWidth / 2) * 0.03;
-      mouse.targetY = (e.clientY - window.innerHeight / 2) * 0.03;
-    });
 
     function spawnShootingStar() {
       if (Math.random() < 0.03) {
@@ -495,17 +489,13 @@
       }
     }
 
-    function renderCleanSpace() {
+    function renderStaticSpace() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Smooth mouse parallax easing
-      mouse.x += (mouse.targetX - mouse.x) * 0.04;
-      mouse.y += (mouse.targetY - mouse.y) * 0.04;
+      const centerX = canvas.width * 0.5;
+      const centerY = 320;
 
-      const centerX = canvas.width * 0.5 + mouse.x * 0.8;
-      const centerY = 320 + mouse.y * 0.8;
-
-      // 1. Soft Ambient Cosmic Core Glow
+      // 1. Soft Ambient Cosmic Glow (Fixed Position)
       const coreGrad = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, Math.min(canvas.width, canvas.height) * 0.48);
       coreGrad.addColorStop(0, 'rgba(124, 108, 240, 0.12)');
       coreGrad.addColorStop(0.4, 'rgba(79, 209, 255, 0.06)');
@@ -516,18 +506,15 @@
       ctx.arc(centerX, centerY, Math.min(canvas.width, canvas.height) * 0.48, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. Gentle Twinkling Stars with Mouse Parallax
+      // 2. Pure Twinkling Stars (No Mouse Movement)
       stars.forEach(s => {
         s.alpha += s.dAlpha;
         if (s.alpha > 0.85 || s.alpha < 0.15) s.dAlpha *= -1;
 
-        const px = s.x + mouse.x * s.depth;
-        const py = s.y + mouse.y * s.depth;
-
         ctx.globalAlpha = s.alpha;
         ctx.fillStyle = s.color;
         ctx.beginPath();
-        ctx.arc(px, py, s.r, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       });
 
@@ -554,12 +541,12 @@
       }
 
       ctx.globalAlpha = 1;
-      requestAnimationFrame(renderCleanSpace);
+      requestAnimationFrame(renderStaticSpace);
     }
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    renderCleanSpace();
+    renderStaticSpace();
   })();
 </script>
 </body>
