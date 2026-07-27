@@ -1,0 +1,12 @@
+{
+  "name": "esperienzecood",
+  "version": "1.0.0",
+  "description": "coodz_10 - System Administrator & Screen Share Analyst Portfolio",
+  "main": "index.html",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./assets/css/input.css -o ./assets/css/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

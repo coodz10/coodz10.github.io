@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://coodz10.github.io/sitemap.xml
