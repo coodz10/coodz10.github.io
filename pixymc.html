@@ -28,9 +28,7 @@
     }
 
     body {
-    background: linear-gradient(-45deg, #070614, #120c2b, #070614, #081122);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    background: linear-gradient(135deg, #090a19 0%, #111029 40%, #0d162d 70%, #080718 100%);
     color: var(--ink);
     font-family: 'Sora', sans-serif;
     overflow-x: hidden;
@@ -621,101 +619,141 @@
   })();
 </script>
 
+
+
 <script>
+  // High-End Assistenzaluni 3D Parallax Constellation Engine
   (function() {
     const canvas = document.getElementById('stars');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    let stars = [];
-    let shootingStars = [];
+
+    let particles = [];
+    let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = Math.max(document.body.scrollHeight, window.innerHeight);
       canvas.style.height = canvas.height + 'px';
-      stars = [];
-      const count = Math.floor((canvas.width * canvas.height) / 14000);
+      initParticles();
+    }
+
+    function initParticles() {
+      particles = [];
+      const count = Math.floor((canvas.width * canvas.height) / 11000);
       for (let i = 0; i < count; i++) {
-        stars.push({
+        const z = Math.random() * 2.2 + 0.5; // 3D depth multiplier
+        particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          r: Math.random() * 1.3 + 0.3,
-          alpha: Math.random() * 0.7 + 0.2,
-          dAlpha: (Math.random() * 0.012 + 0.004) * (Math.random() > 0.5 ? 1 : -1),
-          color: Math.random() > 0.25 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#7c6cf0')
+          z: z,
+          r: (Math.random() * 1.4 + 0.4) * (z * 0.65),
+          vx: (Math.random() - 0.5) * 0.35 * z,
+          vy: (Math.random() - 0.5) * 0.35 * z,
+          alpha: Math.random() * 0.65 + 0.2,
+          color: Math.random() > 0.3 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#7c6cf0')
         });
       }
     }
 
-    function spawnShootingStar() {
-      if (Math.random() < 0.03) {
-        shootingStars.push({
-          x: Math.random() * canvas.width * 1.4,
-          y: Math.random() * (canvas.height * 0.4),
-          len: Math.random() * 80 + 30,
-          speed: Math.random() * 12 + 10,
-          alpha: 1,
-          color: Math.random() > 0.5 ? '#ffffff' : '#4fd1ff'
-        });
-      }
-    }
+    // Parallax mouse movement tracking
+    document.addEventListener('mousemove', (e) => {
+      mouse.targetX = (e.clientX - window.innerWidth / 2) * 0.04;
+      mouse.targetY = (e.clientY - window.innerHeight / 2) * 0.04;
+    });
 
-    function animateAssistenzaluniSpace() {
+    let wavePhase = 0;
+
+    function drawAssistenzaluniBackground() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Ambient radial light glow
-      const centerX = canvas.width * 0.5;
-      const centerY = 350;
-      const coreGrad = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, Math.min(canvas.width, canvas.height) * 0.45);
-      coreGrad.addColorStop(0, 'rgba(124, 108, 240, 0.09)');
-      coreGrad.addColorStop(0.5, 'rgba(79, 209, 255, 0.05)');
-      coreGrad.addColorStop(1, 'rgba(7, 6, 20, 0)');
-      
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, Math.min(canvas.width, canvas.height) * 0.45, 0, Math.PI * 2);
-      ctx.fill();
+      // Smooth mouse interpolation
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
-      // Twinkling stars
-      stars.forEach(s => {
-        s.alpha += s.dAlpha;
-        if (s.alpha > 0.85 || s.alpha < 0.15) s.dAlpha *= -1;
-        ctx.globalAlpha = s.alpha;
-        ctx.fillStyle = s.color;
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // 1. Organic Wavy Flow Lines (matching assistenzaluni screenshot)
+      wavePhase += 0.007;
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      for (let i = 0; i < 3; i++) {
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        const yOffset = height * (0.5 + i * 0.16);
+        ctx.moveTo(-50, yOffset);
+        
+        for (let x = -50; x <= width + 50; x += 40) {
+          const y = Math.sin(x * 0.0018 + wavePhase + i * 1.5) * 55 + Math.cos(x * 0.001 + wavePhase * 0.6) * 35 + yOffset;
+          ctx.lineTo(x + mouse.x * (i + 1) * 0.25, y + mouse.y * (i + 1) * 0.25);
+        }
+        
+        ctx.lineTo(width + 50, height + 50);
+        ctx.lineTo(-50, height + 50);
+        ctx.closePath();
+        
+        const grad = ctx.createLinearGradient(0, yOffset - 80, 0, height);
+        if (i === 0) {
+          grad.addColorStop(0, 'rgba(23, 21, 55, 0.45)');
+          grad.addColorStop(1, 'rgba(9, 10, 25, 0.85)');
+        } else if (i === 1) {
+          grad.addColorStop(0, 'rgba(32, 26, 70, 0.35)');
+          grad.addColorStop(1, 'rgba(11, 10, 26, 0.92)');
+        } else {
+          grad.addColorStop(0, 'rgba(16, 30, 60, 0.3)');
+          grad.addColorStop(1, 'rgba(7, 6, 20, 0.98)');
+        }
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 2. Constellation Lines between neighboring star nodes
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = (particles[i].x + mouse.x * particles[i].z) - (particles[j].x + mouse.x * particles[j].z);
+          const dy = (particles[i].y + mouse.y * particles[i].z) - (particles[j].y + mouse.y * particles[j].z);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 115) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x + mouse.x * particles[i].z, particles[i].y + mouse.y * particles[i].z);
+            ctx.lineTo(particles[j].x + mouse.x * particles[j].z, particles[j].y + mouse.y * particles[j].z);
+            const lineAlpha = (1 - dist / 115) * 0.16 * Math.min(particles[i].alpha, particles[j].alpha);
+            ctx.strokeStyle = `rgba(124, 108, 240, ${lineAlpha})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 3. 3D Parallax Star Particles
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < -30) p.x = width + 30;
+        if (p.x > width + 30) p.x = -30;
+        if (p.y < -30) p.y = height + 30;
+        if (p.y > height + 30) p.y = -30;
+
+        const posX = p.x + mouse.x * p.z;
+        const posY = p.y + mouse.y * p.z;
+
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(posX, posY, p.r, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      // Shooting stars
-      spawnShootingStar();
-      ctx.lineWidth = 1.6;
-      for (let i = shootingStars.length - 1; i >= 0; i--) {
-        let ss = shootingStars[i];
-        ss.x -= ss.speed;
-        ss.y += ss.speed * 0.65;
-        ss.alpha -= 0.02;
-
-        if (ss.alpha <= 0 || ss.y > canvas.height || ss.x < 0) {
-          shootingStars.splice(i, 1);
-          continue;
-        }
-
-        ctx.globalAlpha = ss.alpha;
-        ctx.strokeStyle = ss.color;
-        ctx.beginPath();
-        ctx.moveTo(ss.x, ss.y);
-        ctx.lineTo(ss.x + ss.len, ss.y - ss.len * 0.65);
-        ctx.stroke();
-      }
-
       ctx.globalAlpha = 1;
-      requestAnimationFrame(animateAssistenzaluniSpace);
+      requestAnimationFrame(drawAssistenzaluniBackground);
     }
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    animateAssistenzaluniSpace();
+    drawAssistenzaluniBackground();
   })();
 </script>
 </body>
