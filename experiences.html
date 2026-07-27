@@ -31,7 +31,10 @@
   
 </head>
 
-<body class="relative flex flex-col min-h-screen">
+<body class="relative flex flex-col min-h-screen cyber-grid">
+
+<div class="vignette"></div>
+<div class="ambient-glow top-1/3 left-1/2 -translate-x-1/2"></div>
 
   <canvas id="stars"></canvas>
 
@@ -129,19 +132,33 @@
 
   
 
-  <!-- FOOTER -->
-  <footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.15)] mt-10 animate-in delay-3">
-    <div
-      class="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 mono text-xs text-[var(--ink-dim)]">
-      <span>END_TRANSMISSION // COODZ_10</span>
-      <div class="flex gap-6">
-        
-        <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer"
-          class="hover:text-white transition-colors">[ Discord ]</a>
-      </div>
-      <span>© <span id="year"></span></span>
+  <!-- DASHBOARD FOOTER -->
+<!-- DASHBOARD FOOTER -->
+<footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.18)] bg-[rgba(11,10,26,.85)] backdrop-blur-md mt-auto animate-in delay-3">
+  <div class="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center mono text-xs text-[var(--ink-dim)]">
+    <div class="flex flex-col items-center md:items-start gap-1">
+      <span class="flex items-center gap-2 text-white font-semibold">
+        <span class="w-2 h-2 rounded-full bg-[var(--cyan)]"></span>
+        coodz_10 // SECURED DASHBOARD
+      </span>
+      <span>UPTIME: 99.98% &bull; BUILD: v2.4.0-CYBER</span>
     </div>
-  </footer>
+    <div class="flex flex-col items-center gap-2 border-y md:border-y-0 md:border-x border-[rgba(124,108,240,.15)] py-4 md:py-0 px-4">
+      <div class="flex gap-6">
+        <a href="index.html" class="hover:text-white transition-colors">[ Home ]</a>
+        <a href="about.html" class="hover:text-white transition-colors">[ Bio ]</a>
+        <a href="experiences.html" class="hover:text-white transition-colors">[ Staff ]</a>
+        <a href="contact.html" class="hover:text-white transition-colors">[ Contact ]</a>
+      </div>
+    </div>
+    <div class="flex flex-col items-center md:items-end gap-1">
+      <div class="flex gap-4">
+        <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="text-[var(--cyan)] hover:text-white transition-colors">[ Discord ]</a>
+      </div>
+      <span>&copy; <span id="year"></span> coodz_10. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
 
   
 
@@ -176,6 +193,7 @@
     }
     
     setLanguage(currentLang);
+    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 
   

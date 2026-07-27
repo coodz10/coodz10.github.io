@@ -27,14 +27,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 </head>
-<body class="relative flex flex-col min-h-screen">
+<body class="relative flex flex-col min-h-screen cyber-grid">
 
+<div class="vignette"></div>
+<div class="ambient-glow top-1/4 left-1/2 -translate-x-1/2"></div>
 <canvas id="stars"></canvas>
 
 <!-- HUD NAV -->
 <nav class="hud-bar fixed top-0 inset-x-0 z-30 animate-in">
-  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between mono text-xs">
-    <span class="text-[var(--ink-dim)]">coodz_10 <span class="text-[var(--cyan)]">// ONLINE</span></span>
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between mono text-xs">
+    <div class="flex items-center gap-3">
+      <span class="w-2 h-2 rounded-full bg-[var(--cyan)] animate-ping"></span>
+      <span class="text-[var(--ink-dim)]">coodz_10 <span class="text-[var(--cyan)]">// ONLINE</span></span>
+    </div>
     <div class="flex items-center gap-4 sm:gap-6 text-[var(--ink-dim)]">
       <a href="index.html" class="text-white transition-colors">[ home ]</a>
       <a href="about.html" class="hover:text-white transition-colors"><span class="lang-it">[ chi_sono ]</span><span class="lang-en hidden">[ about_me ]</span></a>
@@ -42,7 +47,7 @@
       <a href="contact.html" class="hover:text-white transition-colors"><span class="lang-it">[ contatti ]</span><span class="lang-en hidden">[ contact ]</span></a>
       <div class="flex items-center ml-2 border-l border-[rgba(124,108,240,.3)] pl-4 gap-3 text-xs">
         <button onclick="setLanguage('it')" id="lang-btn-it" class="text-white transition-colors">&bull; IT</button>
-                <button onclick="setLanguage('en')" id="lang-btn-en" class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>
+        <button onclick="setLanguage('en')" id="lang-btn-en" class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>
         <button id="nav-audio-btn" aria-label="Attiva o Disattiva Musica" title="Attiva o Disattiva Musica" class="flex items-center justify-center p-1.5 rounded-lg border border-[rgba(124,108,240,.4)] bg-[rgba(124,108,240,.15)] text-[var(--cyan)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all ml-2 opacity-60">
           <svg id="nav-audio-on" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
           <svg id="nav-audio-off" class="w-4 h-4 text-[var(--ink-dim)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
@@ -52,42 +57,102 @@
   </div>
 </nav>
 
-<!-- HERO -->
-<main class="relative z-10 flex-grow flex items-center justify-center px-6 pt-28 pb-10">
-  <div class="w-full flex flex-col items-center text-center">
+<!-- HERO (2-COLUMN HIGH-PERCEIVED QUALITY CYBER DASHBOARD LAYOUT) -->
+<main class="relative z-10 flex-grow flex items-center justify-center px-6 pt-32 pb-16">
+  <div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
     
-    <div class="animate-in delay-1">
-      <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold glow leading-none tracking-tighter mb-12">coodz_10</h1>
+    <!-- LEFT COLUMN: TITLE & ACTION BUTTONS -->
+    <div class="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
+      
+      <!-- STATUS BADGE -->
+      <div class="animate-in delay-1 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[rgba(79,209,255,.4)] bg-[rgba(79,209,255,.08)] text-[var(--cyan)] mono text-xs mb-6 shadow-[0_0_15px_rgba(79,209,255,0.2)]">
+        <span class="w-2 h-2 rounded-full bg-[var(--cyan)] animate-ping"></span>
+        <span class="uppercase tracking-widest font-semibold"><span class="lang-it">SYSTEM ONLINE // SICUREZZA ATTIVA</span><span class="lang-en hidden">SYSTEM ONLINE // SECURED</span></span>
+      </div>
+      
+      <!-- HERO TITLE WITH BLINKING CURSOR -->
+      <div class="animate-in delay-1 mb-4">
+        <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold glow leading-none tracking-tighter">coodz_10<span class="blink-cursor">_</span></h1>
+      </div>
+      
+      <!-- SUBTITLE -->
+      <div class="animate-in delay-2 mb-8 max-w-xl">
+        <p class="mono text-xs sm:text-sm text-[var(--cyan)] tracking-widest uppercase mb-3 font-semibold">
+          [ SYSTEM ADMINISTRATOR & SCREEN SHARE ANALYST ]
+        </p>
+        <p class="text-base sm:text-lg text-[var(--ink-dim)] leading-relaxed">
+          <span class="lang-it">Ottimizzazione sistemi Windows, gestione infrastrutture server e analisi di sicurezza avanzata.</span>
+          <span class="lang-en hidden">Windows system optimization, server infrastructure management, and advanced security analysis.</span>
+        </p>
+      </div>
+      
+      <!-- ACTION BUTTONS -->
+      <div class="animate-in delay-3 flex flex-col sm:flex-row gap-5 justify-center lg:justify-start items-center w-full">
+        <a href="about.html" class="bracket-btn inline-block px-8 py-4 text-base sm:text-lg tracking-widest uppercase text-center w-full sm:w-auto">
+          <span class="lang-it">[ chi sono ]</span>
+          <span class="lang-en hidden">[ about me ]</span>
+        </a>
+        <a href="experiences.html" class="bracket-btn inline-block px-8 py-4 text-base sm:text-lg tracking-widest uppercase text-center w-full sm:w-auto">
+          <span class="lang-it">[ le mie esperienze ]</span>
+          <span class="lang-en hidden">[ my experiences ]</span>
+        </a>
+      </div>
+
     </div>
-    
-    <div class="animate-in delay-2 flex flex-col sm:flex-row gap-6 justify-center items-center w-full max-w-3xl mx-auto px-4">
-      <a href="about.html" class="bracket-btn inline-block px-10 py-5 text-lg sm:text-xl tracking-widest uppercase text-center w-full sm:w-auto">
-        <span class="lang-it">[ chi sono ]</span>
-        <span class="lang-en hidden">[ about me ]</span>
-      </a>
-      <a href="experiences.html" class="bracket-btn inline-block px-10 py-5 text-lg sm:text-xl tracking-widest uppercase text-center w-full sm:w-auto">
-        <span class="lang-it">[ le mie esperienze ]</span>
-        <span class="lang-en hidden">[ my experiences ]</span>
-      </a>
+
+    <!-- RIGHT COLUMN: 3D HOLOGRAPHIC WIREFRAME GLOBE & HUD CANVAS -->
+    <div class="lg:col-span-5 flex justify-center items-center animate-in delay-2 w-full">
+      <div class="liquid-glass p-6 w-full max-w-md flex flex-col items-center relative overflow-hidden group">
+        <div class="w-full flex items-center justify-between mono text-[10px] text-[var(--cyan)] border-b border-[rgba(124,108,240,.2)] pb-2 mb-4">
+          <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-[var(--cyan)]"></span>CYBER_TELEMETRY</span>
+          <span class="text-[var(--ink-dim)]">FPS: 60</span>
+        </div>
+        
+        <canvas id="hero-hud" class="w-full h-auto cursor-crosshair"></canvas>
+        
+        <div class="w-full flex items-center justify-between mono text-[10px] text-[var(--ink-dim)] border-t border-[rgba(124,108,240,.2)] pt-2 mt-4">
+          <span>SEC_LEVEL: ALPHA</span>
+          <span class="text-[var(--cyan)]">ENCRYPTION: AES-256</span>
+        </div>
+      </div>
     </div>
 
   </div>
 </main>
 
-<!-- FOOTER -->
-<footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.15)] mt-10 animate-in delay-3">
-  <div class="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 mono text-xs text-[var(--ink-dim)]">
-    <span>END_TRANSMISSION // COODZ_10</span>
-    <div class="flex gap-6">
-      
-      <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">[ Discord ]</a>
+<!-- DASHBOARD FOOTER -->
+<footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.18)] bg-[rgba(11,10,26,.85)] backdrop-blur-md mt-auto animate-in delay-3">
+  <div class="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center mono text-xs text-[var(--ink-dim)]">
+    
+    <!-- LEFT: SYSTEM TELEMETRY -->
+    <div class="flex flex-col items-center md:items-start gap-1">
+      <span class="flex items-center gap-2 text-white font-semibold">
+        <span class="w-2 h-2 rounded-full bg-[var(--cyan)]"></span>
+        coodz_10 // SECURED DASHBOARD
+      </span>
+      <span>UPTIME: 99.98% &bull; BUILD: v2.4.0-CYBER</span>
     </div>
-    <span>© <span id="year"></span></span>
+    
+    <!-- CENTER: DIVIDER & QUICK LINKS -->
+    <div class="flex flex-col items-center gap-2 border-y md:border-y-0 md:border-x border-[rgba(124,108,240,.15)] py-4 md:py-0 px-4">
+      <div class="flex gap-6">
+        <a href="index.html" class="hover:text-white transition-colors">[ Home ]</a>
+        <a href="about.html" class="hover:text-white transition-colors">[ Bio ]</a>
+        <a href="experiences.html" class="hover:text-white transition-colors">[ Staff ]</a>
+        <a href="contact.html" class="hover:text-white transition-colors">[ Contact ]</a>
+      </div>
+    </div>
+    
+    <!-- RIGHT: SOCIAL & COPYRIGHT -->
+    <div class="flex flex-col items-center md:items-end gap-1">
+      <div class="flex gap-4">
+        <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="text-[var(--cyan)] hover:text-white transition-colors">[ Discord ]</a>
+      </div>
+      <span>&copy; <span id="year"></span> coodz_10. All rights reserved.</span>
+    </div>
+
   </div>
 </footer>
-
-
-
 
   <script>
     let currentLang = localStorage.getItem('lang') || 'it';
@@ -96,7 +161,6 @@
       currentLang = lang;
       localStorage.setItem('lang', lang);
       
-      // Update visibility using tailwind .hidden class
       document.querySelectorAll('.lang-it').forEach(el => {
         if(lang === 'it') el.classList.remove('hidden'); else el.classList.add('hidden');
       });
@@ -104,7 +168,6 @@
         if(lang === 'en') el.classList.remove('hidden'); else el.classList.add('hidden');
       });
       
-      // Update bullets style
       const btnIt = document.getElementById('lang-btn-it');
       const btnEn = document.getElementById('lang-btn-en');
       if(btnIt && btnEn) {
@@ -119,34 +182,17 @@
     }
     
     setLanguage(currentLang);
+    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   <!-- CYBERPUNK ENTRY OVERLAY (LOADING SCREEN) -->
   <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none cyberpunk-overlay-bg">
     <div class="text-center max-w-md px-6 flex flex-col items-center">
-      
-      <!-- LOGO / TITLE -->
       <h1 class="text-4xl sm:text-5xl font-extrabold text-white glow tracking-tighter mb-8">coodz_10</h1>
-      
-      <!-- LOADING STATUS -->
       <div class="mono text-[var(--cyan)] text-xs sm:text-sm mb-4 tracking-[0.25em] uppercase font-bold" id="loading-text">INITIALIZING_SYSTEM...</div>
-      
-      <!-- GLOWING PROGRESS BAR -->
       <div class="w-64 sm:w-72 h-1.5 bg-[rgba(124,108,240,.2)] rounded-full overflow-hidden relative mb-8 border border-[rgba(124,108,240,.35)] shadow-[0_0_15px_rgba(124,108,240,.2)]">
         <div id="loading-bar" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[var(--violet)] to-[var(--cyan)] transition-all duration-1000"></div>
       </div>
-      
-      <!-- CLICK TO ENTER BUTTON (HIDDEN DURING LOADING) -->
       <div id="enter-text" class="hidden text-sm sm:text-base text-white glow tracking-[0.2em] cursor-pointer font-bold uppercase py-4 px-8 rounded-xl border border-[rgba(79,209,255,.6)] bg-[rgba(11,10,26,.9)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all shadow-[0_0_25px_rgba(79,209,255,0.4)] animate-pulse">
         [ CLICK ANYWHERE TO ENTER ]
       </div>
@@ -155,34 +201,9 @@
 
   <audio id="bg-audio" preload="auto"></audio>
 
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  <script src="assets/js/hud.js"></script>
   <script src="assets/js/starfield.js"></script>
   <script src="assets/js/audio.js"></script>
   <script src="assets/js/router.js"></script>
 </body>
-
-
-
-
-
-
-
-
-
-
-
 </html>
