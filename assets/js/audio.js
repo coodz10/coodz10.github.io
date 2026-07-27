@@ -4,6 +4,8 @@
     'music/Giovani_Re.mp3',
     'music/tiktok.mp3'
   ];
+  let startTrackName = null;
+  let isFirstPlay = true;
 
   let audio = document.getElementById('bg-audio');
   let currentTrackIndex = -1;
@@ -12,16 +14,28 @@
   if (!audio) return;
   audio.volume = 0.85;
 
-  // Dynamically load music/playlist.json so new MP3s are recognized without changing code
+  // Robust load for music/playlist.json with trailing comma tolerance
   async function loadPlaylistJSON() {
     try {
       const isSubfolder = location.pathname.includes('/servers/');
       const jsonPath = isSubfolder ? '../music/playlist.json' : 'music/playlist.json';
       const res = await fetch(jsonPath);
       if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          playlist = data.map(track => {
+        const text = await res.text();
+        // Remove trailing commas automatically so minor JSON typos don't break playback
+        const cleanedText = text.replace(/,\s*([\]}])/g, '$1');
+        const data = JSON.parse(cleanedText);
+        let rawTracks = [];
+
+        if (Array.isArray(data)) {
+          rawTracks = data;
+        } else if (data && typeof data === 'object') {
+          if (data.startTrack) startTrackName = data.startTrack;
+          if (Array.isArray(data.tracks)) rawTracks = data.tracks;
+        }
+
+        if (rawTracks.length > 0) {
+          playlist = rawTracks.map(track => {
             if (track.startsWith('http') || track.startsWith('/')) return track;
             const cleanName = track.replace(/^music\//, '').replace(/^\//, '');
             return isSubfolder ? '../music/' + cleanName : 'music/' + cleanName;
@@ -29,7 +43,7 @@
         }
       }
     } catch (err) {
-      // Fallback to default playlist if JSON fetch is unavailable
+      // Silent fallback to default list if JSON parse fails
     }
   }
 
@@ -53,20 +67,33 @@
     }
   };
 
-  async function playRandomTrack() {
+  async function playNextTrack(forceRandom = false) {
     if (!audio) return;
     if (currentTrackIndex === -1) {
       await loadPlaylistJSON();
     }
     if (playlist.length === 0) return;
 
-    let nextIndex;
-    if (playlist.length > 1) {
-      do {
-        nextIndex = Math.floor(Math.random() * playlist.length);
-      } while (nextIndex === currentTrackIndex && playlist.length > 1);
-    } else {
-      nextIndex = 0;
+    let nextIndex = -1;
+
+    // Support startTrack for initial play
+    if (isFirstPlay && !forceRandom && startTrackName) {
+      const cleanStart = startTrackName.replace(/^music\//, '').replace(/^\//, '').toLowerCase();
+      const foundIdx = playlist.findIndex(p => p.toLowerCase().endsWith(cleanStart));
+      if (foundIdx !== -1) {
+        nextIndex = foundIdx;
+      }
+    }
+    isFirstPlay = false;
+
+    if (nextIndex === -1) {
+      if (playlist.length > 1) {
+        do {
+          nextIndex = Math.floor(Math.random() * playlist.length);
+        } while (nextIndex === currentTrackIndex && playlist.length > 1);
+      } else {
+        nextIndex = 0;
+      }
     }
 
     currentTrackIndex = nextIndex;
@@ -78,7 +105,7 @@
     }).catch(err => {
       failedAttempts++;
       if (failedAttempts < playlist.length * 2) {
-        setTimeout(playRandomTrack, 200);
+        setTimeout(() => playNextTrack(true), 200);
       } else {
         window.syncAudioUI();
       }
@@ -89,11 +116,11 @@
   audio.onerror = () => {
     failedAttempts++;
     if (failedAttempts < playlist.length * 2) {
-      playRandomTrack();
+      playNextTrack(true);
     }
   };
 
-  audio.onended = () => playRandomTrack();
+  audio.onended = () => playNextTrack(true);
 
   // Cyberpunk Entry Loading Overlay Animation Logic
   const overlay = document.getElementById('entry-overlay');
@@ -103,7 +130,7 @@
 
   if (sessionStorage.getItem('system_entered')) {
     if (overlay) overlay.remove();
-    playRandomTrack();
+    playNextTrack();
   } else {
     audio.pause();
 
@@ -120,7 +147,7 @@
     if (overlay) {
       overlay.addEventListener('click', () => {
         sessionStorage.setItem('system_entered', 'true');
-        playRandomTrack();
+        playNextTrack();
         overlay.style.opacity = '0';
         setTimeout(() => overlay.remove(), 700);
       });
@@ -133,14 +160,14 @@
     const navNext = e.target.closest('#nav-audio-next');
 
     if (navNext) {
-      playRandomTrack();
+      playNextTrack(true);
       return;
     }
 
     if (navBtn) {
       if (audio.paused) {
-        if (!audio.src) playRandomTrack();
-        else audio.play().then(() => window.syncAudioUI()).catch(() => playRandomTrack());
+        if (!audio.src) playNextTrack();
+        else audio.play().then(() => window.syncAudioUI()).catch(() => playNextTrack());
       } else {
         audio.pause();
         window.syncAudioUI();

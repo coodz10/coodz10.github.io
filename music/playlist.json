@@ -1,6 +1,8 @@
-[
-  "Giovani_Re.mp3",
-  "tiktok.mp3",
-  "Zero_spotdown.org.mp3",
-  ""
-]
+{
+  "startTrack": "Giovani_Re.mp3",
+  "tracks": [
+    "Giovani_Re.mp3",
+    "tiktok.mp3",
+    "Zero_spotdown.org.mp3"
+  ]
+}
