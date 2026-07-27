@@ -97,6 +97,22 @@ body {
   transition: transform 0.1s ease;
 }
 
+/* Liquid Glassmorphism Frame Container Style */
+.liquid-glass {
+  background: rgba(16, 14, 38, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(124, 108, 240, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 1.25rem;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.liquid-glass:hover {
+  border-color: rgba(79, 209, 255, 0.45);
+  box-shadow: 0 12px 36px 0 rgba(79, 209, 255, 0.18), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
 ::selection {
   background: rgba(124, 108, 240, .4);
   color: #fff;
