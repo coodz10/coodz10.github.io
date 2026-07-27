@@ -119,7 +119,13 @@
       background: rgba(124, 108, 240, .4);
       color: #fff;
     }
-  </style>
+  
+  .cyberpunk-overlay-bg {
+    background: linear-gradient(-45deg, #0b0a1a, #150f2d, #0b0a1a, #0c1a2f);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+  }
+</style>
 </head>
 
 <body class="relative flex flex-col min-h-screen">
@@ -222,90 +228,7 @@
     </div>
   </footer>
 
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    // Animated starfield with twinkling and shooting stars
-    const canvas = document.getElementById('stars');
-    const ctx = canvas.getContext('2d');
-    let stars = [];
-    let shootingStars = [];
-
-    function initStars() {
-      canvas.width = window.innerWidth;
-      canvas.height = document.body.scrollHeight;
-      canvas.style.height = canvas.height + 'px';
-      stars = [];
-      const count = Math.floor((canvas.width * canvas.height) / 16000);
-      for (let i = 0; i < count; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          r: Math.random() * 1.2 + 0.3,
-          alpha: Math.random() * 0.6 + 0.2,
-          dAlpha: (Math.random() * 0.01 + 0.005) * (Math.random() > 0.5 ? 1 : -1)
-        });
-      }
-    }
-
-    function spawnShootingStar() {
-      if (Math.random() < 0.04) {
-        shootingStars.push({
-          x: Math.random() * canvas.width * 1.5,
-          y: -50,
-          len: Math.random() * 80 + 30,
-          speed: Math.random() * 15 + 15,
-          alpha: 1
-        });
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Twinkling stars
-      stars.forEach(s => {
-        s.alpha += s.dAlpha;
-        if (s.alpha > 0.8 || s.alpha < 0.1) s.dAlpha *= -1;
-        ctx.globalAlpha = s.alpha;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Shooting stars
-      spawnShootingStar();
-      ctx.lineWidth = 2;
-      for (let i = shootingStars.length - 1; i >= 0; i--) {
-        let ss = shootingStars[i];
-        ss.x -= ss.speed;
-        ss.y += ss.speed;
-        ss.alpha -= 0.02;
-
-        if (ss.alpha <= 0 || ss.y > canvas.height || ss.x < 0) {
-          shootingStars.splice(i, 1);
-          continue;
-        }
-
-        ctx.globalAlpha = ss.alpha;
-        ctx.strokeStyle = '#fff';
-        ctx.beginPath();
-        ctx.moveTo(ss.x, ss.y);
-        ctx.lineTo(ss.x + ss.len, ss.y - ss.len);
-        ctx.stroke();
-      }
-
-      ctx.globalAlpha = 1;
-      requestAnimationFrame(animate);
-    }
-
-    initStars();
-    animate();
-    window.addEventListener('resize', initStars);
-
-
-  </script>
+  
 
 
   <script>
@@ -348,8 +271,9 @@
   
   
   
+  
   <!-- CYBERPUNK ENTRY OVERLAY (LOADING SCREEN) -->
-  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none" style="background: linear-gradient(-45deg, #0b0a1a, #150f2d, #0b0a1a, #0c1a2f); background-size: 400% 400%; animation: gradientBG 15s ease infinite;">
+  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none cyberpunk-overlay-bg">
     <div class="text-center max-w-md px-6 flex flex-col items-center">
       
       <!-- LOGO / TITLE -->
@@ -381,7 +305,6 @@
       let currentTrackIndex = -1;
 
       if (!audio) return;
-      // High volume
       audio.volume = 0.85;
 
       window.syncAudioUI = function() {
@@ -441,7 +364,6 @@
         if (overlay) overlay.remove();
         playRandomTrack();
       } else {
-        // Music remains SILENT during loading animation
         audio.pause();
 
         setTimeout(() => { if (loadingBar) loadingBar.style.width = '50%'; }, 200);
@@ -457,7 +379,6 @@
         if (overlay) {
           overlay.addEventListener('click', () => {
             sessionStorage.setItem('system_entered', 'true');
-            // MUSIC STARTS ONLY WHEN USER CLICKS TO ENTER
             playRandomTrack();
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 700);
@@ -539,7 +460,160 @@
       }
     }
   </script>
+
+<script>
+  // High-End Cyberpunk Galaxy & Spiral Nebula Canvas Engine
+  (function() {
+    const canvas = document.getElementById('stars');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let stars = [];
+    let nebulaParticles = [];
+    let shootingStars = [];
+    let rotationAngle = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = Math.max(document.body.scrollHeight, window.innerHeight);
+      canvas.style.height = canvas.height + 'px';
+      initGalaxy();
+    }
+
+    function initGalaxy() {
+      stars = [];
+      nebulaParticles = [];
+      
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // 1. Background Starfield
+      const starCount = Math.floor((width * height) / 12000);
+      for (let i = 0; i < starCount; i++) {
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 1.4 + 0.3,
+          alpha: Math.random() * 0.7 + 0.2,
+          dAlpha: (Math.random() * 0.015 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
+          color: Math.random() > 0.3 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#7c6cf0')
+        });
+      }
+
+      // 2. Spiral Galaxy Nebula Dust Particles
+      const nebulaCount = 180;
+      const centerX = width * 0.5;
+      const centerY = Math.min(height * 0.45, 450);
+
+      for (let i = 0; i < nebulaCount; i++) {
+        const dist = Math.pow(Math.random(), 2) * Math.min(width, height) * 0.6 + 40;
+        const angle = Math.random() * Math.PI * 2;
+        const armOffset = (i % 2) * Math.PI; // 2 spiral arms
+        
+        nebulaParticles.push({
+          dist: dist,
+          angle: angle + armOffset,
+          size: Math.random() * 80 + 30,
+          color: i % 3 === 0 ? 'rgba(124,108,240,' : (i % 3 === 1 ? 'rgba(79,209,255,' : 'rgba(21,15,45,'),
+          alpha: Math.random() * 0.15 + 0.05,
+          speed: (Math.random() * 0.0005 + 0.0002) * (dist < 200 ? 1.5 : 0.8)
+        });
+      }
+    }
+
+    function spawnShootingStar() {
+      if (Math.random() < 0.035) {
+        shootingStars.push({
+          x: Math.random() * canvas.width * 1.4,
+          y: Math.random() * (canvas.height * 0.5),
+          len: Math.random() * 90 + 40,
+          speed: Math.random() * 14 + 12,
+          alpha: 1,
+          color: Math.random() > 0.5 ? '#ffffff' : '#4fd1ff'
+        });
+      }
+    }
+
+    function renderGalaxy() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const centerX = canvas.width * 0.5;
+      const centerY = Math.min(canvas.height * 0.45, 450);
+
+      // A. Glowing Galaxy Core
+      const coreGradient = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, Math.min(canvas.width, canvas.height) * 0.5);
+      coreGradient.addColorStop(0, 'rgba(79, 209, 255, 0.18)');
+      coreGradient.addColorStop(0.25, 'rgba(124, 108, 240, 0.12)');
+      coreGradient.addColorStop(0.6, 'rgba(21, 15, 45, 0.08)');
+      coreGradient.addColorStop(1, 'rgba(11, 10, 26, 0)');
+      
+      ctx.fillStyle = coreGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, Math.min(canvas.width, canvas.height) * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. Rotating Spiral Nebula Clouds
+      rotationAngle += 0.0006;
+      nebulaParticles.forEach(p => {
+        p.angle += p.speed;
+        const currentAngle = p.angle + rotationAngle;
+        const px = centerX + Math.cos(currentAngle) * p.dist;
+        const py = centerY + Math.sin(currentAngle) * (p.dist * 0.5); // Elliptical tilt for 3D depth
+
+        const cloudGradient = ctx.createRadialGradient(px, py, 0, px, py, p.size);
+        cloudGradient.addColorStop(0, p.color + p.alpha + ')');
+        cloudGradient.addColorStop(1, p.color + '0)');
+
+        ctx.fillStyle = cloudGradient;
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // C. Twinkling Stars
+      stars.forEach(s => {
+        s.alpha += s.dAlpha;
+        if (s.alpha > 0.85 || s.alpha < 0.15) s.dAlpha *= -1;
+        ctx.globalAlpha = s.alpha;
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // D. Shooting Stars
+      spawnShootingStar();
+      ctx.lineWidth = 1.8;
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        let ss = shootingStars[i];
+        ss.x -= ss.speed;
+        ss.y += ss.speed * 0.7;
+        ss.alpha -= 0.02;
+
+        if (ss.alpha <= 0 || ss.y > canvas.height || ss.x < 0) {
+          shootingStars.splice(i, 1);
+          continue;
+        }
+
+        ctx.globalAlpha = ss.alpha;
+        ctx.strokeStyle = ss.color;
+        ctx.beginPath();
+        ctx.moveTo(ss.x, ss.y);
+        ctx.lineTo(ss.x + ss.len, ss.y - ss.len * 0.7);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(renderGalaxy);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    renderGalaxy();
+  })();
+</script>
 </body>
+
 
 
 

@@ -23,11 +23,9 @@ default_names = [
 combined_playlist = list(dict.fromkeys(local_mp3s + default_names))
 playlist_js_array = str(combined_playlist)
 
-print(f"Playlist for player: {combined_playlist}")
-
 overlay_and_player_html = f"""
   <!-- CYBERPUNK ENTRY OVERLAY (LOADING SCREEN) -->
-  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none" style="background: linear-gradient(-45deg, #0b0a1a, #150f2d, #0b0a1a, #0c1a2f); background-size: 400% 400%; animation: gradientBG 15s ease infinite;">
+  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none cyberpunk-overlay-bg">
     <div class="text-center max-w-md px-6 flex flex-col items-center">
       
       <!-- LOGO / TITLE -->
@@ -59,7 +57,6 @@ overlay_and_player_html = f"""
       let currentTrackIndex = -1;
 
       if (!audio) return;
-      // High volume
       audio.volume = 0.85;
 
       window.syncAudioUI = function() {{
@@ -119,7 +116,6 @@ overlay_and_player_html = f"""
         if (overlay) overlay.remove();
         playRandomTrack();
       }} else {{
-        // Music remains SILENT during loading animation
         audio.pause();
 
         setTimeout(() => {{ if (loadingBar) loadingBar.style.width = '50%'; }}, 200);
@@ -135,7 +131,6 @@ overlay_and_player_html = f"""
         if (overlay) {{
           overlay.addEventListener('click', () => {{
             sessionStorage.setItem('system_entered', 'true');
-            // MUSIC STARTS ONLY WHEN USER CLICKS TO ENTER
             playRandomTrack();
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 700);
@@ -226,11 +221,23 @@ nav_button_html = """        <button onclick="setLanguage('en')" id="lang-btn-en
           <svg id="nav-audio-off" class="w-4 h-4 hidden text-[var(--ink-dim)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
         </button>"""
 
+css_overlay_rule = """
+  .cyberpunk-overlay-bg {
+    background: linear-gradient(-45deg, #0b0a1a, #150f2d, #0b0a1a, #0c1a2f);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+  }
+"""
+
 for file in html_files:
     with open(file, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Clean all previous widgets and overlays
+    # Inject CSS class rule inside <style>
+    if '.cyberpunk-overlay-bg' not in content and '</style>' in content:
+        content = content.replace('</style>', css_overlay_rule + '</style>')
+
+    # Clean all previous scripts
     content = re.sub(r'<!-- CYBERPUNK ENTRY OVERLAY.*?</script>\s*</body>', '</body>', content, flags=re.DOTALL)
     content = re.sub(r'<!-- ENTRY OVERLAY.*?</script>\s*</body>', '</body>', content, flags=re.DOTALL)
     content = re.sub(r'<!-- CUSTOM AUDIO PLAYER CONTAINER.*?</script>\s*</body>', '</body>', content, flags=re.DOTALL)
@@ -238,7 +245,6 @@ for file in html_files:
     content = re.sub(r'<!-- CUSTOM SHUFFLE AUDIO PLAYER CONTAINER.*.*?</body>', '</body>', content, flags=re.DOTALL)
     content = re.sub(r'<!-- SPOTIFY PLAYER.*?</script>\s*</body>', '</body>', content, flags=re.DOTALL)
     content = re.sub(r'<audio id="bg-audio".*?</script>\s*</body>', '</body>', content, flags=re.DOTALL)
-    content = re.sub(r'<div id="audio-widget-container".*?</div>\s*</div>', '', content, flags=re.DOTALL)
 
     if 'id="nav-audio-btn"' not in content:
         content = content.replace('<button onclick="setLanguage(\'en\')" id="lang-btn-en" class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>', nav_button_html)
@@ -247,4 +253,4 @@ for file in html_files:
         content = content.replace('</body>', overlay_and_player_html)
         with open(file, 'w', encoding='utf-8') as f:
             f.write(content)
-        print(f"Successfully cleaned bottom widget & updated navbar audio in {file}")
+        print(f"Successfully cleaned inline CSS warning in {file}")
