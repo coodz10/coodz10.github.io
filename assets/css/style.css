@@ -22,14 +22,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Vertical alignment fix for underscore in coodz_10 */
-.underline-fix {
-  display: inline-block;
-  transform: translateY(-0.14em);
-  margin-left: 0.02em;
-  margin-right: 0.02em;
-}
-
 .mono {
   font-family: 'IBM Plex Mono', monospace;
 }
