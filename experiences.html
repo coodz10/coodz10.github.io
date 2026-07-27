@@ -28,7 +28,9 @@
     }
 
     body {
-    background: linear-gradient(135deg, #090a19 0%, #111029 40%, #0d162d 70%, #080718 100%);
+    background: linear-gradient(-45deg, #060512, #100b26, #060512, #070e1e);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
     color: var(--ink);
     font-family: 'Sora', sans-serif;
     overflow-x: hidden;
@@ -483,139 +485,147 @@
 
 
 
+
+
 <script>
-  // High-End Assistenzaluni 3D Parallax Constellation Engine
+  // Real 3D Perspective Galaxy & Shooting Stars Engine
   (function() {
     const canvas = document.getElementById('stars');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    let particles = [];
+    let stars = [];
+    let shootingStars = [];
     let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+    const numStars = 450;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = Math.max(document.body.scrollHeight, window.innerHeight);
       canvas.style.height = canvas.height + 'px';
-      initParticles();
+      initStars();
     }
 
-    function initParticles() {
-      particles = [];
-      const count = Math.floor((canvas.width * canvas.height) / 11000);
-      for (let i = 0; i < count; i++) {
-        const z = Math.random() * 2.2 + 0.5; // 3D depth multiplier
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          z: z,
-          r: (Math.random() * 1.4 + 0.4) * (z * 0.65),
-          vx: (Math.random() - 0.5) * 0.35 * z,
-          vy: (Math.random() - 0.5) * 0.35 * z,
-          alpha: Math.random() * 0.65 + 0.2,
-          color: Math.random() > 0.3 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#7c6cf0')
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < numStars; i++) {
+        stars.push({
+          x: (Math.random() - 0.5) * canvas.width * 2.2,
+          y: (Math.random() - 0.5) * canvas.height * 2.2,
+          z: Math.random() * 1000 + 1,
+          size: Math.random() * 1.5 + 0.5,
+          color: Math.random() > 0.35 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#a78bfa')
         });
       }
     }
 
-    // Parallax mouse movement tracking
     document.addEventListener('mousemove', (e) => {
-      mouse.targetX = (e.clientX - window.innerWidth / 2) * 0.04;
-      mouse.targetY = (e.clientY - window.innerHeight / 2) * 0.04;
+      mouse.targetX = (e.clientX - window.innerWidth / 2) * 0.12;
+      mouse.targetY = (e.clientY - window.innerHeight / 2) * 0.12;
     });
 
-    let wavePhase = 0;
+    function spawnShootingStar() {
+      if (Math.random() < 0.04) {
+        shootingStars.push({
+          x: Math.random() * canvas.width * 1.4,
+          y: Math.random() * (canvas.height * 0.5),
+          len: Math.random() * 110 + 50,
+          speed: Math.random() * 16 + 14,
+          alpha: 1,
+          color: Math.random() > 0.5 ? '#ffffff' : '#4fd1ff'
+        });
+      }
+    }
 
-    function drawAssistenzaluniBackground() {
+    function render3DGalaxy() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Smooth mouse interpolation
       mouse.x += (mouse.targetX - mouse.x) * 0.05;
       mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
-      const width = canvas.width;
-      const height = canvas.height;
+      const centerX = canvas.width * 0.5 + mouse.x * 0.5;
+      const centerY = Math.min(canvas.height * 0.45, 450) + mouse.y * 0.5;
 
-      // 1. Organic Wavy Flow Lines (matching assistenzaluni screenshot)
-      wavePhase += 0.007;
-      ctx.save();
-      ctx.globalAlpha = 0.4;
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        const yOffset = height * (0.5 + i * 0.16);
-        ctx.moveTo(-50, yOffset);
-        
-        for (let x = -50; x <= width + 50; x += 40) {
-          const y = Math.sin(x * 0.0018 + wavePhase + i * 1.5) * 55 + Math.cos(x * 0.001 + wavePhase * 0.6) * 35 + yOffset;
-          ctx.lineTo(x + mouse.x * (i + 1) * 0.25, y + mouse.y * (i + 1) * 0.25);
+      // 1. Deep Glowing Galaxy Core
+      const coreGrad = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, Math.min(canvas.width, canvas.height) * 0.55);
+      coreGrad.addColorStop(0, 'rgba(79, 209, 255, 0.16)');
+      coreGrad.addColorStop(0.3, 'rgba(124, 108, 240, 0.11)');
+      coreGrad.addColorStop(0.7, 'rgba(21, 15, 45, 0.05)');
+      coreGrad.addColorStop(1, 'rgba(6, 5, 18, 0)');
+
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, Math.min(canvas.width, canvas.height) * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. TRUE 3D Flying Stars (Z-axis Projection Depth)
+      for (let i = 0; i < stars.length; i++) {
+        let s = stars[i];
+
+        // Move stars closer along Z axis
+        s.z -= 1.3;
+        if (s.z <= 0) {
+          s.z = 1000;
+          s.x = (Math.random() - 0.5) * canvas.width * 2.2;
+          s.y = (Math.random() - 0.5) * canvas.height * 2.2;
         }
-        
-        ctx.lineTo(width + 50, height + 50);
-        ctx.lineTo(-50, height + 50);
-        ctx.closePath();
-        
-        const grad = ctx.createLinearGradient(0, yOffset - 80, 0, height);
-        if (i === 0) {
-          grad.addColorStop(0, 'rgba(23, 21, 55, 0.45)');
-          grad.addColorStop(1, 'rgba(9, 10, 25, 0.85)');
-        } else if (i === 1) {
-          grad.addColorStop(0, 'rgba(32, 26, 70, 0.35)');
-          grad.addColorStop(1, 'rgba(11, 10, 26, 0.92)');
-        } else {
-          grad.addColorStop(0, 'rgba(16, 30, 60, 0.3)');
-          grad.addColorStop(1, 'rgba(7, 6, 20, 0.98)');
-        }
-        ctx.fillStyle = grad;
-        ctx.fill();
-      }
-      ctx.restore();
 
-      // 2. Constellation Lines between neighboring star nodes
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = (particles[i].x + mouse.x * particles[i].z) - (particles[j].x + mouse.x * particles[j].z);
-          const dy = (particles[i].y + mouse.y * particles[i].z) - (particles[j].y + mouse.y * particles[j].z);
-          const dist = Math.sqrt(dx * dx + dy * dy);
+        // 3D Perspective Projection
+        const k = 400 / s.z;
+        const px = (s.x + mouse.x * (1000 / s.z)) * k + canvas.width * 0.5;
+        const py = (s.y + mouse.y * (1000 / s.z)) * k + canvas.height * 0.45;
 
-          if (dist < 115) {
+        if (px >= 0 && px <= canvas.width && py >= 0 && py <= canvas.height) {
+          const radius = Math.max(0.3, (1 - s.z / 1000) * s.size * 2.4);
+          const alpha = Math.min(1, Math.max(0.1, (1 - s.z / 1000) * 1.2));
+
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = s.color;
+          ctx.beginPath();
+          ctx.arc(px, py, radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Speed trail for fast foreground stars
+          if (s.z < 220) {
+            ctx.strokeStyle = s.color;
+            ctx.lineWidth = radius * 0.7;
             ctx.beginPath();
-            ctx.moveTo(particles[i].x + mouse.x * particles[i].z, particles[i].y + mouse.y * particles[i].z);
-            ctx.lineTo(particles[j].x + mouse.x * particles[j].z, particles[j].y + mouse.y * particles[j].z);
-            const lineAlpha = (1 - dist / 115) * 0.16 * Math.min(particles[i].alpha, particles[j].alpha);
-            ctx.strokeStyle = `rgba(124, 108, 240, ${lineAlpha})`;
-            ctx.lineWidth = 0.8;
+            ctx.moveTo(px, py);
+            ctx.lineTo(px - (px - canvas.width * 0.5) * 0.03, py - (py - canvas.height * 0.45) * 0.03);
             ctx.stroke();
           }
         }
       }
 
-      // 3. 3D Parallax Star Particles
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
+      // 3. Bright & Dynamic Shooting Stars (Stelle Cadenti)
+      spawnShootingStar();
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        let ss = shootingStars[i];
+        ss.x -= ss.speed;
+        ss.y += ss.speed * 0.7;
+        ss.alpha -= 0.02;
 
-        if (p.x < -30) p.x = width + 30;
-        if (p.x > width + 30) p.x = -30;
-        if (p.y < -30) p.y = height + 30;
-        if (p.y > height + 30) p.y = -30;
+        if (ss.alpha <= 0 || ss.y > canvas.height || ss.x < 0) {
+          shootingStars.splice(i, 1);
+          continue;
+        }
 
-        const posX = p.x + mouse.x * p.z;
-        const posY = p.y + mouse.y * p.z;
-
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
+        ctx.globalAlpha = ss.alpha;
+        ctx.strokeStyle = ss.color;
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
-        ctx.arc(posX, posY, p.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
+        ctx.moveTo(ss.x, ss.y);
+        ctx.lineTo(ss.x + ss.len, ss.y - ss.len * 0.7);
+        ctx.stroke();
+      }
 
       ctx.globalAlpha = 1;
-      requestAnimationFrame(drawAssistenzaluniBackground);
+      requestAnimationFrame(render3DGalaxy);
     }
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    drawAssistenzaluniBackground();
+    render3DGalaxy();
   })();
 </script>
 </body>
