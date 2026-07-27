@@ -1,0 +1,8 @@
+# Security Policy & Vulnerability Disclosure for coodz_10
+# RFC 9116 Compliant
+
+Contact: https://coodz10.github.io/contact.html
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: it, en
+Canonical: https://coodz10.github.io/.well-known/security.txt
+Policy: https://coodz10.github.io/contact.html

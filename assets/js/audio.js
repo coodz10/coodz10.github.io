@@ -1,8 +1,8 @@
 (function() {
-  // Clean playlist referencing existing MP3 tracks in /music
+  // Playlist using root-absolute paths for seamless playback across root & /servers/ subfolder
   const playlist = [
-    'music/Giovani_Re.mp3',
-    'music/tiktok.mp3'
+    '/music/Giovani_Re.mp3',
+    '/music/tiktok.mp3'
   ];
 
   let audio = document.getElementById('bg-audio');
@@ -44,7 +44,14 @@
     }
 
     currentTrackIndex = nextIndex;
-    audio.src = playlist[currentTrackIndex];
+    
+    // Resolve path dynamically if running on local file system or subfolder
+    let trackPath = playlist[currentTrackIndex];
+    if (location.protocol === 'file:' && location.pathname.includes('/servers/')) {
+      trackPath = '..' + trackPath;
+    }
+
+    audio.src = trackPath;
 
     audio.play().then(() => {
       failedAttempts = 0;
