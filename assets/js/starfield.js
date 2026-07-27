@@ -14,17 +14,22 @@
   }
 
   function initStars() {
-    stars = [];
-    const count = Math.floor((canvas.width * canvas.height) / 12000);
-    for (let i = 0; i < count; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: Math.random() * 1.2 + 0.3,
-        alpha: Math.random() * 0.65 + 0.2,
-        dAlpha: (Math.random() * 0.008 + 0.003) * (Math.random() > 0.5 ? 1 : -1),
-        color: Math.random() > 0.3 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#a78bfa')
-      });
+    const targetCount = Math.floor((canvas.width * canvas.height) / 12000);
+
+    if (stars.length < targetCount) {
+      const needed = targetCount - stars.length;
+      for (let i = 0; i < needed; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.2 + 0.3,
+          alpha: Math.random() * 0.65 + 0.2,
+          dAlpha: (Math.random() * 0.008 + 0.003) * (Math.random() > 0.5 ? 1 : -1),
+          color: Math.random() > 0.3 ? '#ffffff' : (Math.random() > 0.5 ? '#4fd1ff' : '#a78bfa')
+        });
+      }
+    } else if (stars.length > targetCount) {
+      stars.length = targetCount;
     }
   }
 

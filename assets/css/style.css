@@ -47,7 +47,7 @@ body {
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
-  animation: shine 5s linear infinite;
+  animation: shine 3.5s ease-in-out infinite;
   display: inline-block;
 }
 
@@ -92,6 +92,11 @@ body {
   transform: translateY(-2px);
 }
 
+.bracket-btn:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
 ::selection {
   background: rgba(124, 108, 240, .4);
   color: #fff;
@@ -100,7 +105,7 @@ body {
 .cyberpunk-overlay-bg {
   background: linear-gradient(-45deg, #0b0a1a, #150f2d, #0b0a1a, #0c1a2f);
   background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
+  animation: gradientBG 9s ease infinite;
 }
 
 @keyframes gradientBG {

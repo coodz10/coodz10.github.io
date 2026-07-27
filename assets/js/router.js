@@ -1,4 +1,4 @@
-// SPA Router: Replaces <main> and updates active nav links, <title>, and <meta name="description">
+// SPA Router: Replaces <main> with smooth fade-out/fade-in transition and updates active nav links, <title>, and <meta name="description">
 document.addEventListener('click', async (e) => {
   const link = e.target.closest('a');
   if (!link) return;
@@ -38,16 +38,35 @@ async function loadPage(href) {
       currentMetaDesc.setAttribute('content', newMetaDesc.getAttribute('content') || '');
     }
 
-    // 3. Replace <main> Content
+    // 3. Smooth Fade-Out / Fade-In Transition
     const currentMain = document.querySelector('main');
     const newMain = doc.querySelector('main');
-    if (currentMain && newMain) currentMain.replaceWith(newMain);
+
+    if (currentMain && newMain) {
+      currentMain.style.transition = 'opacity 200ms ease';
+      currentMain.style.opacity = '0';
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      newMain.style.opacity = '0';
+      newMain.style.transition = 'opacity 200ms ease';
+      currentMain.replaceWith(newMain);
+
+      requestAnimationFrame(() => {
+        newMain.style.opacity = '1';
+      });
+
+      setTimeout(() => {
+        newMain.style.transition = '';
+        newMain.style.opacity = '';
+      }, 200);
+    }
 
     // 4. Update Navigation Links Active Styling
     const currentNavLinks = document.querySelectorAll('nav a');
     currentNavLinks.forEach(a => {
       const aHref = a.getAttribute('href');
-      if (aHref === href) {
+      if (aHref === href || (href.includes('servers/') && aHref === 'experiences.html')) {
         a.className = 'text-white transition-colors';
       } else {
         a.className = 'hover:text-white transition-colors text-[var(--ink-dim)]';
