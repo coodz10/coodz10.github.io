@@ -4,8 +4,6 @@
   --ink-dim: #a49ecb; /* Enhanced contrast for WCAG AA compliance */
   --violet: #7c6cf0;
   --cyan: #4fd1ff;
-  --violet-glow: rgba(124, 108, 240, 0.4);
-  --cyan-glow: rgba(79, 209, 255, 0.4);
 }
 
 * {
@@ -22,35 +20,6 @@ body {
   color: var(--ink);
   font-family: 'Sora', sans-serif;
   overflow-x: hidden;
-}
-
-/* Layer 1: Cyber Grid Pattern Background */
-.cyber-grid {
-  background-image: 
-    linear-gradient(to right, rgba(124, 108, 240, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(124, 108, 240, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-/* Layer 2: Vignette Overlay */
-.vignette {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at center, transparent 40%, rgba(7, 6, 20, 0.75) 100%);
-  z-index: 1;
-}
-
-/* Layer 3: Ambient Glow spot */
-.ambient-glow {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(124, 108, 240, 0.12) 0%, rgba(79, 209, 255, 0.05) 50%, transparent 70%);
-  pointer-events: none;
-  filter: blur(40px);
-  z-index: 0;
 }
 
 .mono {
@@ -85,7 +54,7 @@ body {
 @keyframes slideUpFade {
   0% {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(40px);
   }
   100% {
     opacity: 1;
@@ -94,34 +63,31 @@ body {
 }
 
 .animate-in {
-  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUpFade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
 }
 
 .delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.25s; }
-.delay-3 { animation-delay: 0.4s; }
+.delay-2 { animation-delay: 0.3s; }
+.delay-3 { animation-delay: 0.5s; }
 
 .hud-bar {
   border-bottom: 1px solid rgba(124, 108, 240, .18);
-  background: rgba(11, 10, 26, .75);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: rgba(11, 10, 26, .7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .bracket-btn {
   font-family: 'IBM Plex Mono', monospace;
   border: 1px solid rgba(124, 108, 240, .5);
   color: var(--ink);
-  transition: background .25s ease, box-shadow .25s ease, color .25s ease, transform .25s ease, border-color .25s ease;
-  position: relative;
-  overflow: hidden;
+  transition: background .25s ease, box-shadow .25s ease, color .25s ease, transform .25s ease;
 }
 
 .bracket-btn:hover {
-  background: rgba(124, 108, 240, .15);
-  border-color: var(--cyan);
-  box-shadow: 0 0 25px rgba(79, 209, 255, .3);
+  background: rgba(124, 108, 240, .12);
+  box-shadow: 0 0 30px rgba(124, 108, 240, .25);
   color: #fff;
   transform: translateY(-2px);
 }
@@ -129,41 +95,6 @@ body {
 .bracket-btn:active {
   transform: scale(0.97);
   transition: transform 0.1s ease;
-}
-
-.bracket-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--cyan), 0 0 20px var(--cyan);
-}
-
-/* Liquid Glassmorphism Frame Container Style */
-.liquid-glass {
-  background: rgba(16, 14, 38, 0.6);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(124, 108, 240, 0.25);
-  box-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
-  border-radius: 1.25rem;
-  transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.liquid-glass:hover {
-  border-color: rgba(79, 209, 255, 0.5);
-  box-shadow: 0 14px 40px 0 rgba(79, 209, 255, 0.2), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-/* Blinking Terminal Cursor */
-@keyframes blinkCursor {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.blink-cursor {
-  display: inline-block;
-  color: var(--cyan);
-  animation: blinkCursor 1s infinite;
 }
 
 ::selection {
@@ -186,14 +117,4 @@ body {
 @keyframes eq {
   0% { height: 20%; }
   100% { height: 100%; }
-}
-
-/* Accessibility: Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }

@@ -101,30 +101,6 @@
     requestAnimationFrame(renderStaticSpace);
   }
 
-  // Interactive 3D Tilt Effect on .liquid-glass Cards
-  document.addEventListener('mousemove', (e) => {
-    const card = e.target.closest('.liquid-glass');
-    if (!card) return;
-
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -5;
-    const rotateY = ((x - centerX) / centerX) * 5;
-
-    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-2px)`;
-  });
-
-  document.addEventListener('mouseout', (e) => {
-    const card = e.target.closest('.liquid-glass');
-    if (card) {
-      card.style.transform = '';
-    }
-  });
-
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
   renderStaticSpace();
