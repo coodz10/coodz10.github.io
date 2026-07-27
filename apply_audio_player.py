@@ -1,114 +1,135 @@
 import glob
 import re
+import os
 
 html_files = glob.glob('*.html')
 
-# Persistent Audio Script & Hidden Audio Element
-audio_script_and_element = """
+# Find all local MP3 files in workspace
+local_mp3s = []
+for file in glob.glob('music/*.mp3'):
+    local_mp3s.append(file.replace('\\', '/'))
+for file in glob.glob('*.mp3'):
+    local_mp3s.append(file.replace('\\', '/'))
+
+# Fallback names in music directory just in case user adds them
+default_names = [
+    'music/Giovani_Re.mp3',
+    'music/tiktok.mp3',
+    'music/doppio_hublot.mp3',
+    'music/peace_and_love.mp3',
+    'music/popstar.mp3',
+    'music.mp3'
+]
+
+combined_playlist = list(dict.fromkeys(local_mp3s + default_names))
+playlist_js_array = str(combined_playlist)
+
+print(f"Detected local MP3 playlist: {combined_playlist}")
+
+# Audio script using ONLY local user MP3 files
+audio_script_and_element = f"""
   <audio id="bg-audio" preload="auto"></audio>
 
   <script>
-    // Rock-Solid Audio Controller (Persistent Navbar Button)
-    (function() {
-      const playlist = [
-        'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3', // Lofi Chill Ambient
-        'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3', // Lofi Night Drive
-        'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c41e8f237f.mp3', // Cyber Lofi Beats
-        'music.mp3',
-        'music/track1.mp3',
-        'music/track2.mp3'
-      ];
+    // Strict Local MP3 Audio Controller
+    (function() {{
+      const playlist = {playlist_js_array};
 
       let audio = document.getElementById('bg-audio');
       let currentTrackIndex = -1;
 
       if (!audio) return;
-      audio.volume = 0.35;
+      audio.volume = 0.4;
 
-      window.updateAudioIcon = function() {
+      window.updateAudioIcon = function() {{
         const audioOn = document.getElementById('nav-audio-on');
         const audioOff = document.getElementById('nav-audio-off');
         const btn = document.getElementById('nav-audio-btn');
 
         if (!audioOn || !audioOff || !btn) return;
 
-        if (audio && !audio.paused) {
+        if (audio && !audio.paused) {{
           audioOn.classList.remove('hidden');
           audioOff.classList.add('hidden');
           btn.classList.add('border-[var(--cyan)]', 'text-[var(--cyan)]', 'shadow-[0_0_12px_rgba(79,209,255,0.4)]');
           btn.classList.remove('opacity-60');
-        } else {
+        }} else {{
           audioOn.classList.add('hidden');
           audioOff.classList.remove('hidden');
           btn.classList.remove('border-[var(--cyan)]', 'text-[var(--cyan)]', 'shadow-[0_0_12px_rgba(79,209,255,0.4)]');
           btn.classList.add('opacity-60');
-        }
-      };
+        }}
+      }};
 
-      function playRandomTrack() {
-        if (!audio) return;
+      function playRandomTrack() {{
+        if (!audio || playlist.length === 0) return;
         let nextIndex;
-        if (playlist.length > 1) {
-          do {
+        if (playlist.length > 1) {{
+          do {{
             nextIndex = Math.floor(Math.random() * playlist.length);
-          } while (nextIndex === currentTrackIndex && playlist.length > 1);
-        } else {
+          }} while (nextIndex === currentTrackIndex && playlist.length > 1);
+        }} else {{
           nextIndex = 0;
-        }
+        }}
 
         currentTrackIndex = nextIndex;
         audio.src = playlist[currentTrackIndex];
 
-        audio.play().then(() => {
+        audio.play().then(() => {{
           window.updateAudioIcon();
-        }).catch(err => {
-          window.updateAudioIcon();
-        });
-      }
+        }}).catch(err => {{
+          // Try next local track if one fails
+          if (playlist.length > 1) {{
+            setTimeout(playRandomTrack, 300);
+          }} else {{
+            window.updateAudioIcon();
+          }}
+        }});
+      }}
 
-      // Start playing music
+      // Play local track immediately
       playRandomTrack();
 
-      // Trigger playback on first user click if browser prevented immediate unmuted play
-      const tryAutoPlay = () => {
-        if (audio && audio.paused) {
+      // Trigger playback on user touch/click if browser blocked immediate unmuted play
+      const tryAutoPlay = () => {{
+        if (audio && audio.paused) {{
           if (!audio.src) playRandomTrack();
-          else audio.play().then(() => window.updateAudioIcon()).catch(() => {});
-        }
-      };
+          else audio.play().then(() => window.updateAudioIcon()).catch(() => {{}});
+        }}
+      }};
 
       document.addEventListener('click', tryAutoPlay);
       document.addEventListener('touchstart', tryAutoPlay);
 
-      // Auto play next random song on end
-      audio.onended = () => {
+      // Auto play next random local song when current song ends
+      audio.onended = () => {{
         playRandomTrack();
-      };
+      }};
 
       // Navbar Audio Toggle Button Event Listener
-      document.addEventListener('click', (e) => {
+      document.addEventListener('click', (e) => {{
         const btn = e.target.closest('#nav-audio-btn');
         if (!btn) return;
 
-        if (audio.paused) {
-          if (!audio.src) {
+        if (audio.paused) {{
+          if (!audio.src) {{
             playRandomTrack();
-          } else {
+          }} else {{
             audio.play().then(() => window.updateAudioIcon()).catch(() => playRandomTrack());
-          }
-        } else {
+          }}
+        }} else {{
           audio.pause();
           window.updateAudioIcon();
-        }
-      });
+        }}
+      }});
 
       // Keep state in sync
       audio.addEventListener('play', window.updateAudioIcon);
       audio.addEventListener('pause', window.updateAudioIcon);
-    })();
+    }})();
 
     // SPA Router: Only replaces <main> so <nav> and the Audio Button NEVER flicker or disappear
-    document.addEventListener('click', async (e) => {
+    document.addEventListener('click', async (e) => {{
       const link = e.target.closest('a');
       if (!link) return;
       
@@ -117,16 +138,16 @@ audio_script_and_element = """
 
       e.preventDefault();
       await loadPage(href);
-      history.pushState({ path: href }, '', href);
-    });
+      history.pushState({{ path: href }}, '', href);
+    }});
 
-    window.addEventListener('popstate', async (e) => {
+    window.addEventListener('popstate', async (e) => {{
       const path = e.state?.path || location.pathname.split('/').pop() || 'index.html';
       await loadPage(path);
-    });
+    }});
 
-    async function loadPage(href) {
-      try {
+    async function loadPage(href) {{
+      try {{
         const res = await fetch(href);
         const text = await res.text();
         const parser = new DOMParser();
@@ -141,28 +162,28 @@ audio_script_and_element = """
 
         // Update Nav Active Link styling without destroying navbar
         const currentNavLinks = document.querySelectorAll('nav a');
-        currentNavLinks.forEach(a => {
+        currentNavLinks.forEach(a => {{
           const aHref = a.getAttribute('href');
-          if (aHref === href) {
+          if (aHref === href) {{
             a.className = 'text-white transition-colors';
-          } else {
+          }} else {{
             a.className = 'hover:text-white transition-colors text-[var(--ink-dim)]';
-          }
-        });
+          }}
+        }});
 
-        if (typeof setLanguage === 'function') {
+        if (typeof setLanguage === 'function') {{
           setLanguage(localStorage.getItem('lang') || 'it');
-        }
+        }}
 
-        if (typeof window.updateAudioIcon === 'function') {
+        if (typeof window.updateAudioIcon === 'function') {{
           window.updateAudioIcon();
-        }
+        }}
 
         window.scrollTo(0, 0);
-      } catch (err) {
+      }} catch (err) {{
         window.location.href = href;
-      }
-    }
+      }}
+    }}
   </script>
 </body>
 """
@@ -191,4 +212,4 @@ for file in html_files:
         content = content.replace('</body>', audio_script_and_element)
         with open(file, 'w', encoding='utf-8') as f:
             f.write(content)
-        print(f"Successfully fixed persistent navbar audio button in {file}")
+        print(f"Successfully configured local MP3 audio player in {file}")

@@ -356,25 +356,19 @@
   
   
   
+  
   <audio id="bg-audio" preload="auto"></audio>
 
   <script>
-    // Rock-Solid Audio Controller (Persistent Navbar Button)
+    // Strict Local MP3 Audio Controller
     (function() {
-      const playlist = [
-        'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3', // Lofi Chill Ambient
-        'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3', // Lofi Night Drive
-        'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c41e8f237f.mp3', // Cyber Lofi Beats
-        'music.mp3',
-        'music/track1.mp3',
-        'music/track2.mp3'
-      ];
+      const playlist = ['music/Giovani_Re.mp3', 'music/tiktok.mp3', 'music/doppio_hublot.mp3', 'music/peace_and_love.mp3', 'music/popstar.mp3', 'music.mp3'];
 
       let audio = document.getElementById('bg-audio');
       let currentTrackIndex = -1;
 
       if (!audio) return;
-      audio.volume = 0.35;
+      audio.volume = 0.4;
 
       window.updateAudioIcon = function() {
         const audioOn = document.getElementById('nav-audio-on');
@@ -397,7 +391,7 @@
       };
 
       function playRandomTrack() {
-        if (!audio) return;
+        if (!audio || playlist.length === 0) return;
         let nextIndex;
         if (playlist.length > 1) {
           do {
@@ -413,14 +407,19 @@
         audio.play().then(() => {
           window.updateAudioIcon();
         }).catch(err => {
-          window.updateAudioIcon();
+          // Try next local track if one fails
+          if (playlist.length > 1) {
+            setTimeout(playRandomTrack, 300);
+          } else {
+            window.updateAudioIcon();
+          }
         });
       }
 
-      // Start playing music
+      // Play local track immediately
       playRandomTrack();
 
-      // Trigger playback on first user click if browser prevented immediate unmuted play
+      // Trigger playback on user touch/click if browser blocked immediate unmuted play
       const tryAutoPlay = () => {
         if (audio && audio.paused) {
           if (!audio.src) playRandomTrack();
@@ -431,7 +430,7 @@
       document.addEventListener('click', tryAutoPlay);
       document.addEventListener('touchstart', tryAutoPlay);
 
-      // Auto play next random song on end
+      // Auto play next random local song when current song ends
       audio.onended = () => {
         playRandomTrack();
       };
@@ -516,6 +515,7 @@
     }
   </script>
 </body>
+
 
 
 
