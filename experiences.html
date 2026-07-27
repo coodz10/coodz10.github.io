@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 
 <head>
@@ -159,39 +159,62 @@
         <span class="lang-en hidden">My Experiences</span>
       </h2>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in delay-2 w-full">
+
+    <!-- SEZIONE 1: STAFF ATTUALE (CURRENT STAFF) -->
+    <div class="mb-14 animate-in delay-2">
+      <div class="flex items-center gap-3 mb-6 border-b border-[rgba(79,209,255,.2)] pb-3">
+        <span class="w-2 h-2 rounded-full bg-[var(--cyan)] animate-ping"></span>
+        <h3 class="text-xl sm:text-2xl font-bold text-white mono uppercase tracking-wider">
+          <span class="lang-it">⚡ Staff Attualmente</span>
+          <span class="lang-en hidden">⚡ Current Staff Roles</span>
+        </h3>
+      </div>
       
-      <!-- PixyMC Card -->
-      <a href="pixymc.html" class="block border border-[rgba(124,108,240,.2)] bg-[rgba(11,10,26,.4)] p-6 rounded-lg hover:border-[rgba(124,108,240,.5)] hover:bg-[rgba(124,108,240,.05)] transition-colors relative group cursor-pointer">
-        <div class="text-sm text-[var(--ink-dim)] mb-3">
-          <span class="text-white">★★★★</span><span class="opacity-30">★</span>
-        </div>
-        <div class="inline-block border border-[rgba(124,108,240,.4)] text-[var(--ink-dim)] text-[10px] uppercase px-2 py-0.5 rounded mb-4 tracking-wider">
-          <span class="lang-it">Dimesso</span>
-          <span class="lang-en hidden">Resign</span>
-        </div>
-        <h3 class="text-2xl text-white font-bold mb-2 group-hover:text-[var(--cyan)] transition-colors">PixyMC</h3>
-        <p class="text-sm md:text-base text-[var(--ink-dim)] leading-relaxed">
-          Owner [ SS Manager ]
-        </p>
-      </a>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        <!-- MetaMc Card -->
+        <a href="metamc.html" class="block border border-[rgba(79,209,255,.4)] bg-[rgba(11,10,26,.6)] p-6 rounded-xl hover:border-[var(--cyan)] hover:bg-[rgba(79,209,255,.08)] hover:shadow-[0_0_20px_rgba(79,209,255,.2)] transition-all relative group cursor-pointer">
+          <div class="text-sm text-[var(--cyan)] mb-3 flex items-center gap-2 animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
+            <span class="mono text-[10px] tracking-widest uppercase"><span class="lang-it">In Valutazione</span><span class="lang-en hidden">Evaluating</span></span>
+          </div>
+          <div class="inline-block border border-[var(--cyan)] text-[var(--cyan)] font-semibold text-[10px] uppercase px-2.5 py-0.5 rounded-full mb-4 tracking-wider bg-[rgba(79,209,255,.1)]">
+            <span class="lang-it">● Attivo</span>
+            <span class="lang-en hidden">● Active</span>
+          </div>
+          <h3 class="text-2xl text-white font-bold mb-2 group-hover:text-[var(--cyan)] transition-colors">MetaMc</h3>
+          <p class="text-sm md:text-base text-[var(--ink-dim)] leading-relaxed">
+            Trainee
+          </p>
+        </a>
+      </div>
+    </div>
 
-      <!-- MetaMc Card -->
-      <a href="metamc.html" class="block border border-[rgba(124,108,240,.2)] bg-[rgba(11,10,26,.4)] p-6 rounded-lg hover:border-[rgba(124,108,240,.5)] hover:bg-[rgba(124,108,240,.05)] transition-colors relative group cursor-pointer">
-        <div class="text-sm text-[var(--cyan)] mb-3 flex items-center gap-2 animate-pulse">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
-          <span class="mono text-[10px] tracking-widest uppercase"><span class="lang-it">In Valutazione</span><span class="lang-en hidden">Evaluating</span></span>
-        </div>
-        <div class="inline-block border border-[rgba(124,108,240,.4)] text-[var(--ink-dim)] text-[10px] uppercase px-2 py-0.5 rounded mb-4 tracking-wider">
-          <span class="lang-it">Attivo</span>
-          <span class="lang-en hidden">Active</span>
-        </div>
-        <h3 class="text-2xl text-white font-bold mb-2 group-hover:text-[var(--cyan)] transition-colors">MetaMc</h3>
-        <p class="text-sm md:text-base text-[var(--ink-dim)] leading-relaxed">
-          Trainee
-        </p>
-      </a>
+    <!-- SEZIONE 2: ESPERIENZE PASSATE (PAST STAFF ROLES) -->
+    <div class="animate-in delay-3">
+      <div class="flex items-center gap-3 mb-6 border-b border-[rgba(124,108,240,.2)] pb-3">
+        <span class="w-2 h-2 rounded-full bg-[var(--violet)]"></span>
+        <h3 class="text-xl sm:text-2xl font-bold text-white mono uppercase tracking-wider">
+          <span class="lang-it">📁 Esperienze Passate</span>
+          <span class="lang-en hidden">📁 Past Staff Roles</span>
+        </h3>
+      </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        <!-- PixyMC Card -->
+        <a href="pixymc.html" class="block border border-[rgba(124,108,240,.2)] bg-[rgba(11,10,26,.4)] p-6 rounded-xl hover:border-[rgba(124,108,240,.5)] hover:bg-[rgba(124,108,240,.05)] transition-colors relative group cursor-pointer">
+          <div class="text-sm text-[var(--ink-dim)] mb-3">
+            <span class="text-white">★★★★</span><span class="opacity-30">★</span>
+          </div>
+          <div class="inline-block border border-[rgba(124,108,240,.4)] text-[var(--ink-dim)] text-[10px] uppercase px-2.5 py-0.5 rounded-full mb-4 tracking-wider">
+            <span class="lang-it">Dimesso</span>
+            <span class="lang-en hidden">Resign</span>
+          </div>
+          <h3 class="text-2xl text-white font-bold mb-2 group-hover:text-[var(--cyan)] transition-colors">PixyMC</h3>
+          <p class="text-sm md:text-base text-[var(--ink-dim)] leading-relaxed">
+            Owner [ SS Manager ]
+          </p>
+        </a>
+      </div>
     </div>
   </main>
 
@@ -331,60 +354,47 @@
   
   
   
-  <audio id="bg-audio"></audio>
+  
+  
+  <audio id="bg-audio" preload="auto"></audio>
 
   <script>
-    // Global Minimal Audio Controller
+    // Rock-Solid Audio Controller (Persistent Navbar Button)
     (function() {
       const playlist = [
+        'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3', // Lofi Chill Ambient
+        'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3', // Lofi Night Drive
+        'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c41e8f237f.mp3', // Cyber Lofi Beats
         'music.mp3',
-        'music1.mp3',
-        'music2.mp3',
-        'music3.mp3',
-        'music4.mp3',
-        'music5.mp3',
         'music/track1.mp3',
-        'music/track2.mp3',
-        'music/track3.mp3',
-        'music/track4.mp3',
-        'music/track5.mp3',
-        'music/tik_tok.mp3',
-        'music/peace_and_love.mp3',
-        'music/doppio_hublot.mp3',
-        'music/giovani_re.mp3',
-        'music/popstar.mp3'
+        'music/track2.mp3'
       ];
 
       let audio = document.getElementById('bg-audio');
       let currentTrackIndex = -1;
-      let failedAttempts = 0;
 
       if (!audio) return;
-      audio.volume = 0.4;
+      audio.volume = 0.35;
 
-      function updateNavAudioUI(isPlaying) {
+      window.updateAudioIcon = function() {
         const audioOn = document.getElementById('nav-audio-on');
         const audioOff = document.getElementById('nav-audio-off');
         const btn = document.getElementById('nav-audio-btn');
 
-        if (!audioOn || !audioOff) return;
+        if (!audioOn || !audioOff || !btn) return;
 
-        if (isPlaying) {
+        if (audio && !audio.paused) {
           audioOn.classList.remove('hidden');
           audioOff.classList.add('hidden');
-          if (btn) {
-            btn.classList.add('border-[var(--cyan)]', 'shadow-[0_0_12px_rgba(79,209,255,0.4)]');
-            btn.classList.remove('opacity-60');
-          }
+          btn.classList.add('border-[var(--cyan)]', 'text-[var(--cyan)]', 'shadow-[0_0_12px_rgba(79,209,255,0.4)]');
+          btn.classList.remove('opacity-60');
         } else {
           audioOn.classList.add('hidden');
           audioOff.classList.remove('hidden');
-          if (btn) {
-            btn.classList.remove('border-[var(--cyan)]', 'shadow-[0_0_12px_rgba(79,209,255,0.4)]');
-            btn.classList.add('opacity-60');
-          }
+          btn.classList.remove('border-[var(--cyan)]', 'text-[var(--cyan)]', 'shadow-[0_0_12px_rgba(79,209,255,0.4)]');
+          btn.classList.add('opacity-60');
         }
-      }
+      };
 
       function playRandomTrack() {
         if (!audio) return;
@@ -401,23 +411,32 @@
         audio.src = playlist[currentTrackIndex];
 
         audio.play().then(() => {
-          failedAttempts = 0;
-          updateNavAudioUI(true);
+          window.updateAudioIcon();
         }).catch(err => {
-          failedAttempts++;
-          if (failedAttempts >= 3) {
-            audio.src = 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3';
-            audio.play().then(() => updateNavAudioUI(true)).catch(() => updateNavAudioUI(false));
-          } else {
-            setTimeout(playRandomTrack, 200);
-          }
+          window.updateAudioIcon();
         });
       }
 
+      // Start playing music
+      playRandomTrack();
+
+      // Trigger playback on first user click if browser prevented immediate unmuted play
+      const tryAutoPlay = () => {
+        if (audio && audio.paused) {
+          if (!audio.src) playRandomTrack();
+          else audio.play().then(() => window.updateAudioIcon()).catch(() => {});
+        }
+      };
+
+      document.addEventListener('click', tryAutoPlay);
+      document.addEventListener('touchstart', tryAutoPlay);
+
+      // Auto play next random song on end
       audio.onended = () => {
         playRandomTrack();
       };
 
+      // Navbar Audio Toggle Button Event Listener
       document.addEventListener('click', (e) => {
         const btn = e.target.closest('#nav-audio-btn');
         if (!btn) return;
@@ -426,23 +445,20 @@
           if (!audio.src) {
             playRandomTrack();
           } else {
-            audio.play().then(() => updateNavAudioUI(true)).catch(() => playRandomTrack());
+            audio.play().then(() => window.updateAudioIcon()).catch(() => playRandomTrack());
           }
         } else {
           audio.pause();
-          updateNavAudioUI(false);
+          window.updateAudioIcon();
         }
       });
 
-      // Maintain UI state on page updates
-      setInterval(() => {
-        if (audio && !audio.paused) {
-          updateNavAudioUI(true);
-        }
-      }, 500);
+      // Keep state in sync
+      audio.addEventListener('play', window.updateAudioIcon);
+      audio.addEventListener('pause', window.updateAudioIcon);
     })();
 
-    // SPA Router: Keeps music playing smoothly without restart on page navigation
+    // SPA Router: Only replaces <main> so <nav> and the Audio Button NEVER flicker or disappear
     document.addEventListener('click', async (e) => {
       const link = e.target.closest('a');
       if (!link) return;
@@ -469,16 +485,28 @@
 
         document.title = doc.title;
 
+        // Replace only main content so navigation and audio button stay completely intact
         const currentMain = document.querySelector('main');
         const newMain = doc.querySelector('main');
         if (currentMain && newMain) currentMain.replaceWith(newMain);
 
-        const currentNav = document.querySelector('nav');
-        const newNav = doc.querySelector('nav');
-        if (currentNav && newNav) currentNav.replaceWith(newNav);
+        // Update Nav Active Link styling without destroying navbar
+        const currentNavLinks = document.querySelectorAll('nav a');
+        currentNavLinks.forEach(a => {
+          const aHref = a.getAttribute('href');
+          if (aHref === href) {
+            a.className = 'text-white transition-colors';
+          } else {
+            a.className = 'hover:text-white transition-colors text-[var(--ink-dim)]';
+          }
+        });
 
         if (typeof setLanguage === 'function') {
           setLanguage(localStorage.getItem('lang') || 'it');
+        }
+
+        if (typeof window.updateAudioIcon === 'function') {
+          window.updateAudioIcon();
         }
 
         window.scrollTo(0, 0);
@@ -488,6 +516,8 @@
     }
   </script>
 </body>
+
+
 
 
 
