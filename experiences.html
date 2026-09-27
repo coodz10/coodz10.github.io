@@ -75,29 +75,18 @@
     <!-- SEZIONE 1: STAFF ATTUALE (CURRENT STAFF) -->
     <div class="mb-14 animate-in delay-2">
       <div class="flex items-center gap-3 mb-6 border-b border-[rgba(79,209,255,.2)] pb-3">
-        <span class="w-2 h-2 rounded-full bg-[var(--cyan)] animate-ping"></span>
+        <span class="w-2 h-2 rounded-full bg-[rgba(79,209,255,.4)]"></span>
         <h3 class="text-xl sm:text-2xl font-bold text-white mono uppercase tracking-wider">
           <span class="lang-it">Staff Attualmente</span>
           <span class="lang-en hidden">Current Staff Roles</span>
         </h3>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-        <!-- MetaMc Card -->
-        <a href="servers/metamc.html" class="block border border-[rgba(79,209,255,.4)] bg-[rgba(11,10,26,.6)] p-6 rounded-xl hover:border-[var(--cyan)] hover:bg-[rgba(79,209,255,.08)] hover:shadow-[0_0_20px_rgba(79,209,255,.2)] transition-all relative group cursor-pointer">
-          <div class="text-sm text-[var(--cyan)] mb-3 flex items-center gap-2 animate-pulse">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
-            <span class="mono text-[10px] tracking-widest uppercase"><span class="lang-it">In Valutazione</span><span class="lang-en hidden">Evaluating</span></span>
-          </div>
-          <div class="inline-block border border-[var(--cyan)] text-[var(--cyan)] font-semibold text-[10px] uppercase px-2.5 py-0.5 rounded-full mb-4 tracking-wider bg-[rgba(79,209,255,.1)]">
-            <span class="lang-it">● Attivo</span>
-            <span class="lang-en hidden">● Active</span>
-          </div>
-          <h3 class="text-2xl text-white font-bold mb-2 group-hover:text-[var(--cyan)] transition-colors">MetaMc</h3>
-          <p class="text-sm md:text-base text-[var(--ink-dim)] leading-relaxed">
-            Helper
-          </p>
-        </a>
+      <div class="p-6 rounded-xl border border-[rgba(124,108,240,.15)] bg-[rgba(11,10,26,.3)]">
+        <p class="mono text-sm text-[var(--ink-dim)]">
+          <span class="lang-it">// Nessun ruolo staff attivo al momento</span>
+          <span class="lang-en hidden">// No active staff roles at the moment</span>
+        </p>
       </div>
     </div>
 
@@ -112,6 +101,18 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        <!-- MetaMc Card -->
+        <a href="servers/metamc.html" class="block border border-[rgba(124,108,240,.2)] bg-[rgba(11,10,26,.4)] p-6 rounded-xl hover:border-[rgba(124,108,240,.5)] hover:bg-[rgba(124,108,240,.05)] transition-colors relative group cursor-pointer">
+          <div class="inline-block border border-[rgba(124,108,240,.4)] text-[var(--ink-dim)] text-[10px] uppercase px-2.5 py-0.5 rounded-full mb-4 tracking-wider">
+            <span class="lang-it">Ritirato</span>
+            <span class="lang-en hidden">Resign</span>
+          </div>
+          <h3 class="text-2xl text-white font-bold mb-2 group-hover:text-[var(--cyan)] transition-colors">MetaMc</h3>
+          <p class="text-sm md:text-base text-[var(--ink-dim)] leading-relaxed">
+            Helper
+          </p>
+        </a>
+
         <!-- PixyMC Card -->
         <a href="servers/pixymc.html" class="block border border-[rgba(124,108,240,.2)] bg-[rgba(11,10,26,.4)] p-6 rounded-xl hover:border-[rgba(124,108,240,.5)] hover:bg-[rgba(124,108,240,.05)] transition-colors relative group cursor-pointer">
           <div class="text-sm text-[var(--ink-dim)] mb-3">
