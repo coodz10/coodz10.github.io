@@ -1,11 +1,14 @@
 (function() {
-  // Default playlist fallback
-  let playlist = [
-    'music/30C.mp3',
-    'music/dorado.mp3'
+  // Default fallback track filenames in /music
+  let rawTracks = [
+    '30C.mp3',
+    'dorado.mp3',
+    'Grinch3.mp3'
   ];
+  let playlist = [];
   let startTrackName = null;
   let isFirstPlay = true;
+  let isTransitioning = false;
 
   let audio = document.getElementById('bg-audio');
   let currentTrackIndex = -1;
@@ -13,26 +16,62 @@
 
   if (!audio) return;
   audio.volume = 0.85;
+  audio.loop = false; // Assicura che l'evento 'ended' scatti alla fine di ogni brano
 
-  // Robust load for music/playlist.json with trailing comma tolerance & cache busting
+  // Calcola l'URL assoluto della cartella music per evitare errori 404 durante la navigazione SPA (/ e /servers/)
+  function getMusicBaseURL() {
+    let path = location.pathname;
+    if (path.includes('/servers/')) {
+      path = path.split('/servers/')[0] + '/';
+    } else {
+      path = path.substring(0, path.lastIndexOf('/') + 1);
+    }
+    return location.origin + path + 'music/';
+  }
+
+  function getMusicTrackUrl(trackFilename) {
+    if (!trackFilename) return '';
+    if (trackFilename.startsWith('http://') || trackFilename.startsWith('https://')) {
+      return trackFilename;
+    }
+    const cleanName = trackFilename.replace(/^music\//, '').replace(/^\//, '');
+    if (location.origin && location.origin !== 'null' && location.protocol !== 'file:') {
+      return getMusicBaseURL() + cleanName;
+    }
+    const isSubfolder = location.pathname.includes('/servers/');
+    return isSubfolder ? '../music/' + cleanName : 'music/' + cleanName;
+  }
+
+  function getPlaylistJsonUrl() {
+    if (location.origin && location.origin !== 'null' && location.protocol !== 'file:') {
+      return getMusicBaseURL() + 'playlist.json?v=' + Date.now();
+    }
+    const isSubfolder = location.pathname.includes('/servers/');
+    return (isSubfolder ? '../music/playlist.json' : 'music/playlist.json') + '?v=' + Date.now();
+  }
+
+  function refreshPlaylistUrls() {
+    playlist = rawTracks.map(name => getMusicTrackUrl(name));
+  }
+
+  refreshPlaylistUrls();
+
+  // Caricamento robusto di music/playlist.json con tolleranza per virgole finali e anticache
   async function loadPlaylistJSON() {
     try {
-      const isSubfolder = location.pathname.includes('/servers/');
-      const basePath = isSubfolder ? '../music/playlist.json' : 'music/playlist.json';
-      const jsonPath = basePath + '?v=' + Date.now();
-      const res = await fetch(jsonPath, { cache: 'no-store' });
+      const jsonUrl = getPlaylistJsonUrl();
+      const res = await fetch(jsonUrl, { cache: 'no-store' });
       if (res.ok) {
         const text = await res.text();
-        // Remove trailing commas automatically so minor JSON typos don't break playback
         const cleanedText = text.replace(/,\s*([\]}])/g, '$1');
         const data = JSON.parse(cleanedText);
-        let rawTracks = [];
+        let loadedTracks = [];
 
         if (Array.isArray(data)) {
-          rawTracks = data;
+          loadedTracks = data;
           startTrackName = null;
         } else if (data && typeof data === 'object') {
-          // Se startTrack è vuoto (""), spazi, null o "random", rimane null per selezionare un brano casuale
+          // Se startTrack è stringa non vuota (e non "random"/"none"), salvala; altrimenti null (scelta random)
           if (typeof data.startTrack === 'string') {
             const clean = data.startTrack.trim();
             if (clean !== '' && clean.toLowerCase() !== 'random' && clean.toLowerCase() !== 'none') {
@@ -43,19 +82,16 @@
           } else {
             startTrackName = null;
           }
-          if (Array.isArray(data.tracks)) rawTracks = data.tracks;
+          if (Array.isArray(data.tracks)) loadedTracks = data.tracks;
         }
 
-        if (rawTracks.length > 0) {
-          playlist = rawTracks.map(track => {
-            if (track.startsWith('http') || track.startsWith('/')) return track;
-            const cleanName = track.replace(/^music\//, '').replace(/^\//, '');
-            return isSubfolder ? '../music/' + cleanName : 'music/' + cleanName;
-          });
+        if (loadedTracks.length > 0) {
+          rawTracks = loadedTracks.map(t => t.replace(/^music\//, '').replace(/^\//, ''));
+          refreshPlaylistUrls();
         }
       }
     } catch (err) {
-      // Silent fallback to default list if JSON parse fails
+      // Fallback silenzioso alla playlist di riserva se il parsing del JSON fallisce
     }
   }
 
@@ -84,58 +120,89 @@
 
   async function playNextTrack(forceRandom = false) {
     if (!audio) return;
-    if (currentTrackIndex === -1) {
-      await loadPlaylistJSON();
-    }
-    if (playlist.length === 0) return;
+    if (isTransitioning) return;
+    isTransitioning = true;
 
-    let nextIndex = -1;
-
-    // Support startTrack for initial play
-    if (isFirstPlay && !forceRandom && startTrackName) {
-      const cleanStart = startTrackName.replace(/^music\//, '').replace(/^\//, '').toLowerCase();
-      const foundIdx = playlist.findIndex(p => p.toLowerCase().endsWith(cleanStart));
-      if (foundIdx !== -1) {
-        nextIndex = foundIdx;
+    try {
+      if (currentTrackIndex === -1 || playlist.length === 0) {
+        await loadPlaylistJSON();
       }
-    }
-    isFirstPlay = false;
-
-    if (nextIndex === -1) {
-      if (playlist.length > 1) {
-        do {
-          nextIndex = Math.floor(Math.random() * playlist.length);
-        } while (nextIndex === currentTrackIndex && playlist.length > 1);
-      } else {
-        nextIndex = 0;
+      if (playlist.length === 0) {
+        isTransitioning = false;
+        return;
       }
-    }
 
-    currentTrackIndex = nextIndex;
-    audio.src = playlist[currentTrackIndex];
+      let nextIndex = -1;
 
-    audio.play().then(() => {
-      failedAttempts = 0;
-      window.syncAudioUI();
-    }).catch(err => {
-      failedAttempts++;
-      if (failedAttempts < playlist.length * 2) {
-        setTimeout(() => playNextTrack(true), 200);
+      // Se è il primo avvio e startTrack è specificato, seleziona quel brano
+      if (isFirstPlay && !forceRandom && startTrackName) {
+        const cleanStart = startTrackName.replace(/^music\//, '').replace(/^\//, '').toLowerCase();
+        const foundIdx = rawTracks.findIndex(p => p.toLowerCase().endsWith(cleanStart));
+        if (foundIdx !== -1) {
+          nextIndex = foundIdx;
+        }
+      }
+      isFirstPlay = false;
+
+      // Se startTrack è vuoto (""), non specificato o per le tracce successive: sceglie casualmente
+      if (nextIndex === -1) {
+        if (playlist.length > 1) {
+          do {
+            nextIndex = Math.floor(Math.random() * playlist.length);
+          } while (nextIndex === currentTrackIndex && playlist.length > 1);
+        } else {
+          nextIndex = 0;
+        }
+      }
+
+      currentTrackIndex = nextIndex;
+      const targetSrc = playlist[currentTrackIndex];
+
+      // Reset pulito della sorgente audio prima di avviare il nuovo brano
+      audio.pause();
+      audio.src = targetSrc;
+      audio.load();
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          failedAttempts = 0;
+          isTransitioning = false;
+          window.syncAudioUI();
+        }).catch(err => {
+          isTransitioning = false;
+          failedAttempts++;
+          if (failedAttempts < playlist.length * 2) {
+            setTimeout(() => playNextTrack(true), 300);
+          } else {
+            window.syncAudioUI();
+          }
+        });
       } else {
+        isTransitioning = false;
         window.syncAudioUI();
       }
-    });
+    } catch (e) {
+      isTransitioning = false;
+    }
   }
 
-  // Silent fallback: Skip to next track if file fetch or play fails
-  audio.onerror = () => {
-    failedAttempts++;
-    if (failedAttempts < playlist.length * 2) {
-      playNextTrack(true);
-    }
-  };
+  // Quando un brano finisce, avvia subito il brano successivo
+  audio.addEventListener('ended', () => {
+    isTransitioning = false;
+    failedAttempts = 0;
+    playNextTrack(true);
+  });
 
-  audio.onended = () => playNextTrack(true);
+  // Fallback in caso di errore di caricamento del file audio
+  audio.addEventListener('error', () => {
+    if (audio.src && !isTransitioning) {
+      failedAttempts++;
+      if (failedAttempts < playlist.length * 2) {
+        setTimeout(() => playNextTrack(true), 300);
+      }
+    }
+  });
 
   // Cyberpunk Entry Loading Overlay Animation Logic
   const overlay = document.getElementById('entry-overlay');
@@ -162,6 +229,7 @@
     if (overlay) {
       overlay.addEventListener('click', () => {
         sessionStorage.setItem('system_entered', 'true');
+        failedAttempts = 0;
         playNextTrack();
         overlay.style.opacity = '0';
         setTimeout(() => overlay.remove(), 700);
@@ -169,20 +237,29 @@
     }
   }
 
-  // Top Navbar Audio Buttons Event Listener (Play/Pause & Skip Next Track)
+  // Top Navbar Audio Buttons Event Listener (Play/Pause & Salta al brano successivo)
   document.addEventListener('click', (e) => {
     const navBtn = e.target.closest('#nav-audio-btn');
     const navNext = e.target.closest('#nav-audio-next');
 
     if (navNext) {
+      isTransitioning = false;
+      failedAttempts = 0;
       playNextTrack(true);
       return;
     }
 
     if (navBtn) {
+      failedAttempts = 0;
       if (audio.paused) {
-        if (!audio.src) playNextTrack();
-        else audio.play().then(() => window.syncAudioUI()).catch(() => playNextTrack());
+        if (!audio.src) {
+          playNextTrack();
+        } else {
+          audio.play().then(() => window.syncAudioUI()).catch(() => {
+            isTransitioning = false;
+            playNextTrack(true);
+          });
+        }
       } else {
         audio.pause();
         window.syncAudioUI();
