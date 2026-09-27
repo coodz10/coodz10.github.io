@@ -88,3 +88,39 @@ async function loadPage(href) {
     window.location.href = href;
   }
 }
+
+// Global Proofs Modal Support (ensures modal works across SPA page transitions)
+window.openModal = function() {
+  const modal = document.getElementById('proofsModal');
+  if (!modal) return;
+  const modalContent = modal.querySelector('div');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    modal.classList.remove('opacity-0');
+    if (modalContent) modalContent.classList.remove('scale-95');
+  }, 10);
+};
+
+window.closeModal = function() {
+  const modal = document.getElementById('proofsModal');
+  if (!modal) return;
+  const modalContent = modal.querySelector('div');
+  modal.classList.add('opacity-0');
+  if (modalContent) modalContent.classList.add('scale-95');
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 300);
+};
+
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('proofsModal');
+  if (modal && e.target === modal) {
+    window.closeModal();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    window.closeModal();
+  }
+});
