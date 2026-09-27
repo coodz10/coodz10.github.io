@@ -82,10 +82,10 @@
     </div>
 
     <!-- CONTENT GRID -->
-    <div class="grid grid-cols-1 gap-8 animate-in delay-2">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in delay-2">
 
       <!-- MAIN TEXT -->
-      <div class="space-y-8">
+      <div class="lg:col-span-2 space-y-8">
         <div
           class="bg-[rgba(11,10,26,.4)] border border-[rgba(124,108,240,.15)] p-8 rounded-xl hover:border-[rgba(124,108,240,.3)] transition-colors">
           <h3 class="text-xl text-white font-bold mb-4 flex items-center gap-3">
@@ -140,6 +140,52 @@
             <span class="lang-it">Apri Prove</span>
             <span class="lang-en hidden">Open Proofs</span>
           </button>
+        </div>
+      </div>
+
+      <!-- SIDEBAR (Pros/Cons) -->
+      <div class="space-y-6">
+        <!-- PROS -->
+        <div
+          class="bg-gradient-to-b from-[rgba(79,209,255,.05)] to-transparent border border-[rgba(79,209,255,.2)] p-6 rounded-xl hover:border-[rgba(79,209,255,.4)] transition-colors">
+          <h3 class="text-lg text-[var(--cyan)] font-bold mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span class="lang-it">Punti di Forza</span>
+            <span class="lang-en hidden">Strengths</span>
+          </h3>
+          <ul class="space-y-3 text-sm text-[var(--ink-dim)]">
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--cyan)] mt-0.5 text-xs">▹</span>
+              <span class="lang-it">Professionalità</span>
+              <span class="lang-en hidden">Professionalism</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- CONS -->
+        <div
+          class="bg-gradient-to-b from-[rgba(124,108,240,.05)] to-transparent border border-[rgba(124,108,240,.2)] p-6 rounded-xl hover:border-[rgba(124,108,240,.4)] transition-colors">
+          <h3 class="text-lg text-[var(--violet)] font-bold mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span class="lang-it">Punti Deboli</span>
+            <span class="lang-en hidden">Weaknesses</span>
+          </h3>
+          <ul class="space-y-3 text-sm text-[var(--ink-dim)]">
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--violet)] mt-0.5 text-xs">▹</span>
+              <span class="lang-it">Comunicazione insufficiente</span>
+              <span class="lang-en hidden">Insufficient communication</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
