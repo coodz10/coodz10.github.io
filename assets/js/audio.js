@@ -1,8 +1,8 @@
 (function() {
   // Default playlist fallback
   let playlist = [
-    'music/Giovani_Re.mp3',
-    'music/tiktok.mp3'
+    'music/30C.mp3',
+    'music/dorado.mp3'
   ];
   let startTrackName = null;
   let isFirstPlay = true;
@@ -14,12 +14,13 @@
   if (!audio) return;
   audio.volume = 0.85;
 
-  // Robust load for music/playlist.json with trailing comma tolerance
+  // Robust load for music/playlist.json with trailing comma tolerance & cache busting
   async function loadPlaylistJSON() {
     try {
       const isSubfolder = location.pathname.includes('/servers/');
-      const jsonPath = isSubfolder ? '../music/playlist.json' : 'music/playlist.json';
-      const res = await fetch(jsonPath);
+      const basePath = isSubfolder ? '../music/playlist.json' : 'music/playlist.json';
+      const jsonPath = basePath + '?v=' + Date.now();
+      const res = await fetch(jsonPath, { cache: 'no-store' });
       if (res.ok) {
         const text = await res.text();
         // Remove trailing commas automatically so minor JSON typos don't break playback
@@ -29,8 +30,19 @@
 
         if (Array.isArray(data)) {
           rawTracks = data;
+          startTrackName = null;
         } else if (data && typeof data === 'object') {
-          if (data.startTrack) startTrackName = data.startTrack;
+          // Se startTrack è vuoto (""), spazi, null o "random", rimane null per selezionare un brano casuale
+          if (typeof data.startTrack === 'string') {
+            const clean = data.startTrack.trim();
+            if (clean !== '' && clean.toLowerCase() !== 'random' && clean.toLowerCase() !== 'none') {
+              startTrackName = clean;
+            } else {
+              startTrackName = null;
+            }
+          } else {
+            startTrackName = null;
+          }
           if (Array.isArray(data.tracks)) rawTracks = data.tracks;
         }
 
@@ -46,6 +58,9 @@
       // Silent fallback to default list if JSON parse fails
     }
   }
+
+  // Precarica la playlist all'avvio
+  loadPlaylistJSON();
 
   window.syncAudioUI = function() {
     const navOn = document.getElementById('nav-audio-on');
