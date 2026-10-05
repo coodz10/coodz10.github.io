@@ -77,7 +77,6 @@
           <p class="mono text-sm text-[var(--cyan)] uppercase tracking-wider">Jr SSer</p>
         </div>
         <div class="flex flex-col items-start md:items-end gap-2 text-sm text-[var(--ink-dim)]">
-          <div><span class="text-white">★★★★★</span></div>
           <div
             class="inline-flex items-center gap-1.5 border border-[rgba(79,209,255,.5)] text-[var(--cyan)] text-[10px] uppercase px-3 py-1 rounded tracking-wider bg-[rgba(79,209,255,.08)]">
             <span class="w-1.5 h-1.5 rounded-full bg-[var(--cyan)] animate-pulse"></span>
@@ -89,34 +88,43 @@
     </div>
 
     <!-- CONTENT: WORK IN PROGRESS -->
-    <div class="animate-in delay-2 flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-8 w-full">
-      <div class="w-full bg-[rgba(11,10,26,.4)] border border-[rgba(124,108,240,.2)] p-10 rounded-2xl mb-8 shadow-[0_0_30px_rgba(124,108,240,0.08)]">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[rgba(79,209,255,.4)] bg-[rgba(79,209,255,.08)] text-[var(--cyan)] mono text-xs uppercase tracking-widest mb-4">
+    <div class="animate-in delay-2 max-w-3xl">
+      <div class="bg-[rgba(11,10,26,.4)] border border-[rgba(124,108,240,.2)] p-8 sm:p-10 rounded-xl hover:border-[rgba(124,108,240,.35)] transition-colors">
+        <div class="flex items-center gap-2 mb-4">
           <span class="w-2 h-2 rounded-full bg-[var(--cyan)] animate-pulse"></span>
-          <span>// STATUS: WORK_IN_PROGRESS</span>
+          <span class="mono text-xs text-[var(--cyan)] uppercase tracking-widest font-semibold">// STATUS: WORK_IN_PROGRESS</span>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-white glow tracking-tight mb-3">
-          Work in Progress
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-white glow tracking-tight mb-3 flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="text-[var(--cyan)]">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Work in Progress</span>
         </h3>
-        <p class="text-[var(--ink-dim)] leading-relaxed text-sm sm:text-base mono">
+        <p class="text-[var(--ink-dim)] leading-relaxed text-sm sm:text-base mono mb-8">
           <span class="lang-it">I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.</span>
           <span class="lang-en hidden">Details and review for this experience are currently work in progress.</span>
         </p>
-      </div>
 
-      <!-- PROOFS BUTTON -->
-      <div>
-        <button onclick="window.openModal ? window.openModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.remove('hidden');m.classList.add('flex');setTimeout(function(){m.classList.remove('opacity-0');var c=m.querySelector('div');if(c)c.classList.remove('scale-95');},10);}})()"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-[rgba(124,108,240,.1)] border border-[var(--cyan)] text-[var(--cyan)] font-bold uppercase tracking-widest hover:bg-[var(--cyan)] hover:text-[#0b0a1a] hover:shadow-[0_0_25px_rgba(79,209,255,0.4)] transition-all rounded-lg mono group cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="group-hover:animate-pulse">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-          </svg>
-          <span class="lang-it">Apri Prove</span>
-          <span class="lang-en hidden">Open Proofs</span>
-        </button>
+        <!-- PROOFS BUTTON -->
+        <div>
+          <button onclick="window.openModal ? window.openModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.remove('hidden');m.classList.add('flex');setTimeout(function(){m.classList.remove('opacity-0');var c=m.querySelector('div');if(c)c.classList.remove('scale-95');},10);}})()"
+            class="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[rgba(124,108,240,.1)] border border-[var(--cyan)] text-[var(--cyan)] font-bold uppercase tracking-widest hover:bg-[var(--cyan)] hover:text-[#0b0a1a] hover:shadow-[0_0_25px_rgba(79,209,255,0.4)] transition-all rounded-lg mono group cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="group-hover:animate-pulse">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span class="lang-it">Apri Prove</span>
+            <span class="lang-en hidden">Open Proofs</span>
+          </button>
+        </div>
       </div>
     </div>
 
