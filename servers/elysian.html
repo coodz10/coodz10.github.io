@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elysian Tierlist - coodz_10</title>
+  <meta name="description" content="Dettagli dell'esperienza staff presso Elysian Tierlist come Jr SSer.">
+  <link rel="icon" type="image/png" href="../favicon.png">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://coodz10.github.io/servers/elysian.html">
+  <meta property="og:title" content="Elysian Tierlist - coodz_10">
+  <meta property="og:description" content="Dettagli dell'esperienza staff presso Elysian Tierlist come Jr SSer.">
+  <meta property="og:image" content="https://coodz10.github.io/favicon.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://coodz10.github.io/servers/elysian.html">
+  <meta property="twitter:title" content="Elysian Tierlist - coodz_10">
+  <meta property="twitter:description" content="Dettagli dell'esperienza staff presso Elysian Tierlist come Jr SSer.">
+
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+</head>
+
+<body class="relative flex flex-col min-h-screen">
+
+  <canvas id="stars"></canvas>
+
+  <!-- HUD NAV -->
+  <nav class="hud-bar fixed top-0 inset-x-0 z-30 animate-in">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between mono text-xs">
+      <span class="text-[var(--ink-dim)]">coodz_10 <span class="text-[var(--cyan)]">// ONLINE</span></span>
+      <div class="flex items-center gap-4 sm:gap-6 text-[var(--ink-dim)]">
+        <a href="../index.html" class="hover:text-white transition-colors">[ home ]</a>
+        <a href="../about.html" class="hover:text-white transition-colors"><span class="lang-it">[ chi_sono ]</span><span
+            class="lang-en hidden">[ about_me ]</span></a>
+        <a href="../experiences.html" class="text-white transition-colors"><span class="lang-it">[ esperienze ]</span><span
+            class="lang-en hidden">[ experiences ]</span></a>
+        <a href="../contact.html" class="hover:text-white transition-colors"><span class="lang-it">[ contatti ]</span><span
+            class="lang-en hidden">[ contact ]</span></a>
+        <div class="flex items-center ml-2 border-l border-[rgba(124,108,240,.3)] pl-4 gap-3 text-xs">
+          <button onclick="setLanguage('it')" id="lang-btn-it" class="text-white transition-colors">&bull; IT</button>
+          <button onclick="setLanguage('en')" id="lang-btn-en"
+            class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>
+          <button id="nav-audio-btn" aria-label="Attiva o Disattiva Musica" title="Attiva o Disattiva Musica" class="flex items-center justify-center p-1.5 rounded-lg border border-[rgba(124,108,240,.4)] bg-[rgba(124,108,240,.15)] text-[var(--cyan)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all ml-2 opacity-60">
+            <svg id="nav-audio-on" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            <svg id="nav-audio-off" class="w-4 h-4 text-[var(--ink-dim)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+          </button>
+          <button id="nav-audio-next" aria-label="Prossima Canzone Casuale" title="Prossima Canzone Casuale" class="flex items-center justify-center p-1.5 rounded-lg border border-[rgba(124,108,240,.4)] bg-[rgba(124,108,240,.15)] text-[var(--cyan)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all ml-1.5 opacity-60 hover:opacity-100 cursor-pointer">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ELYSIAN DETTAGLI -->
+  <main class="relative z-10 flex-grow max-w-5xl mx-auto px-6 pt-32 pb-24 flex flex-col justify-center w-full">
+
+    <!-- HEADER -->
+    <div class="animate-in delay-1 mb-10 border-b border-[rgba(124,108,240,.2)] pb-8">
+      <a href="../experiences.html"
+        class="mono text-xs text-[var(--ink-dim)] hover:text-white transition-colors tracking-widest mb-6 inline-block">&larr;
+        <span class="lang-it">TORNA ALLE ESPERIENZE</span><span class="lang-en hidden">BACK TO EXPERIENCES</span></a>
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h2 class="text-5xl md:text-7xl font-extrabold text-white glow tracking-tighter leading-none mb-3 mt-2">Elysian Tierlist
+          </h2>
+          <p class="mono text-sm text-[var(--cyan)] uppercase tracking-wider">Jr SSer</p>
+        </div>
+        <div class="flex flex-col items-start md:items-end gap-2 text-sm text-[var(--ink-dim)]">
+          <div><span class="text-white">★★★★★</span></div>
+          <div
+            class="inline-flex items-center gap-1.5 border border-[rgba(79,209,255,.5)] text-[var(--cyan)] text-[10px] uppercase px-3 py-1 rounded tracking-wider bg-[rgba(79,209,255,.08)]">
+            <span class="w-1.5 h-1.5 rounded-full bg-[var(--cyan)] animate-pulse"></span>
+            <span class="lang-it">Stato: Attivo</span>
+            <span class="lang-en hidden">Status: Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in delay-2">
+
+      <!-- MAIN TEXT -->
+      <div class="lg:col-span-2 space-y-8">
+        <div
+          class="bg-[rgba(11,10,26,.4)] border border-[rgba(124,108,240,.15)] p-8 rounded-xl hover:border-[rgba(124,108,240,.3)] transition-colors">
+          <h3 class="text-xl text-white font-bold mb-4 flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-[var(--violet)]">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span class="lang-it">La Mia Esperienza</span>
+            <span class="lang-en hidden">My Experience</span>
+          </h3>
+          <p class="text-[var(--ink-dim)] leading-relaxed text-sm md:text-base">
+            <span class="lang-it">
+              Attualmente faccio parte dello staff di Elysian Tierlist [1.7-1.9+] nel ruolo di Jr SSer.
+              <br><br>
+              Elysian è un network competitivo focalizzato sui ranking e tierlist PvP, dove la credibilità di ogni risultato dipende dall'efficacia e dalla trasparenza delle verifiche tecniche sui giocatori.
+              <br><br>
+              Nel mio ruolo di Jr SSer eseguo approfonditi controlli Screen Share durante le valutazioni dei giocatori e i provini per i tier. Analizzo meticolosamente i file binari, le stringhe di memoria RAM, la cache di sistema (BAM, Amcache, Prefetch, USN Journal) e i processi attivi per identificare cheat di ultima generazione, injection silenziose o autoclicker offuscati, assicurando i massimi standard di competitività e affidabilità.
+            </span>
+            <span class="lang-en hidden">
+              I am currently a member of the Elysian Tierlist [1.7-1.9+] staff as a Jr SSer.
+              <br><br>
+              Elysian is a competitive network focused on PvP rankings and tierlists, where the credibility of every tier relies directly on the rigor and transparency of technical player checks.
+              <br><br>
+              In my role as Jr SSer, I carry out comprehensive Screen Share inspections during player tier evaluations and testing matches. I meticulously analyze system binaries, RAM memory strings, operating system caches (BAM, Amcache, Prefetch, USN Journal), and running processes to uncover stealth cheats, hidden injections, or obscured autoclickers, guaranteeing the highest competitive integrity and reliability.
+            </span>
+          </p>
+        </div>
+
+        <!-- PROOFS BUTTON -->
+        <div>
+          <button onclick="window.openModal ? window.openModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.remove('hidden');setTimeout(function(){m.classList.remove('opacity-0');var c=m.querySelector('div');if(c)c.classList.remove('scale-95');},10);}})()"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-[rgba(124,108,240,.1)] border border-[var(--cyan)] text-[var(--cyan)] font-bold uppercase tracking-widest hover:bg-[var(--cyan)] hover:text-[#0b0a1a] hover:shadow-[0_0_25px_rgba(79,209,255,0.4)] transition-all rounded-lg mono group cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="group-hover:animate-pulse">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span class="lang-it">Apri Prove</span>
+            <span class="lang-en hidden">Open Proofs</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SIDEBAR (Strengths & Specializations) -->
+      <div class="space-y-6">
+        <!-- PROS -->
+        <div
+          class="bg-gradient-to-b from-[rgba(79,209,255,.05)] to-transparent border border-[rgba(79,209,255,.2)] p-6 rounded-xl hover:border-[rgba(79,209,255,.4)] transition-colors">
+          <h3 class="text-lg text-[var(--cyan)] font-bold mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span class="lang-it">Punti di Forza</span>
+            <span class="lang-en hidden">Strengths</span>
+          </h3>
+          <ul class="space-y-3 text-sm text-[var(--ink-dim)]">
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--cyan)] mt-0.5 text-xs">▹</span>
+              <span class="lang-it">Standard competitivi di altissimo livello</span>
+              <span class="lang-en hidden">Top-tier competitive standards</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--cyan)] mt-0.5 text-xs">▹</span>
+              <span class="lang-it">Precisione forense nei controlli hack</span>
+              <span class="lang-en hidden">Forensic precision in hack checks</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--cyan)] mt-0.5 text-xs">▹</span>
+              <span class="lang-it">Cooperazione diretta con i vertici dello staff</span>
+              <span class="lang-en hidden">Direct cooperation with staff leads</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- SPECIALIZATIONS -->
+        <div
+          class="bg-gradient-to-b from-[rgba(124,108,240,.05)] to-transparent border border-[rgba(124,108,240,.2)] p-6 rounded-xl hover:border-[rgba(124,108,240,.4)] transition-colors">
+          <h3 class="text-lg text-[var(--violet)] font-bold mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span class="lang-it">Specializzazioni</span>
+            <span class="lang-en hidden">Specializations</span>
+          </h3>
+          <ul class="space-y-3 text-sm text-[var(--ink-dim)]">
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--violet)] mt-0.5 text-xs">▹</span>
+              <span class="lang-it">Rilevamento ghost client e injection</span>
+              <span class="lang-en hidden">Ghost client & injection detection</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--violet)] mt-0.5 text-xs">▹</span>
+              <span class="lang-it">Analisi di memoria e artefatti Windows</span>
+              <span class="lang-en hidden">Memory & Windows artifact analysis</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="proofsModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-md opacity-0 transition-opacity duration-300">
+      <div
+        class="bg-[rgba(11,10,26,.95)] border border-[rgba(124,108,240,.5)] p-8 rounded-lg shadow-[0_0_40px_rgba(124,108,240,0.2)] max-w-lg w-full mx-4 transform scale-95 transition-transform duration-300 relative">
+        <button onclick="window.closeModal ? window.closeModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.add('opacity-0');var c=m.querySelector('div');if(c)c.classList.add('scale-95');setTimeout(function(){m.classList.add('hidden');m.classList.remove('flex');},300);}})()"
+          class="absolute top-4 right-4 text-[var(--ink-dim)] hover:text-white transition-colors mono text-xs cursor-pointer">
+          <span class="lang-it">[ X ] CHIUDI</span>
+          <span class="lang-en hidden">[ X ] CLOSE</span>
+        </button>
+        <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="text-[var(--cyan)]">
+            <path
+              d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+            </path>
+          </svg>
+          <span class="lang-it">Link e Prove (Elysian Tierlist)</span>
+          <span class="lang-en hidden">Links & Proofs (Elysian Tierlist)</span>
+        </h3>
+        <div
+          class="w-full max-h-[300px] p-2 bg-[rgba(0,0,0,.4)] border border-[rgba(124,108,240,.3)] rounded text-sm text-[var(--ink-dim)] mono overflow-y-auto space-y-1">
+
+          <a href="https://imgur.com/a/EJAquxr" target="_blank" rel="noopener noreferrer"
+            class="flex items-center gap-3 text-white hover:text-[var(--cyan)] hover:bg-[rgba(124,108,240,.15)] p-3 rounded transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-[var(--violet)] shrink-0">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span class="truncate">https://imgur.com/a/EJAquxr</span>
+          </a>
+
+          <a href="https://i.imgur.com/hiYquti.png" target="_blank" rel="noopener noreferrer"
+            class="flex items-center gap-3 text-white hover:text-[var(--cyan)] hover:bg-[rgba(124,108,240,.15)] p-3 rounded transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-[var(--cyan)] shrink-0">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span class="truncate">https://i.imgur.com/hiYquti.png (Direct)</span>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.15)] mt-10 animate-in delay-3">
+    <div
+      class="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 mono text-xs text-[var(--ink-dim)]">
+      <span>END_TRANSMISSION // COODZ_10</span>
+      <div class="flex gap-6">
+        <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer"
+          class="hover:text-white transition-colors">[ Discord ]</a>
+      </div>
+      <span>© <span id="year"></span></span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Modal Logic
+    function openModal() {
+      const modal = document.getElementById('proofsModal');
+      if (!modal) return;
+      const modalContent = modal.querySelector('div');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        if (modalContent) modalContent.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('proofsModal');
+      if (!modal) return;
+      const modalContent = modal.querySelector('div');
+      modal.classList.add('opacity-0');
+      if (modalContent) modalContent.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }, 300);
+    }
+
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+
+    document.addEventListener('click', (e) => {
+      const modal = document.getElementById('proofsModal');
+      if (modal && e.target === modal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+  </script>
+  <script>
+    let currentLang = localStorage.getItem('lang') || 'it';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('lang', lang);
+
+      // Update visibility using tailwind .hidden class
+      document.querySelectorAll('.lang-it').forEach(el => {
+        if (lang === 'it') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+      document.querySelectorAll('.lang-en').forEach(el => {
+        if (lang === 'en') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+
+      // Update bullets style
+      const btnIt = document.getElementById('lang-btn-it');
+      const btnEn = document.getElementById('lang-btn-en');
+      if (btnIt && btnEn) {
+        if (lang === 'it') {
+          btnIt.className = 'text-white transition-colors';
+          btnEn.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        } else {
+          btnEn.className = 'text-white transition-colors';
+          btnIt.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        }
+      }
+    }
+
+    setLanguage(currentLang);
+  </script>
+
+  <!-- CYBERPUNK ENTRY OVERLAY (LOADING SCREEN) -->
+  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none cyberpunk-overlay-bg">
+    <div class="text-center max-w-md px-6 flex flex-col items-center">
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-white glow tracking-tighter mb-8">coodz_10</h1>
+      <div class="mono text-[var(--cyan)] text-xs sm:text-sm mb-4 tracking-[0.25em] uppercase font-bold" id="loading-text">INITIALIZING_SYSTEM...</div>
+      <div class="w-64 sm:w-72 h-1.5 bg-[rgba(124,108,240,.2)] rounded-full overflow-hidden relative mb-8 border border-[rgba(124,108,240,.35)] shadow-[0_0_15px_rgba(124,108,240,.2)]">
+        <div id="loading-bar" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[var(--violet)] to-[var(--cyan)] transition-all duration-1000"></div>
+      </div>
+      <div id="enter-text" class="hidden text-sm sm:text-base text-white glow tracking-[0.2em] cursor-pointer font-bold uppercase py-4 px-8 rounded-xl border border-[rgba(79,209,255,.6)] bg-[rgba(11,10,26,.9)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all shadow-[0_0_25px_rgba(79,209,255,0.4)] animate-pulse">
+        [ CLICK ANYWHERE TO ENTER ]
+      </div>
+    </div>
+  </div>
+
+  <audio id="bg-audio" preload="auto"></audio>
+
+  <script src="../assets/js/starfield.js"></script>
+  <script src="../assets/js/audio.js?v=2"></script>
+  <script src="../assets/js/router.js?v=3"></script>
+</body>
+
+</html>
