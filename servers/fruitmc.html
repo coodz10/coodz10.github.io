@@ -76,13 +76,9 @@
           </h2>
           <p class="mono text-sm text-[var(--cyan)] uppercase tracking-wider">Helper [SS Verified]</p>
         </div>
-        <div class="flex items-center gap-3">
-          <div
-            class="inline-flex items-center gap-1.5 border border-[rgba(79,209,255,.5)] text-[var(--cyan)] text-xs uppercase px-3.5 py-1.5 rounded-full tracking-wider bg-[rgba(79,209,255,.08)] shadow-[0_0_15px_rgba(79,209,255,0.15)]">
-            <span class="w-2 h-2 rounded-full bg-[var(--cyan)] animate-pulse"></span>
-            <span class="lang-it">Stato: Attivo</span>
-            <span class="lang-en hidden">Status: Active</span>
-          </div>
+        <div class="mono text-xs sm:text-sm text-[var(--cyan)] uppercase tracking-wider">
+          <span class="lang-it">[ Stato: Attivo ]</span>
+          <span class="lang-en hidden">[ Status: Active ]</span>
         </div>
       </div>
     </div>
@@ -90,10 +86,10 @@
     <!-- MINIMAL WORK IN PROGRESS -->
     <div class="animate-in delay-2 max-w-2xl py-2 space-y-6">
       <div class="border-l-2 border-[var(--cyan)] pl-4 py-1">
-        <div class="mono text-xs text-[var(--cyan)] uppercase tracking-widest mb-1.5 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-[var(--cyan)] animate-pulse"></span>
-          <span>// STATUS: WORK_IN_PROGRESS</span>
-        </div>
+        <p class="mono text-xs text-[var(--cyan)] uppercase tracking-widest mb-1.5">
+          <span class="lang-it">[ Work in Progress ]</span>
+          <span class="lang-en hidden">[ Work in Progress ]</span>
+        </p>
         <p class="mono text-sm sm:text-base text-[var(--ink-dim)] leading-relaxed">
           <span class="lang-it">I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.</span>
           <span class="lang-en hidden">Details and review for this experience are currently work in progress.</span>
@@ -102,15 +98,9 @@
 
       <div>
         <button onclick="window.openModal ? window.openModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.remove('hidden');m.classList.add('flex');setTimeout(function(){m.classList.remove('opacity-0');var c=m.querySelector('div');if(c)c.classList.remove('scale-95');},10);}})()"
-          class="inline-flex items-center gap-3 px-6 py-3 bg-[rgba(124,108,240,.1)] border border-[var(--cyan)] text-[var(--cyan)] font-bold text-xs uppercase tracking-widest hover:bg-[var(--cyan)] hover:text-[#0b0a1a] hover:shadow-[0_0_25px_rgba(79,209,255,0.4)] transition-all rounded-lg mono group cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="group-hover:animate-pulse">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-          </svg>
-          <span class="lang-it">Apri Prove</span>
-          <span class="lang-en hidden">Open Proofs</span>
+          class="bracket-btn inline-block px-8 py-3.5 text-xs sm:text-sm tracking-widest uppercase text-center mono cursor-pointer">
+          <span class="lang-it">[ Apri Prove ]</span>
+          <span class="lang-en hidden">[ Open Proofs ]</span>
         </button>
       </div>
     </div>
