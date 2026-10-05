@@ -107,7 +107,7 @@
 
     <!-- MODAL -->
     <div id="proofsModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+      class="fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
       <div
         class="bg-[rgba(11,10,26,.95)] border border-[rgba(124,108,240,.5)] p-8 rounded-lg shadow-[0_0_40px_rgba(124,108,240,0.2)] max-w-lg w-full mx-4 transform scale-95 transition-transform duration-300 relative">
         <button onclick="window.closeModal ? window.closeModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.add('opacity-0');var c=m.querySelector('div');if(c)c.classList.add('scale-95');setTimeout(function(){m.classList.add('hidden');},300);}})()"
