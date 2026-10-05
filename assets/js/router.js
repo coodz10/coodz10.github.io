@@ -146,6 +146,7 @@ window.openModal = function() {
   if (!modal) return;
   const modalContent = modal.querySelector('div');
   modal.classList.remove('hidden');
+  modal.classList.add('flex');
   setTimeout(() => {
     modal.classList.remove('opacity-0');
     if (modalContent) modalContent.classList.remove('scale-95');
@@ -160,6 +161,7 @@ window.closeModal = function() {
   if (modalContent) modalContent.classList.add('scale-95');
   setTimeout(() => {
     modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }, 300);
 };
 
