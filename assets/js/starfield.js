@@ -1,3 +1,4 @@
+// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
 (function() {
   const canvas = document.getElementById('stars');
   if (!canvas) return;

@@ -1,3 +1,4 @@
+// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
 // SPA Router: Replaces <main> with smooth fade-out/fade-in transition and updates active nav links, <title>, and <meta name="description">
 
 function getSiteRootURL() {

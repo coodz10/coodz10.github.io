@@ -1,3 +1,4 @@
+// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
 // 3D Holographic Wireframe Globe & Futuristic HUD Canvas Component
 (function() {
   const canvas = document.getElementById('hero-hud');

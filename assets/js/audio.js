@@ -1,3 +1,4 @@
+// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
 (function() {
   // Default fallback track filenames in /music
   let rawTracks = [
