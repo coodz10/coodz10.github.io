@@ -71,21 +71,17 @@
           </h2>
           <p class="mono text-sm text-[var(--cyan)] uppercase tracking-wider">Owner [ SS Manager ]</p>
         </div>
-        <div class="flex flex-col items-start md:items-end gap-2.5 text-sm text-[var(--ink-dim)]">
-          <div><span class="text-white">★★★★</span><span class="opacity-30">★</span></div>
-          <div class="mono text-xs text-[var(--ink-dim)] uppercase tracking-wider">
+        <div class="flex flex-col items-start md:items-end gap-1.5 mono text-xs sm:text-sm uppercase tracking-wider">
+          <div class="text-sm text-[var(--ink-dim)] mb-1">
+            <span class="text-white">★★★★</span><span class="opacity-30">★</span>
+          </div>
+          <div class="text-[var(--ink-dim)]">
             <span class="lang-it">[ Stato: Dimesso ]</span>
             <span class="lang-en hidden">[ Status: Resign ]</span>
           </div>
-          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[rgba(124,108,240,.3)] bg-[rgba(124,108,240,.1)] mono text-xs text-[var(--cyan)] shadow-[0_0_15px_rgba(124,108,240,0.1)]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--violet)]">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span class="lang-it">Agosto 2025 - Luglio 2026</span>
-            <span class="lang-en hidden">August 2025 - July 2026</span>
+          <div class="text-[var(--cyan)]">
+            <span class="lang-it">[ Periodo: Agosto 2025 - Luglio 2026 ]</span>
+            <span class="lang-en hidden">[ Period: August 2025 - July 2026 ]</span>
           </div>
         </div>
       </div>
@@ -139,16 +135,10 @@
 
         <!-- PROOFS BUTTON -->
         <div>
-          <button onclick="window.openModal ? window.openModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.remove('hidden');setTimeout(function(){m.classList.remove('opacity-0');var c=m.querySelector('div');if(c)c.classList.remove('scale-95');},10);}})()"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-[rgba(124,108,240,.1)] border border-[var(--cyan)] text-[var(--cyan)] font-bold uppercase tracking-widest hover:bg-[var(--cyan)] hover:text-[#0b0a1a] hover:shadow-[0_0_25px_rgba(79,209,255,0.4)] transition-all rounded-lg mono group">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="group-hover:animate-pulse">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-            <span class="lang-it">Apri Prove</span>
-            <span class="lang-en hidden">Open Proofs</span>
+          <button onclick="window.openModal ? window.openModal() : (function(){var m=document.getElementById('proofsModal');if(m){m.classList.remove('hidden');m.classList.add('flex');setTimeout(function(){m.classList.remove('opacity-0');var c=m.querySelector('div');if(c)c.classList.remove('scale-95');},10);}})()"
+            class="mono text-sm tracking-widest uppercase text-[var(--cyan)] hover:text-white transition-colors cursor-pointer py-1">
+            <span class="lang-it">[ Apri Prove ]</span>
+            <span class="lang-en hidden">[ Open Proofs ]</span>
           </button>
         </div>
       </div>

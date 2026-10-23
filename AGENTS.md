@@ -17,3 +17,9 @@
   - HTML: `<!-- ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. -->`
   - CSS: `/* ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. */`
   - JS: `// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.`
+
+## 4. Stile Grafico UI (No Pillole, Solo Parentesi Quadre)
+
+- NON usare MAI forme a pillola, badge arrotondati o icone dentro riquadri per stati, date o bottoni.
+- Utilizzare SEMPRE lo stile cyberpunk coerente con parentesi quadre `[ ... ]` in font monospace/uppercase (es. `[ Stato: Attivo ]`, `[ Periodo: Ottobre 2026 - ]`, `[ In Lavorazione ]`).
+- Per pulsanti come `[ Apri Prove ]`: NON mettere nessun riquadro, rettangolo o bordo attorno. Deve essere puramente testo tra parentesi quadre `[ Apri Prove ]` cliccabile e reattivo al passaggio del mouse.
