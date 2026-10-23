@@ -23,3 +23,9 @@
 - NON usare MAI forme a pillola, badge arrotondati o icone dentro riquadri per stati, date o bottoni.
 - Utilizzare SEMPRE lo stile cyberpunk coerente con parentesi quadre `[ ... ]` in font monospace/uppercase (es. `[ Stato: Attivo ]`, `[ Periodo: Ottobre 2026 - ]`, `[ In Lavorazione ]`).
 - Per pulsanti come `[ Apri Prove ]`: NON mettere nessun riquadro, rettangolo o bordo attorno. Deve essere puramente testo tra parentesi quadre `[ Apri Prove ]` cliccabile e reattivo al passaggio del mouse.
+
+## 5. Armonia Condivisa e Misure Uniformi
+
+- L'obiettivo fondamentale del design è mantenere un'**armonia condivisa** e bilanciata in tutte le sezioni.
+- Quando possibile, impostare SEMPRE le misure (altezze, larghezze, spaziature, padding) **uguali per tutti gli elementi correlati** (come le card della griglia in `experiences.html`).
+- Anche in presenza di contenuti di lunghezza differente o spazi vuoti interni, i contenitori devono mantenere la medesima dimensione per non apparire disallineati, asimmetrici o rimpiccioliti.
