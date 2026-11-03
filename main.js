@@ -631,7 +631,7 @@
         return;
       }
 
-      if (fDisplay < 0.05) {
+      if (fDisplay < 0.15) {
         this.transitionTo('hold');
         return;
       }
@@ -689,9 +689,16 @@
         }
       }
 
-      // If avatar leaves title (fDisplay > 0.05 or flightW > 0.05), hold pose fades out immediately
-      if ((fDisplay > 0.05 || flightW > 0.05) && this.currentPoseName === 'hold' && !this.isBlending) {
-        this.transitionTo('neutral', 1.0);
+      // In home section (fDisplay < 0.15): ALWAYS stay in 'hold' pose holding the banner!
+      if (fDisplay < 0.15) {
+        if (this.currentPoseName !== 'hold' && !this.forcedPose && !this.isBlending) {
+          this.transitionTo('hold', 0.8);
+        }
+      } else {
+        // When leaving home: transition out of 'hold'
+        if (this.currentPoseName === 'hold' && !this.isBlending) {
+          this.transitionTo('neutral', 1.0);
+        }
       }
 
       // 2. Flight Pose Blend & Flutter
@@ -988,7 +995,8 @@
 
     // 1. Group Transform Origin at anchor
     const originX = (anchorRect.left + anchorRect.width * 0.5) - groupRect.left;
-    const originY = (CONFIG.HOLD_TITLE ? titleRect.bottom : (titleRect.top - 20)) - groupRect.top;
+    const bottomY = Math.max(titleRect.bottom, groupRect.bottom);
+    const originY = (CONFIG.HOLD_TITLE ? (bottomY - groupRect.top) : (titleRect.top - 20 - groupRect.top));
     heroSwayGroup.style.transformOrigin = `${originX.toFixed(1)}px ${originY.toFixed(1)}px`;
 
     // 2. Avatar Home Scale
@@ -1002,7 +1010,7 @@
 
     const targetX = anchorRect.left + anchorRect.width * 0.5;
     const targetY = CONFIG.HOLD_TITLE
-      ? (titleRect.bottom + window.innerHeight * 0.005)
+      ? (bottomY + window.innerHeight * 0.012)
       : (titleRect.top - window.innerHeight * 0.04);
 
     const ax = targetX - (window.innerWidth * 0.5);

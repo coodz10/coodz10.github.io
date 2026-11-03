@@ -574,14 +574,15 @@ html, body {
   line-height: 1;
   text-align: center;
   white-space: nowrap;
+  color: #c4b5ff;
   background: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 28%, #c4b5ff 50%, #8b6cff 72%, #5ea8ff 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: titleShimmer 14s linear infinite;
   text-shadow: none !important;
   box-shadow: none !important;
-  filter: none !important;
   cursor: default;
   user-select: none;
   margin: 0;
@@ -594,8 +595,12 @@ html, body {
 }
 
 .hero-title .ch {
-  display: inline-block;
-  will-change: transform;
+  display: inline;
+  background: inherit;
+  background-size: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Subtitle under title with fading thin lines */
