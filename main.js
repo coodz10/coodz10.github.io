@@ -18,23 +18,27 @@
     accentBlue: '#5ea8ff',
     accentViolet: '#8b6cff',
     accentLilac: '#c4b5ff',
-    bg: '#05060f',
+    bg: '#03040a',
     text: '#e8eaff',
     muted: '#7c83a8',
 
-    // Avatar Sizing & Vertical Placement (~65vh tall, leaves space for title below)
-    AVATAR_ZOOM_DESKTOP: 0.65, // Desktop camera zoom (~65vh tall, head below nav, feet above title)
-    AVATAR_ZOOM_MOBILE: 0.45,  // Mobile camera zoom for small viewports
-    AVATAR_Y_OFFSET: -35,      // Vertical stage nudge in px (negative moves avatar up toward center)
+    // Avatar Sizing & Vertical Placement (~74vh tall: head ~10vh, feet ~84vh, title ~88vh)
+    AVATAR_ZOOM_DESKTOP: 0.92, // Desktop camera zoom (~74vh tall, clearly below navbar)
+    AVATAR_ZOOM_MOBILE: 0.52,  // Mobile camera zoom (fully visible, proportioned)
+    AVATAR_Y_OFFSET: -25,      // Vertical stage nudge in px (top of head ~10vh, feet ~84vh)
 
-    // Avatar Rotations (ROT_OFFSET turns model 180° so it faces forward)
-    ROT_OFFSET: Math.PI,       // Base rotation offset (Math.PI makes front face the camera)
-    ROT_ABOUT: -0.65,          // chi_sono: relative rotation turning toward text on the left
-    ROT_EXP: 0.65,             // esperienze: relative rotation turning toward cards on the right
+    // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180° to back)
+    ROT_OFFSET: 0,             // Rotation offset (0 = face toward camera; Math.PI = back)
+    ROT_ABOUT: -0.65,          // chi_sono: turns 3/4 toward text on the left
+    ROT_EXP: 0.65,             // esperienze: turns 3/4 toward cards on the right
 
     // Lighting (illuminates dark skin on dark backgrounds)
-    GLOBAL_LIGHT: 3.5,         // Ambient global light intensity
-    CAMERA_LIGHT: 1.2,         // Direct camera light intensity
+    GLOBAL_LIGHT: 4.5,         // Global ambient light intensity
+    CAMERA_LIGHT: 1.8,         // Directional camera light intensity
+
+    // Display Filters (CSS variables --avatar-contrast, --avatar-brightness)
+    AVATAR_CONTRAST: 0.78,     // Lift pure blacks
+    AVATAR_BRIGHTNESS: 1.5,    // Brighten dark skin
 
     // Audio & Playlist
     DEFAULT_VOLUME: 0.4,
@@ -116,66 +120,298 @@
   let skinViewer = null;
   let targetHeadX = 0;
   let targetHeadY = 0;
-  let targetPlayerRotY = CONFIG.ROT_OFFSET;
+  let currentHeadX = 0;
+  let currentHeadY = 0;
+  let gestureHeadX = 0;
+  let gestureHeadY = 0;
+
+  let targetPlayerRotY = 0; // State rotation relative to ROT_OFFSET
+  let bonusSpinRotY = 0;    // Dynamic 360-spin offset on click/interaction
   let currentAvatarState = 'home';
   let activeSectionId = 'home';
   let isMobile = window.innerWidth <= 768;
 
+  // Timers and transitions
+  let gestureTimer = null;
+  let transitionTimer = null;
+  let isTransitioning = false;
+  let lastHomeGesture = null;
+
+  const HOME_GESTURES = ['wave', 'lookAround', 'stretch', 'headTilt', 'smallHop', 'handsOnHips', 'armsCrossed'];
+
+  function pickRandomGesture(list, last) {
+    const pool = list.filter((g) => g !== last);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function clearTimers() {
+    if (gestureTimer) clearTimeout(gestureTimer);
+    if (transitionTimer) clearTimeout(transitionTimer);
+    gestureTimer = null;
+    transitionTimer = null;
+    gestureHeadX = 0;
+    gestureHeadY = 0;
+  }
+
   // ==========================================================================
-  // CUSTOM SKINVIEW3D ANIMATIONS (WAVE & SHORT-WAVE-THEN-IDLE)
+  // CUSTOM SKINVIEW3D COMPOSITE GESTURE ANIMATION (Half-sine ease-in/out)
   // ==========================================================================
-  class WaveAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
+  class CompositeGestureAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
+    constructor(gestureName, onComplete) {
+      super();
+      this.gestureName = gestureName;
+      this.onComplete = onComplete;
+      this.hasCompleted = false;
+
+      // Base idle animation running continuously beneath gestures
+      this.idleAnim = new skinview3d.IdleAnimation();
+      this.idleAnim.speed = 0.8;
+
+      // Gestures duration between 1.4s and 2.4s
+      const durations = {
+        wave: 2.1,
+        lookAround: 2.2,
+        stretch: 2.4,
+        headTilt: 1.8,
+        smallHop: 1.4,
+        handsOnHips: 2.2,
+        armsCrossed: 2.4,
+        pointCards: 2.2
+      };
+      this.duration = durations[gestureName] || 2.0;
+    }
+
     animate(player) {
       if (!player || !player.skin) return;
-      const t = this.progress * 6;
 
-      // Right arm raised and waving
-      player.skin.rightArm.rotation.x = -Math.PI * 0.85;
-      player.skin.rightArm.rotation.z = -0.3 + Math.sin(t) * 0.35;
-      player.skin.rightArm.rotation.y = 0.2;
+      // 1. Maintain underlying idle breathing on chest and limbs
+      this.idleAnim.progress = this.progress;
+      this.idleAnim.animate(player);
 
-      // Left arm relaxed idle breathing
-      player.skin.leftArm.rotation.x = 0;
-      player.skin.leftArm.rotation.z = 0.05 + Math.cos(this.progress * 2) * 0.03;
-      player.skin.leftArm.rotation.y = 0;
+      // 2. Smooth half-sine envelope (0 at start -> 1 at peak -> 0 at finish)
+      const t = this.progress / this.duration;
+      if (t >= 1) {
+        if (!this.hasCompleted) {
+          this.hasCompleted = true;
+          player.position.y = 0;
+          gestureHeadX = 0;
+          gestureHeadY = 0;
+          player.skin.head.rotation.z = 0;
+          if (this.onComplete) setTimeout(this.onComplete, 0);
+        }
+        return;
+      }
 
-      // Keep legs straight
-      player.skin.leftLeg.rotation.x = 0;
-      player.skin.rightLeg.rotation.x = 0;
-      player.skin.leftLeg.rotation.z = 0;
-      player.skin.rightLeg.rotation.z = 0;
+      const w = Math.sin(t * Math.PI);
+
+      // 3. Blend specific gesture pose
+      switch (this.gestureName) {
+        case 'wave': {
+          const wave = Math.sin(this.progress * 8) * 0.35;
+          player.skin.rightArm.rotation.x = (-Math.PI * 0.85) * w + player.skin.rightArm.rotation.x * (1 - w);
+          player.skin.rightArm.rotation.z = (-0.25 + wave) * w + player.skin.rightArm.rotation.z * (1 - w);
+          player.skin.rightArm.rotation.y = 0.2 * w;
+          break;
+        }
+
+        case 'lookAround': {
+          gestureHeadY = Math.sin(this.progress * 3.5) * 0.45 * w;
+          break;
+        }
+
+        case 'stretch': {
+          player.skin.rightArm.rotation.x = (-Math.PI * 0.92) * w + player.skin.rightArm.rotation.x * (1 - w);
+          player.skin.leftArm.rotation.x = (-Math.PI * 0.92) * w + player.skin.leftArm.rotation.x * (1 - w);
+          player.skin.rightArm.rotation.z = 0.25 * w + player.skin.rightArm.rotation.z * (1 - w);
+          player.skin.leftArm.rotation.z = -0.25 * w + player.skin.leftArm.rotation.z * (1 - w);
+          gestureHeadX = -0.22 * w;
+          break;
+        }
+
+        case 'headTilt': {
+          player.skin.head.rotation.z = Math.sin(this.progress * 3.5) * 0.32 * w;
+          break;
+        }
+
+        case 'smallHop': {
+          player.position.y = Math.sin(t * Math.PI) * 4.0;
+          player.skin.leftLeg.rotation.x = -0.35 * w;
+          player.skin.rightLeg.rotation.x = -0.35 * w;
+          break;
+        }
+
+        case 'handsOnHips': {
+          player.skin.leftArm.rotation.x = -0.25 * w + player.skin.leftArm.rotation.x * (1 - w);
+          player.skin.leftArm.rotation.z = -0.55 * w + player.skin.leftArm.rotation.z * (1 - w);
+          player.skin.leftArm.rotation.y = -0.2 * w;
+          player.skin.rightArm.rotation.x = -0.25 * w + player.skin.rightArm.rotation.x * (1 - w);
+          player.skin.rightArm.rotation.z = 0.55 * w + player.skin.rightArm.rotation.z * (1 - w);
+          player.skin.rightArm.rotation.y = 0.2 * w;
+          break;
+        }
+
+        case 'armsCrossed': {
+          player.skin.leftArm.rotation.x = (-Math.PI * 0.45) * w + player.skin.leftArm.rotation.x * (1 - w);
+          player.skin.leftArm.rotation.z = 0.45 * w + player.skin.leftArm.rotation.z * (1 - w);
+          player.skin.rightArm.rotation.x = (-Math.PI * 0.45) * w + player.skin.rightArm.rotation.x * (1 - w);
+          player.skin.rightArm.rotation.z = -0.45 * w + player.skin.rightArm.rotation.z * (1 - w);
+          break;
+        }
+
+        case 'pointCards': {
+          player.skin.rightArm.rotation.x = (-Math.PI * 0.55) * w + player.skin.rightArm.rotation.x * (1 - w);
+          player.skin.rightArm.rotation.y = -0.38 * w;
+          player.skin.rightArm.rotation.z = 0.28 * w + player.skin.rightArm.rotation.z * (1 - w);
+          break;
+        }
+      }
     }
   }
 
-  class ShortWaveThenIdleAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
-    constructor(onComplete) {
-      super();
-      this.onComplete = onComplete;
-      this.waveDuration = 2.0;
-      this.hasCompleted = false;
+  function playGesture(gestureName, onComplete) {
+    if (!skinViewer) return;
+    skinViewer.animation = new CompositeGestureAnimation(gestureName, () => {
+      if (onComplete) onComplete();
+    });
+  }
+
+  // ==========================================================================
+  // GESTURE SCHEDULERS FOR SECTIONS
+  // ==========================================================================
+  function scheduleHomeGesture() {
+    clearTimeout(gestureTimer);
+    if (currentAvatarState !== 'home' || isTransitioning) return;
+    const delay = Math.random() * 4000 + 5000; // Random interval 5-9 seconds
+    gestureTimer = setTimeout(() => {
+      if (currentAvatarState !== 'home' || isTransitioning) return;
+      const g = pickRandomGesture(HOME_GESTURES, lastHomeGesture);
+      lastHomeGesture = g;
+      playGesture(g, () => {
+        if (currentAvatarState === 'home' && !isTransitioning && skinViewer) {
+          skinViewer.animation = new skinview3d.IdleAnimation();
+          skinViewer.animation.speed = 0.8;
+          scheduleHomeGesture();
+        }
+      });
+    }, delay);
+  }
+
+  function scheduleChiSonoHeadTilt() {
+    clearTimeout(gestureTimer);
+    if (currentAvatarState !== 'chi_sono' || isTransitioning) return;
+    const delay = Math.random() * 3000 + 6000; // Occasional head tilt 6-9 seconds
+    gestureTimer = setTimeout(() => {
+      if (currentAvatarState !== 'chi_sono' || isTransitioning) return;
+      playGesture('headTilt', () => {
+        if (currentAvatarState === 'chi_sono' && !isTransitioning && skinViewer) {
+          skinViewer.animation = new skinview3d.IdleAnimation();
+          skinViewer.animation.speed = 0.8;
+          scheduleChiSonoHeadTilt();
+        }
+      });
+    }, delay);
+  }
+
+  function scheduleEsperienzePoint() {
+    clearTimeout(gestureTimer);
+    if (currentAvatarState !== 'esperienze' || isTransitioning) return;
+    const delay = Math.random() * 3000 + 6000; // Occasional stop & point 6-9 seconds
+    gestureTimer = setTimeout(() => {
+      if (currentAvatarState !== 'esperienze' || isTransitioning) return;
+      playGesture('pointCards', () => {
+        if (currentAvatarState === 'esperienze' && !isTransitioning && skinViewer) {
+          const walk = new skinview3d.WalkingAnimation();
+          walk.speed = 0.45;
+          walk.headBobbing = false;
+          skinViewer.animation = walk;
+          scheduleEsperienzePoint();
+        }
+      });
+    }, delay);
+  }
+
+  function scheduleContattiGesture() {
+    clearTimeout(gestureTimer);
+    if (currentAvatarState !== 'contatti' || isTransitioning) return;
+    const delay = Math.random() * 4000 + 5000; // Random idle gestures 5-9 seconds
+    gestureTimer = setTimeout(() => {
+      if (currentAvatarState !== 'contatti' || isTransitioning) return;
+      const g = pickRandomGesture(HOME_GESTURES, lastHomeGesture);
+      lastHomeGesture = g;
+      playGesture(g, () => {
+        if (currentAvatarState === 'contatti' && !isTransitioning && skinViewer) {
+          skinViewer.animation = new skinview3d.IdleAnimation();
+          skinViewer.animation.speed = 0.8;
+          scheduleContattiGesture();
+        }
+      });
+    }, delay);
+  }
+
+  // ==========================================================================
+  // SECTION POSE ACTIVATOR
+  // ==========================================================================
+  function activateSectionPose(state) {
+    if (!skinViewer) return;
+
+    // Reset arm, leg, and head rotations smoothly before starting section pose
+    if (skinViewer.playerObject && skinViewer.playerObject.skin) {
+      const s = skinViewer.playerObject.skin;
+      s.leftArm.rotation.x = 0;
+      s.rightArm.rotation.x = 0;
+      s.leftArm.rotation.y = 0;
+      s.rightArm.rotation.y = 0;
+      s.leftArm.rotation.z = 0;
+      s.rightArm.rotation.z = 0;
+      s.leftLeg.rotation.x = 0;
+      s.rightLeg.rotation.x = 0;
+      s.head.rotation.z = 0;
+    }
+    if (skinViewer.playerObject) {
+      skinViewer.playerObject.position.y = 0;
     }
 
-    animate(player) {
-      if (!player || !player.skin) return;
+    switch (state) {
+      case 'home':
+        targetPlayerRotY = 0;
+        skinViewer.animation = new skinview3d.IdleAnimation();
+        skinViewer.animation.speed = 0.8;
+        scheduleHomeGesture();
+        break;
 
-      if (this.progress < this.waveDuration) {
-        const t = this.progress * 7;
-        player.skin.rightArm.rotation.x = -Math.PI * 0.85;
-        player.skin.rightArm.rotation.z = -0.3 + Math.sin(t) * 0.35;
-        player.skin.rightArm.rotation.y = 0.2;
+      case 'chi_sono':
+        // Avatar shifts to right, turns 3/4 toward text on left, initial wave then head tilt
+        targetPlayerRotY = CONFIG.ROT_ABOUT;
+        playGesture('wave', () => {
+          if (currentAvatarState === 'chi_sono' && !isTransitioning && skinViewer) {
+            skinViewer.animation = new skinview3d.IdleAnimation();
+            skinViewer.animation.speed = 0.8;
+            scheduleChiSonoHeadTilt();
+          }
+        });
+        break;
 
-        player.skin.leftArm.rotation.x = 0;
-        player.skin.leftArm.rotation.z = 0.05 + Math.cos(this.progress * 2) * 0.03;
-        player.skin.leftArm.rotation.y = 0;
+      case 'esperienze':
+        // Avatar shifts to left, walking in place, turns 3/4 toward cards on right
+        targetPlayerRotY = CONFIG.ROT_EXP;
+        const walk = new skinview3d.WalkingAnimation();
+        walk.speed = 0.45;
+        walk.headBobbing = false;
+        skinViewer.animation = walk;
+        scheduleEsperienzePoint();
+        break;
 
-        player.skin.leftLeg.rotation.x = 0;
-        player.skin.rightLeg.rotation.x = 0;
-      } else {
-        if (!this.hasCompleted) {
-          this.hasCompleted = true;
-          if (this.onComplete) this.onComplete();
-        }
-      }
+      case 'contatti':
+        // Back to center, facing front, short wave then random gestures
+        targetPlayerRotY = 0;
+        playGesture('wave', () => {
+          if (currentAvatarState === 'contatti' && !isTransitioning && skinViewer) {
+            skinViewer.animation = new skinview3d.IdleAnimation();
+            skinViewer.animation.speed = 0.8;
+            scheduleContattiGesture();
+          }
+        });
+        break;
     }
   }
 
@@ -303,7 +539,8 @@
   // 2. AVATAR STATE MACHINE & CONTINUOUS FRAME TICK
   // ==========================================================================
   function setAvatarState(state) {
-    if (currentAvatarState === state) return;
+    if (currentAvatarState === state && skinViewer && skinViewer.animation) return;
+    const isStateChange = (currentAvatarState !== state);
     currentAvatarState = state;
 
     const stage = document.getElementById('avatar-stage');
@@ -314,49 +551,31 @@
 
     if (!skinViewer) return;
 
-    // Reset arm/leg rotations smoothly before switching animation
-    if (skinViewer.playerObject && skinViewer.playerObject.skin) {
-      const s = skinViewer.playerObject.skin;
-      s.leftArm.rotation.x = 0;
-      s.rightArm.rotation.x = 0;
-      s.leftArm.rotation.z = 0;
-      s.rightArm.rotation.z = 0;
-      s.leftLeg.rotation.x = 0;
-      s.rightLeg.rotation.x = 0;
+    clearTimers();
+
+    // Directional rotation for state
+    if (state === 'chi_sono') {
+      targetPlayerRotY = CONFIG.ROT_ABOUT;
+    } else if (state === 'esperienze') {
+      targetPlayerRotY = CONFIG.ROT_EXP;
+    } else {
+      targetPlayerRotY = 0;
     }
 
-    switch (state) {
-      case 'home':
-        targetPlayerRotY = CONFIG.ROT_OFFSET;
-        skinViewer.animation = new skinview3d.IdleAnimation();
-        skinViewer.animation.speed = 0.8;
-        break;
+    if (isStateChange) {
+      // 900ms Section Transition: avatar RUNS while CSS stage moves across viewport
+      isTransitioning = true;
+      const run = new skinview3d.RunningAnimation();
+      run.speed = 1.0;
+      run.headBobbing = false;
+      skinViewer.animation = run;
 
-      case 'chi_sono':
-        // Avatar shifts to right, turns 3/4 toward text on left, waving with right arm
-        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_ABOUT;
-        skinViewer.animation = new WaveAnimation();
-        break;
-
-      case 'esperienze':
-        // Avatar shifts to left, walking in place slowly, looking toward cards on right
-        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_EXP;
-        const walk = new skinview3d.WalkingAnimation();
-        walk.speed = 0.45;
-        walk.headBobbing = false; // Disables walking head sway so cursor head-follow is not overridden
-        skinViewer.animation = walk;
-        break;
-
-      case 'contatti':
-        // Back to center, facing front, short wave then idle
-        targetPlayerRotY = CONFIG.ROT_OFFSET;
-        skinViewer.animation = new ShortWaveThenIdleAnimation(() => {
-          if (currentAvatarState === 'contatti' && skinViewer) {
-            skinViewer.animation = new skinview3d.IdleAnimation();
-            skinViewer.animation.speed = 0.8;
-          }
-        });
-        break;
+      transitionTimer = setTimeout(() => {
+        isTransitioning = false;
+        activateSectionPose(state);
+      }, 900);
+    } else {
+      activateSectionPose(state);
     }
   }
 
@@ -368,7 +587,7 @@
     skinViewer.width = w;
     skinViewer.height = h;
 
-    // Use configurable zoom from CONFIG (~65vh tall on desktop)
+    // Use configurable zoom from CONFIG (~74vh tall on desktop)
     skinViewer.zoom = isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP;
 
     const stage = document.getElementById('avatar-stage');
@@ -408,42 +627,50 @@
       });
 
       skinViewer.controls.enabled = false;
-      skinViewer.autoRotate = false; // Rotation controlled smoothly via state machine lerp
+      skinViewer.autoRotate = false; // Controlled smoothly via continuous per-frame lerp
 
       // Apply light intensities from CONFIG (illuminates dark skin on dark backgrounds)
       if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
       if (skinViewer.cameraLight) skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
 
-      // Initial rotation facing front
+      // Ensure CSS filter variables match CONFIG
+      document.documentElement.style.setProperty('--avatar-contrast', CONFIG.AVATAR_CONTRAST);
+      document.documentElement.style.setProperty('--avatar-brightness', CONFIG.AVATAR_BRIGHTNESS);
+
+      // Initial rotation facing front (ROT_OFFSET = 0)
       if (skinViewer.playerObject) {
         skinViewer.playerObject.rotation.y = CONFIG.ROT_OFFSET;
       }
 
-      // Initial state: home idle breathing
-      skinViewer.animation = new skinview3d.IdleAnimation();
-      skinViewer.animation.speed = 0.8;
-
       updateViewerSize();
 
-      // Hook skinViewer.render to run right after animation.update() and before composer.render()
-      // This guarantees mouse head-follow and rotation lerp are applied smoothly on every rendered frame,
-      // including in the walking state (esperienze) where animation updates head properties.
+      // Hook skinViewer.render to run right after animation.update() and before composer.render().
+      // This guarantees cursor head-following and rotation lerp are applied smoothly on every single frame,
+      // including in walking and running states and across all gestures.
       const origRender = skinViewer.render.bind(skinViewer);
       skinViewer.render = function () {
         if (skinViewer.playerObject) {
-          // Smooth lerp on player.rotation.y (NEVER move the camera)
-          skinViewer.playerObject.rotation.y += (targetPlayerRotY - skinViewer.playerObject.rotation.y) * 0.06;
+          // Continuous lerp on player.rotation.y (NEVER move the camera)
+          // CONFIG.ROT_OFFSET is added inside the per-frame lerp so it cannot be bypassed or overwritten
+          const finalTargetRotY = targetPlayerRotY + CONFIG.ROT_OFFSET + bonusSpinRotY;
+          skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
 
-          // Smooth lerp on head rotation (cursor following applied AFTER animation update)
+          // Smooth lerp on head rotation (cursor follow + gesture offset)
+          currentHeadY += (targetHeadY - currentHeadY) * 0.08;
+          currentHeadX += (targetHeadX - currentHeadX) * 0.08;
+
           if (skinViewer.playerObject.skin && skinViewer.playerObject.skin.head) {
             const head = skinViewer.playerObject.skin.head;
-            head.rotation.y += (targetHeadY - head.rotation.y) * 0.08;
-            head.rotation.x += (targetHeadX - head.rotation.x) * 0.08;
+            head.rotation.y = gestureHeadY + currentHeadY;
+            head.rotation.x = gestureHeadX + currentHeadX;
           }
         }
 
         origRender();
       };
+
+      // Activate initial pose for active section
+      activateSectionPose(activeSectionId || 'home');
 
       // Track mouse across screen for head following
       window.addEventListener('mousemove', (e) => {
@@ -472,7 +699,99 @@
   }
 
   // ==========================================================================
-  // 3. CANVAS STARS (~60 Tiny Twinkling Stars)
+  // CLICK / TAP INTERACTION (360-degree Spin or Jump Hop)
+  // ==========================================================================
+  function initAvatarInteraction() {
+    let isSpinning = false;
+
+    function triggerSpin() {
+      if (isSpinning) return;
+      isSpinning = true;
+      const startTime = performance.now();
+      const duration = 650; // Snappy 360-degree rotation
+
+      function spinStep(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(1, elapsed / duration);
+        const ease = 1 - Math.pow(1 - t, 3); // Ease-out cubic
+        bonusSpinRotY = ease * Math.PI * 2;
+
+        if (t < 1) {
+          requestAnimationFrame(spinStep);
+        } else {
+          if (skinViewer && skinViewer.playerObject) {
+            skinViewer.playerObject.rotation.y -= Math.PI * 2;
+          }
+          bonusSpinRotY = 0;
+          isSpinning = false;
+        }
+      }
+      requestAnimationFrame(spinStep);
+    }
+
+    function triggerJump() {
+      playGesture('smallHop', () => {
+        if (currentAvatarState === 'home') {
+          skinViewer.animation = new skinview3d.IdleAnimation();
+          skinViewer.animation.speed = 0.8;
+          scheduleHomeGesture();
+        } else if (currentAvatarState === 'esperienze') {
+          const walk = new skinview3d.WalkingAnimation();
+          walk.speed = 0.45;
+          walk.headBobbing = false;
+          skinViewer.animation = walk;
+          scheduleEsperienzePoint();
+        } else {
+          skinViewer.animation = new skinview3d.IdleAnimation();
+          skinViewer.animation.speed = 0.8;
+        }
+      });
+    }
+
+    function handleInteraction(clientX, clientY, target) {
+      if (target && target.closest('button, a, input, select, textarea, [role="button"], #opening-screen, .opening-screen, .avatar-debug-panel')) {
+        return;
+      }
+      if (!skinViewer) return;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let shiftX = 0;
+      let shiftY = CONFIG.AVATAR_Y_OFFSET;
+
+      if (currentAvatarState === 'chi_sono') {
+        shiftX = vw * 0.22;
+        shiftY = CONFIG.AVATAR_Y_OFFSET * 0.8;
+      } else if (currentAvatarState === 'esperienze') {
+        shiftX = -vw * 0.22;
+        shiftY = CONFIG.AVATAR_Y_OFFSET * 0.8;
+      }
+
+      const centerX = (vw / 2) + shiftX;
+      const centerY = (vh / 2) + shiftY;
+
+      const boxWidth = isMobile ? vw * 0.65 : vh * 0.38;
+      const boxHeight = isMobile ? vh * 0.6 : vh * 0.74;
+
+      const dx = Math.abs(clientX - centerX);
+      const dy = Math.abs(clientY - centerY);
+
+      if (dx <= boxWidth / 2 && dy <= boxHeight / 2) {
+        if (Math.random() > 0.5) {
+          triggerSpin();
+        } else {
+          triggerJump();
+        }
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      handleInteraction(e.clientX, e.clientY, e.target);
+    });
+  }
+
+  // ==========================================================================
+  // 3. CANVAS STARS & CYBER-RAIN WITH SHOOTING STARS (METEORS)
   // ==========================================================================
   function initStars() {
     const canvas = document.getElementById('stars-canvas');
@@ -484,34 +803,65 @@
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    const starCount = 60;
+    let starCount = isMobile ? 65 : 120;
     const stars = [];
+    const meteors = [];
 
-    for (let i = 0; i < starCount; i++) {
-      stars.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        radius: Math.random() * 0.85 + 0.6,
-        baseAlpha: Math.random() * 0.4 + 0.25,
-        speed: Math.random() * 1.5 + 0.75,
-        phase: Math.random() * Math.PI * 2
-      });
+    function populateStars() {
+      stars.length = 0;
+      for (let i = 0; i < starCount; i++) {
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: Math.random() * 0.9 + 0.4,
+          baseAlpha: Math.random() * 0.45 + 0.2,
+          speedY: Math.random() * 0.3 + 0.2, // Slow vertical drift (0.2..0.5 px/frame for light cyber-rain)
+          speedX: (Math.random() - 0.5) * 0.06,
+          twinkleSpeed: Math.random() * 1.6 + 0.8,
+          phase: Math.random() * Math.PI * 2,
+          color: Math.random() > 0.4 ? '#e8eaff' : (Math.random() > 0.5 ? '#5ea8ff' : '#c4b5ff')
+        });
+      }
     }
+
+    populateStars();
 
     function renderStatic() {
       ctx.clearRect(0, 0, width, height);
-      for (let i = 0; i < starCount; i++) {
+      for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(232, 234, 255, ${s.baseAlpha})`;
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = s.baseAlpha;
         ctx.fill();
       }
+      ctx.globalAlpha = 1;
     }
 
     if (prefersReducedMotion) {
       renderStatic();
       return;
+    }
+
+    let nextMeteorTime = performance.now() + (Math.random() * 3000 + 2000); // 2-5 seconds
+
+    function spawnMeteor() {
+      const angleDeg = Math.random() * 15 + 30; // 30-45 degrees angle
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const speed = Math.random() * 8 + 10;
+      const len = Math.random() * 70 + 60;
+
+      meteors.push({
+        x: Math.random() * width * 0.9 + width * 0.1,
+        y: Math.random() * (height * 0.4),
+        vx: -Math.cos(angleRad) * speed,
+        vy: Math.sin(angleRad) * speed,
+        len: len,
+        angleRad: angleRad,
+        alpha: 1.0,
+        decay: Math.random() * 0.012 + 0.015
+      });
     }
 
     let startTime = performance.now();
@@ -521,14 +871,68 @@
         const elapsed = (now - startTime) / 1000;
         ctx.clearRect(0, 0, width, height);
 
-        for (let i = 0; i < starCount; i++) {
+        // 1. Draw and drift stars
+        for (let i = 0; i < stars.length; i++) {
           const s = stars[i];
-          const alpha = Math.max(0.1, s.baseAlpha + Math.sin(elapsed * s.speed + s.phase) * 0.25);
+          s.y += s.speedY;
+          s.x += s.speedX;
+
+          if (s.y > height) {
+            s.y = 0;
+            s.x = Math.random() * width;
+          }
+          if (s.x < 0) s.x = width;
+          if (s.x > width) s.x = 0;
+
+          const twinkle = Math.sin(elapsed * s.twinkleSpeed + s.phase) * 0.25;
+          const alpha = Math.min(1, Math.max(0.12, s.baseAlpha + twinkle));
+
           ctx.beginPath();
           ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(232, 234, 255, ${alpha.toFixed(2)})`;
+          ctx.fillStyle = s.color;
+          ctx.globalAlpha = alpha;
           ctx.fill();
         }
+
+        // 2. Spawn and render shooting stars (meteors)
+        if (now >= nextMeteorTime) {
+          spawnMeteor();
+          nextMeteorTime = now + (Math.random() * 3000 + 2000); // 2-5s
+        }
+
+        for (let i = meteors.length - 1; i >= 0; i--) {
+          const m = meteors[i];
+          m.x += m.vx;
+          m.y += m.vy;
+          m.alpha -= m.decay;
+
+          if (m.alpha <= 0 || m.y > height + 100 || m.x < -100) {
+            meteors.splice(i, 1);
+            continue;
+          }
+
+          const tailX = m.x - Math.cos(m.angleRad) * (-m.len);
+          const tailY = m.y - Math.sin(m.angleRad) * m.len;
+
+          const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+          grad.addColorStop(0, `rgba(94, 168, 255, ${m.alpha})`);
+          grad.addColorStop(0.35, `rgba(139, 108, 255, ${(m.alpha * 0.6).toFixed(2)})`);
+          grad.addColorStop(1, 'rgba(94, 168, 255, 0)');
+
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(m.x, m.y);
+          ctx.lineTo(tailX, tailY);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(232, 234, 255, ${m.alpha})`;
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
       }
 
       requestAnimationFrame(renderStars);
@@ -539,10 +943,8 @@
     window.addEventListener('resize', () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      for (let i = 0; i < starCount; i++) {
-        stars[i].x = Math.random() * width;
-        stars[i].y = Math.random() * height;
-      }
+      starCount = (window.innerWidth <= 768) ? 65 : 120;
+      populateStars();
       if (prefersReducedMotion) renderStatic();
     }, { passive: true });
   }
@@ -885,6 +1287,14 @@
           <span>Camera Light: <b id="val-clight">${CONFIG.CAMERA_LIGHT.toFixed(1)}</b></span>
           <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
         </label>
+        <label class="debug-row">
+          <span>Contrast: <b id="val-contrast">${CONFIG.AVATAR_CONTRAST.toFixed(2)}</b></span>
+          <input type="range" id="slider-contrast" min="0.4" max="1.6" step="0.02" value="${CONFIG.AVATAR_CONTRAST}">
+        </label>
+        <label class="debug-row">
+          <span>Brightness: <b id="val-brightness">${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)}</b></span>
+          <input type="range" id="slider-brightness" min="0.8" max="2.5" step="0.05" value="${CONFIG.AVATAR_BRIGHTNESS}">
+        </label>
       </div>
       <pre id="debug-code-output" class="debug-output"></pre>
     `;
@@ -896,12 +1306,16 @@
     const sliderRot = panel.querySelector('#slider-rot');
     const sliderGLight = panel.querySelector('#slider-glight');
     const sliderCLight = panel.querySelector('#slider-clight');
+    const sliderContrast = panel.querySelector('#slider-contrast');
+    const sliderBrightness = panel.querySelector('#slider-brightness');
 
     const valZoom = panel.querySelector('#val-zoom');
     const valY = panel.querySelector('#val-y');
     const valRot = panel.querySelector('#val-rot');
     const valGLight = panel.querySelector('#val-glight');
     const valCLight = panel.querySelector('#val-clight');
+    const valContrast = panel.querySelector('#val-contrast');
+    const valBrightness = panel.querySelector('#val-brightness');
     const codeOutput = panel.querySelector('#debug-code-output');
     const copyBtn = panel.querySelector('#debug-copy-btn');
 
@@ -911,15 +1325,10 @@ AVATAR_ZOOM_DESKTOP: ${CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2)},
 AVATAR_Y_OFFSET: ${CONFIG.AVATAR_Y_OFFSET},
 ROT_OFFSET: ${(CONFIG.ROT_OFFSET / Math.PI).toFixed(2)} * Math.PI, // ${(CONFIG.ROT_OFFSET).toFixed(3)} rad
 GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
-CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
+CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)},
+AVATAR_CONTRAST: ${CONFIG.AVATAR_CONTRAST.toFixed(2)},
+AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)}`;
       codeOutput.textContent = code;
-      console.log('AVATAR CONFIG:', {
-        AVATAR_ZOOM_DESKTOP: CONFIG.AVATAR_ZOOM_DESKTOP,
-        AVATAR_Y_OFFSET: CONFIG.AVATAR_Y_OFFSET,
-        ROT_OFFSET: CONFIG.ROT_OFFSET,
-        GLOBAL_LIGHT: CONFIG.GLOBAL_LIGHT,
-        CAMERA_LIGHT: CONFIG.CAMERA_LIGHT
-      });
     }
 
     sliderZoom.addEventListener('input', (e) => {
@@ -944,13 +1353,6 @@ CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
     sliderRot.addEventListener('input', (e) => {
       CONFIG.ROT_OFFSET = parseFloat(e.target.value);
       valRot.textContent = CONFIG.ROT_OFFSET.toFixed(2) + ' rad';
-      if (activeSectionId === 'chi_sono') {
-        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_ABOUT;
-      } else if (activeSectionId === 'esperienze') {
-        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_EXP;
-      } else {
-        targetPlayerRotY = CONFIG.ROT_OFFSET;
-      }
       updateConfigReadout();
     });
 
@@ -972,6 +1374,20 @@ CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
       updateConfigReadout();
     });
 
+    sliderContrast.addEventListener('input', (e) => {
+      CONFIG.AVATAR_CONTRAST = parseFloat(e.target.value);
+      valContrast.textContent = CONFIG.AVATAR_CONTRAST.toFixed(2);
+      document.documentElement.style.setProperty('--avatar-contrast', CONFIG.AVATAR_CONTRAST);
+      updateConfigReadout();
+    });
+
+    sliderBrightness.addEventListener('input', (e) => {
+      CONFIG.AVATAR_BRIGHTNESS = parseFloat(e.target.value);
+      valBrightness.textContent = CONFIG.AVATAR_BRIGHTNESS.toFixed(2);
+      document.documentElement.style.setProperty('--avatar-brightness', CONFIG.AVATAR_BRIGHTNESS);
+      updateConfigReadout();
+    });
+
     copyBtn.addEventListener('click', () => {
       if (navigator.clipboard) {
         navigator.clipboard.writeText(codeOutput.textContent).then(() => {
@@ -990,6 +1406,7 @@ CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
   document.addEventListener('DOMContentLoaded', () => {
     initOpeningSequence();
     initAvatar();
+    initAvatarInteraction();
     initStars();
     initNavigation();
     initAudio();
