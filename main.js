@@ -56,6 +56,20 @@
     HOME_AVATAR_SCALE: 0.38,   // Avatar scale in home state (~28vh tall)
     SPILL_OPACITY: 0.18,       // Soft light spill opacity under title
 
+    // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
+    AVATAR_KEYFRAMES: [
+      { id: 'home',       x: 'anchor', y: 'anchor', scale: 'anchor', yaw: 0.15, roll: 0 },
+      { id: 'chi_sono',   x: 0,        y: 0,        scale: 1.0,      yaw: 0.0,  roll: 0 },
+      { id: 'esperienze', x: -22,      y: 0,        scale: 0.8,      yaw: 0.65, roll: 0 },
+      { id: 'contatti',   x: 0,        y: 2,        scale: 0.7,      yaw: 0.0,  roll: 0 }
+    ],
+    FLIGHT_ARC_X: 9,           // Extra arc horizontal offset in vw
+    FLIGHT_ARC_Y: 4,           // Extra arc vertical lift in vh
+    FLIGHT_SWOOP: 0.14,        // Swoop scale overshoot factor
+    FLIGHT_ROLL: 0.12,         // Bank roll during flight in rad
+    FLIGHT_VELOCITY_REF: 0.85, // Velocity reference for flight pose blend (sections/sec)
+    WARP_STRENGTH: 28,         // Warp star streak length multiplier
+
     // Audio & Playlist
     DEFAULT_VOLUME: 0.4,
     PLAYLIST: [
@@ -263,6 +277,24 @@
   let activeDetailId = null; // Currently open experience detail key ('redismc', 'metamc', 'pixymc')
   let isMobile = window.innerWidth <= 768;
 
+  // Scroll-driven flight state & layout caching
+  let targetScrollF = 0;
+  let fDisplay = 0;
+  let prevFDisplay = 0;
+  let scrollVelocity = 0;
+  let flightW = 0;
+  let manualF = null;
+  let lastFrameTime = performance.now();
+
+  let cachedSectionHeight = window.innerHeight;
+  let cachedWindowWidth = window.innerWidth;
+  let cachedWindowHeight = window.innerHeight;
+  let cachedAnchorAxPx = 0;
+  let cachedAnchorAyPx = 0;
+  let cachedAnchorScale = 0.38;
+  let lastComputedStageX = 0;
+  let lastComputedStageY = 0;
+
   // ==========================================================================
   // ZERO-GRAVITY POSES & CUBIC EASING ENGINE
   // ==========================================================================
@@ -315,6 +347,13 @@
       rightArm: { x: -2.9, y: -0.05, z: 0.12 },
       leftLeg: { x: 0.05, y: 0, z: -0.06 },
       rightLeg: { x: -0.05, y: 0, z: 0.06 }
+    },
+    fly: {
+      body: { x: 0.35, y: 0, z: 0 },
+      leftArm: { x: -1.5, y: 0, z: -0.15 },
+      rightArm: { x: -1.5, y: 0, z: 0.15 },
+      leftLeg: { x: -0.25, y: 0, z: -0.04 },
+      rightLeg: { x: -0.25, y: 0, z: 0.04 }
     }
   };
 
@@ -356,7 +395,11 @@
   function updateLookTargetEveryFrame() {
     const nowSec = performance.now() / 1000;
 
-    if (activeSectionId === 'home') {
+    if (flightW > 0.3) {
+      // During flight look forward / at camera (target = viewport center)
+      desiredLookTargetX = cachedWindowWidth * 0.5;
+      desiredLookTargetY = cachedWindowHeight * 0.5;
+    } else if (activeSectionId === 'home') {
       if (mouseInWindow && !isTouchDevice) {
         desiredLookTargetX = mouseX;
         desiredLookTargetY = mouseY;
@@ -513,6 +556,7 @@
       this.headPitch = 0;
 
       this.currentSection = 'home';
+      this.hasDoneChiSonoWave = false;
     }
 
     clonePose(p) {
@@ -587,14 +631,14 @@
         return;
       }
 
-      if (this.currentSection === 'home') {
+      if (fDisplay < 0.05) {
         this.transitionTo('hold');
         return;
       }
 
       let pool = ['neutral', 'open', 'rest'];
       if (this.currentSection === 'chi_sono') {
-        pool = ['rest', 'neutral', 'open'];
+        pool = ['rest', 'open', 'neutral'];
       } else if (this.currentSection === 'esperienze') {
         if (activeDetailId) {
           this.transitionTo('point');
@@ -639,17 +683,29 @@
             this.pickNextPose();
           }
         } else if (!this.forcedPose) {
-          if (this.currentSection === 'home') {
-            if (this.currentPoseName !== 'hold') {
-              this.transitionTo('hold', 1.5);
-            }
-          } else if (nowSec - this.holdStartTime >= this.holdDuration) {
+          if (nowSec - this.holdStartTime >= this.holdDuration) {
             this.pickNextPose();
           }
         }
       }
 
-      // 2. Secondary Limb Drift & Noise (Weightless float feel)
+      // If avatar leaves title (fDisplay > 0.05 or flightW > 0.05), hold pose fades out immediately
+      if ((fDisplay > 0.05 || flightW > 0.05) && this.currentPoseName === 'hold' && !this.isBlending) {
+        this.transitionTo('neutral', 1.0);
+      }
+
+      // 2. Flight Pose Blend & Flutter
+      const w = Math.min(1, Math.max(0, flightW));
+      const skin = player.skin;
+      const b = this.blendedRotations;
+      const fly = POSES.fly;
+
+      let legFlutter = 0;
+      if (!prefersReducedMotion && w > 0.02) {
+        legFlutter = 0.08 * Math.sin(nowSec * 14.0) * w;
+      }
+
+      // 3. Secondary Limb Drift & Noise (Weightless float feel)
       let armLDriftZ = 0;
       let armRDriftZ = 0;
       let legLDriftX = 0;
@@ -662,51 +718,58 @@
       let armTremorR = 0;
 
       if (!prefersReducedMotion) {
-        if (this.currentPoseName === 'hold') {
-          legSway = 0.12 * Math.sin(nowSec * (2 * Math.PI / 5.0));
-          armTremorL = (Math.random() - 0.5) * 0.03;
-          armTremorR = (Math.random() - 0.5) * 0.03;
+        if (this.currentPoseName === 'hold' && fDisplay < 0.1) {
+          const homeInf = Math.max(0, 1 - fDisplay / 0.1);
+          legSway = 0.12 * Math.sin(nowSec * (2 * Math.PI / 5.0)) * homeInf;
+          armTremorL = (Math.random() - 0.5) * 0.03 * homeInf;
+          armTremorR = (Math.random() - 0.5) * 0.03 * homeInf;
         }
 
-        armLDriftZ = 0.08 * Math.sin(nowSec * 1.1 + 0.5);
-        armRDriftZ = -0.08 * Math.sin(nowSec * 1.3 + 2.0);
-        legLDriftX = 0.06 * Math.sin(nowSec * 0.9 + 1.2);
-        legRDriftX = -0.06 * Math.sin(nowSec * 1.05 + 3.4);
-        bodyNoiseX = 0.02 * Math.sin(nowSec * 0.8 + 0.2);
-        bodyNoiseZ = 0.015 * Math.sin(nowSec * 0.7 + 1.5);
+        const driftWeight = 1 - w * 0.7; // drift calms down during high-speed flight
+        armLDriftZ = 0.08 * Math.sin(nowSec * 1.1 + 0.5) * driftWeight;
+        armRDriftZ = -0.08 * Math.sin(nowSec * 1.3 + 2.0) * driftWeight;
+        legLDriftX = 0.06 * Math.sin(nowSec * 0.9 + 1.2) * driftWeight;
+        legRDriftX = -0.06 * Math.sin(nowSec * 1.05 + 3.4) * driftWeight;
+        bodyNoiseX = 0.02 * Math.sin(nowSec * 0.8 + 0.2) * driftWeight;
+        bodyNoiseZ = 0.015 * Math.sin(nowSec * 0.7 + 1.5) * driftWeight;
 
         if (this.currentPoseName === 'wave' || this.isOneShotWave) {
-          waveOscZ = Math.sin(nowSec * 7.0) * 0.35;
+          waveOscZ = Math.sin(nowSec * 7.0) * 0.35 * (1 - w);
         }
       }
 
-      // 3. Apply to Joints
-      const skin = player.skin;
-      const b = this.blendedRotations;
+      // 4. Lerp with fly pose
+      const bodyRotX = (b.body.x * (1 - w) + fly.body.x * w);
+      const leftArmRotX = (b.leftArm.x * (1 - w) + fly.leftArm.x * w);
+      const leftArmRotZ = (b.leftArm.z * (1 - w) + fly.leftArm.z * w);
+      const rightArmRotX = (b.rightArm.x * (1 - w) + fly.rightArm.x * w);
+      const rightArmRotZ = (b.rightArm.z * (1 - w) + fly.rightArm.z * w);
+      const leftLegRotX = (b.leftLeg.x * (1 - w) + fly.leftLeg.x * w) + legFlutter;
+      const rightLegRotX = (b.rightLeg.x * (1 - w) + fly.rightLeg.x * w) - legFlutter;
 
       if (skin.body) {
-        skin.body.rotation.x = b.body.x + bodyNoiseX;
+        skin.body.rotation.x = bodyRotX + bodyNoiseX;
         skin.body.rotation.y = b.body.y;
         skin.body.rotation.z = b.body.z + bodyNoiseZ;
       }
 
-      skin.leftArm.rotation.x = b.leftArm.x + armTremorL;
+      skin.leftArm.rotation.x = leftArmRotX + armTremorL;
       skin.leftArm.rotation.y = b.leftArm.y;
-      skin.leftArm.rotation.z = b.leftArm.z + armLDriftZ;
+      skin.leftArm.rotation.z = leftArmRotZ + armLDriftZ;
 
-      skin.rightArm.rotation.x = b.rightArm.x + armTremorR;
+      skin.rightArm.rotation.x = rightArmRotX + armTremorR;
       skin.rightArm.rotation.y = b.rightArm.y;
-      skin.rightArm.rotation.z = b.rightArm.z + armRDriftZ + waveOscZ;
+      skin.rightArm.rotation.z = rightArmRotZ + armRDriftZ + waveOscZ;
 
-      skin.leftLeg.rotation.x = b.leftLeg.x + legLDriftX + legSway;
+      skin.leftLeg.rotation.x = leftLegRotX + legLDriftX + legSway;
       skin.leftLeg.rotation.y = b.leftLeg.y;
       skin.leftLeg.rotation.z = b.leftLeg.z;
 
-      skin.rightLeg.rotation.x = b.rightLeg.x + legRDriftX - legSway;
+      skin.rightLeg.rotation.x = rightLegRotX + legRDriftX - legSway;
       skin.rightLeg.rotation.y = b.rightLeg.y;
       skin.rightLeg.rotation.z = b.rightLeg.z;
 
-      // 4. Drive Head inside FloatAnimation (after pose blend)
+      // 5. Drive Head inside FloatAnimation
       this.updateHeadLook(player);
     }
 
@@ -735,7 +798,10 @@
       let clampedYaw = 0;
       let clampedPitch = 0;
 
-      if (this.currentSection === 'home') {
+      if (flightW > 0.3) {
+        clampedYaw = Math.max(-0.25, Math.min(0.25, targetHeadYaw));
+        clampedPitch = Math.max(-0.15, Math.min(0.15, rawPitch));
+      } else if (fDisplay < 0.2) {
         const lookUpBias = -0.18; // tilt head up towards title
         clampedYaw = Math.max(-0.45, Math.min(0.45, targetHeadYaw));
         clampedPitch = Math.max(-0.25, Math.min(0.25, rawPitch)) + lookUpBias;
@@ -893,6 +959,21 @@
   // ==========================================================================
   // HOME BANNER & AVATAR HANDS ANCHOR CALCULATION
   // ==========================================================================
+  function updateCachedDimensions() {
+    cachedWindowWidth = window.innerWidth;
+    cachedWindowHeight = window.innerHeight;
+    isMobile = cachedWindowWidth <= 768;
+
+    const scrollContainer = document.getElementById('scroll-container');
+    if (scrollContainer) {
+      cachedSectionHeight = scrollContainer.clientHeight || window.innerHeight;
+    } else {
+      cachedSectionHeight = window.innerHeight;
+    }
+
+    updateHomeAvatarAnchor();
+  }
+
   function updateHomeAvatarAnchor() {
     const titleEl = document.getElementById('hero-title');
     const heroSwayGroup = document.getElementById('hero-sway-group');
@@ -927,15 +1008,210 @@
     const ax = targetX - (window.innerWidth * 0.5);
     const ay = targetY + handsDistFromCenter - (window.innerHeight * 0.5);
 
+    cachedAnchorAxPx = ax;
+    cachedAnchorAyPx = ay;
+    cachedAnchorScale = scale;
+
     document.documentElement.style.setProperty('--home-ax', `${ax.toFixed(2)}px`);
     document.documentElement.style.setProperty('--home-ay', `${ay.toFixed(2)}px`);
     document.documentElement.style.setProperty('--home-as', `${scale.toFixed(3)}`);
     document.documentElement.style.setProperty('--spill-opacity', CONFIG.SPILL_OPACITY);
 
     const avatarFloatEl = document.getElementById('avatar-float');
-    if (avatarFloatEl && activeSectionId === 'home') {
+    if (avatarFloatEl && fDisplay < 0.2) {
       avatarFloatEl.style.transformOrigin = `50% calc(50% - ${handsDistFromCenter.toFixed(2)}px)`;
     }
+  }
+
+  function smoothstep(x) {
+    const c = Math.max(0, Math.min(1, x));
+    return c * c * (3 - 2 * c);
+  }
+
+  function resolveKeyframe(kf) {
+    if (kf.anchor || kf.x === 'anchor') {
+      return {
+        x: cachedAnchorAxPx,
+        y: cachedAnchorAyPx,
+        scale: cachedAnchorScale,
+        yaw: (typeof kf.yaw === 'number') ? kf.yaw : 0.15,
+        roll: 0
+      };
+    }
+    const isMob = cachedWindowWidth <= 768;
+    const kfX = (kf.x / 100) * cachedWindowWidth;
+    const kfY = (kf.y / 100) * cachedWindowHeight + (CONFIG.AVATAR_Y_OFFSET || 0);
+    const kfScale = isMob ? (kf.scaleMobile || kf.scale * 0.75) : kf.scale;
+    return {
+      x: kfX,
+      y: kfY,
+      scale: kfScale,
+      yaw: kf.yaw || 0,
+      roll: kf.roll || 0
+    };
+  }
+
+  function runFrameFlightTick(nowSec, dt) {
+    // 1. Determine target scroll fraction
+    const targetF = (manualF !== null) ? manualF : targetScrollF;
+
+    // 2. Smoothly scrub displayed value
+    fDisplay += (targetF - fDisplay) * 0.14;
+    fDisplay = Math.max(0, Math.min(3, fDisplay));
+
+    // 3. Scroll velocity & flight weight (smoothed: fast rise, slow fall ~1s)
+    const frameDt = Math.max(0.001, dt);
+    scrollVelocity = (fDisplay - prevFDisplay) / frameDt;
+    prevFDisplay = fDisplay;
+
+    const targetW = Math.min(1, Math.max(0, Math.abs(scrollVelocity) / CONFIG.FLIGHT_VELOCITY_REF));
+    if (targetW > flightW) {
+      flightW += (targetW - flightW) * 0.25;
+    } else {
+      flightW += (targetW - flightW) * Math.min(1, frameDt / 1.0);
+    }
+
+    // 4. Wave trigger on first landing at chi_sono
+    if (Math.abs(fDisplay - 1.0) < 0.08 && flightW < 0.25 && floatAnimation && !floatAnimation.hasDoneChiSonoWave) {
+      floatAnimation.hasDoneChiSonoWave = true;
+      floatAnimation.triggerWave(2.2);
+    }
+
+    // 5. Interpolate keyframes
+    const kfs = CONFIG.AVATAR_KEYFRAMES;
+    let seg = Math.floor(fDisplay);
+    if (seg >= kfs.length - 1) seg = kfs.length - 2;
+    if (seg < 0) seg = 0;
+
+    const u = Math.min(1, Math.max(0, fDisplay - seg));
+    const t = smoothstep(u);
+
+    const kfA = resolveKeyframe(kfs[seg]);
+    const kfB = resolveKeyframe(kfs[seg + 1]);
+
+    const baseX = kfA.x + (kfB.x - kfA.x) * t;
+    const baseY = kfA.y + (kfB.y - kfA.y) * t;
+    const baseScale = kfA.scale + (kfB.scale - kfA.scale) * t;
+    const baseYaw = kfA.yaw + (kfB.yaw - kfA.yaw) * t;
+    const baseRoll = kfA.roll + (kfB.roll - kfA.roll) * t;
+
+    // Flight curved arc (alternate direction per segment)
+    const dir = (seg % 2 === 0) ? 1 : -1;
+    const sinT = Math.sin(Math.PI * t);
+    const arcX = (CONFIG.FLIGHT_ARC_X / 100) * cachedWindowWidth * sinT * dir;
+    const arcY = -(CONFIG.FLIGHT_ARC_Y / 100) * cachedWindowHeight * sinT; // lift
+    const swoop = 1 + CONFIG.FLIGHT_SWOOP * sinT;
+    const bankRoll = CONFIG.FLIGHT_ROLL * sinT * dir;
+
+    const finalX = baseX + arcX;
+    const finalY = baseY + arcY;
+    const finalScale = baseScale * swoop;
+    const finalRoll = baseRoll + bankRoll;
+
+    lastComputedStageX = finalX;
+    lastComputedStageY = finalY;
+
+    // Apply transform directly to #avatar-stage (translate3d, scale, rotate)
+    const stage = document.getElementById('avatar-stage');
+    if (stage) {
+      stage.style.transform = `translate3d(${finalX.toFixed(2)}px, ${finalY.toFixed(2)}px, 0) scale(${finalScale.toFixed(3)}) rotate(${finalRoll.toFixed(4)}rad)`;
+    }
+
+    // Pass target yaw to model
+    if (!activeDetailId) {
+      targetPlayerRotY = baseYaw;
+    }
+
+    // 6. Home pendulum bob & sway (fade smoothly between f 0 and 0.35)
+    const heroSwayGroup = document.getElementById('hero-sway-group');
+    const avatarFloatEl = document.getElementById('avatar-float');
+    let homeWeight = 0;
+    if (fDisplay < 0.35) {
+      homeWeight = Math.max(0, 1 - (fDisplay / 0.35));
+    }
+
+    if (!prefersReducedMotion && homeWeight > 0.001) {
+      const thetaRad = (0.02 * Math.sin(nowSec * (2 * Math.PI / 7.0)) + 0.008 * Math.sin(nowSec * (2 * Math.PI / 3.3))) * homeWeight;
+      const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0) + 0.5) * homeWeight;
+
+      if (heroSwayGroup) {
+        heroSwayGroup.style.transform = `translate(-50%, -50%) translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
+      }
+
+      if (avatarFloatEl) {
+        const handsDistFromCenter = (cachedWindowHeight * 0.74 * 0.5) * cachedAnchorScale;
+        avatarFloatEl.style.transformOrigin = `50% calc(50% - ${handsDistFromCenter.toFixed(2)}px)`;
+        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
+      }
+    } else {
+      if (heroSwayGroup) {
+        heroSwayGroup.style.transform = 'translate(-50%, -50%)';
+      }
+      if (!prefersReducedMotion && avatarFloatEl && fDisplay >= 0.35) {
+        // Zero-gravity bob & gentle roll in subsequent sections
+        const nonHomeWeight = Math.min(1, (fDisplay - 0.35) / 0.2);
+        const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * nonHomeWeight * (1 - flightW);
+        const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * nonHomeWeight * (1 - flightW);
+        avatarFloatEl.style.transformOrigin = '50% 50%';
+        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
+      } else if (avatarFloatEl) {
+        avatarFloatEl.style.transform = 'none';
+      }
+    }
+
+    // 7. Title & Actions scrub
+    const heroTitle = document.getElementById('hero-title');
+    if (heroTitle) {
+      if (fDisplay <= 0.6) {
+        const p = fDisplay / 0.6;
+        const s = 1 + 0.18 * p;
+        const op = Math.max(0, 1 - p);
+        const bl = (6 * p).toFixed(1);
+        heroTitle.style.transform = `scale(${s.toFixed(3)})`;
+        heroTitle.style.opacity = op.toFixed(3);
+        heroTitle.style.filter = `blur(${bl}px)`;
+        heroTitle.style.pointerEvents = op < 0.1 ? 'none' : 'auto';
+      } else {
+        heroTitle.style.opacity = '0';
+        heroTitle.style.filter = 'blur(6px)';
+        heroTitle.style.pointerEvents = 'none';
+      }
+    }
+
+    const heroSubElements = document.querySelectorAll('.hero-subtitle, .hero-actions, .scroll-hint');
+    if (fDisplay <= 0.3) {
+      const subOp = Math.max(0, 1 - (fDisplay / 0.3));
+      heroSubElements.forEach((el) => {
+        el.style.opacity = subOp.toFixed(3);
+        el.style.pointerEvents = subOp < 0.1 ? 'none' : 'auto';
+      });
+    } else {
+      heroSubElements.forEach((el) => {
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+      });
+    }
+
+    // 8. Continuous background word sliding scrub
+    const bgWordTargets = [
+      { sel: '#chi_sono .section-bg-word', index: 1 },
+      { sel: '#esperienze .section-bg-word', index: 2 },
+      { sel: '#contatti .section-bg-word', index: 3 }
+    ];
+    bgWordTargets.forEach((item) => {
+      const el = document.querySelector(item.sel);
+      if (el) {
+        const dist = fDisplay - item.index;
+        if (Math.abs(dist) < 1.2) {
+          const op = Math.max(0, 1 - Math.abs(dist)) * 0.12;
+          const shiftPx = dist * 70;
+          el.style.transform = `translateY(-50%) translateX(${shiftPx.toFixed(1)}px)`;
+          el.style.opacity = op.toFixed(3);
+        } else {
+          el.style.opacity = '0';
+        }
+      }
+    });
   }
 
   // ==========================================================================
@@ -1001,6 +1277,19 @@
     function showFallback() {
       if (canvas) canvas.style.display = 'none';
       if (fallbackImg) fallbackImg.style.display = 'block';
+
+      let lastFallbackTime = performance.now();
+      function fallbackLoop() {
+        const now = performance.now();
+        const nowSec = now / 1000;
+        const dt = Math.min(0.1, (now - lastFallbackTime) / 1000);
+        lastFallbackTime = now;
+
+        runFrameFlightTick(nowSec, dt);
+        updateLookTargetEveryFrame();
+        requestAnimationFrame(fallbackLoop);
+      }
+      requestAnimationFrame(fallbackLoop);
     }
 
     let isWebGLAvailable = false;
@@ -1050,61 +1339,26 @@
       const avatarFloatEl = document.getElementById('avatar-float');
 
       // Hook skinViewer.render: runs per frame
+      let lastRenderTime = performance.now();
       const origRender = skinViewer.render.bind(skinViewer);
       skinViewer.render = function () {
-        const nowSec = performance.now() / 1000;
+        const now = performance.now();
+        const nowSec = now / 1000;
+        const dt = Math.min(0.1, (now - lastRenderTime) / 1000);
+        lastRenderTime = now;
 
-        // 1. Update on-screen look targets
+        // 1. Run scroll-driven flight & keyframe interpolation
+        runFrameFlightTick(nowSec, dt);
+
+        // 2. Update on-screen look targets
         updateLookTargetEveryFrame();
-
-        // 2. Pendulum sway in home / Zero-gravity JS transform on #avatar-float in other sections
-        const heroSwayGroup = document.getElementById('hero-sway-group');
-        let yawDrift = 0;
-
-        if (activeSectionId === 'home') {
-          if (!prefersReducedMotion) {
-            const thetaRad = 0.02 * Math.sin(nowSec * (2 * Math.PI / 7.0)) + 0.008 * Math.sin(nowSec * (2 * Math.PI / 3.3));
-            const bobPx = (window.innerHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0) + 0.5);
-
-            if (heroSwayGroup) {
-              heroSwayGroup.style.transform = `translate(-50%, -50%) translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
-            }
-
-            if (avatarFloatEl) {
-              const scale = isMobile ? (CONFIG.HOME_AVATAR_SCALE * 0.8) : CONFIG.HOME_AVATAR_SCALE;
-              const handsDistFromCenter = (window.innerHeight * 0.74 * 0.5) * scale;
-              avatarFloatEl.style.transformOrigin = `50% calc(50% - ${handsDistFromCenter.toFixed(2)}px)`;
-              avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
-            }
-          } else {
-            if (heroSwayGroup) heroSwayGroup.style.transform = 'translate(-50%, -50%)';
-            if (avatarFloatEl) avatarFloatEl.style.transform = 'none';
-          }
-        } else {
-          if (heroSwayGroup) {
-            heroSwayGroup.style.transform = '';
-            heroSwayGroup.style.transformOrigin = 'center center';
-          }
-
-          if (!prefersReducedMotion) {
-            const bobPx = (window.innerHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0));
-            const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0));
-            yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
-
-            if (avatarFloatEl) {
-              avatarFloatEl.style.transformOrigin = '50% 50%';
-              avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
-            }
-          } else {
-            if (avatarFloatEl) {
-              avatarFloatEl.style.transformOrigin = '50% 50%';
-              avatarFloatEl.style.transform = 'none';
-            }
-          }
-        }
 
         // 3. Continuous rotation lerp on player.rotation.y (NEVER move the camera)
         if (skinViewer.playerObject) {
+          let yawDrift = 0;
+          if (!prefersReducedMotion && fDisplay >= 0.35 && flightW < 0.2) {
+            yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
+          }
           const finalTargetRotY = targetPlayerRotY + CONFIG.ROT_OFFSET + yawDrift;
           skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
         }
@@ -1114,9 +1368,9 @@
 
       // Set initial section state
       setAvatarState(activeSectionId || 'home');
-      updateHomeAvatarAnchor();
+      updateCachedDimensions();
       if (document.fonts) {
-        document.fonts.ready.then(updateHomeAvatarAnchor);
+        document.fonts.ready.then(updateCachedDimensions);
       }
 
       // Track mouse across screen for head following in home section
@@ -1205,7 +1459,7 @@
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    let starCount = isMobile ? 65 : 120;
+    let starCount = isMobile ? 40 : 100;
     const stars = [];
     const meteors = [];
     const thrustParticles = [];
@@ -1222,6 +1476,7 @@
           speedX: (Math.random() - 0.5) * 0.06,
           twinkleSpeed: Math.random() * 1.6 + 0.8,
           phase: Math.random() * Math.PI * 2,
+          depth: Math.random() * 0.8 + 0.2, // Depth z (0.2..1.0) for radial warp streaks
           color: Math.random() > 0.4 ? '#e8eaff' : (Math.random() > 0.5 ? '#5ea8ff' : '#c4b5ff')
         });
       }
@@ -1274,27 +1529,62 @@
         const elapsed = (now - startTime) / 1000;
         ctx.clearRect(0, 0, width, height);
 
-        // 1. Draw and drift stars
+        // 1. Draw and drift stars / radial warp streaks
+        const avatarCenterX = (width * 0.5) + lastComputedStageX;
+        const avatarCenterY = (height * 0.5) + lastComputedStageY;
+        const isWarping = !prefersReducedMotion && Math.abs(scrollVelocity) > 0.08;
+
         for (let i = 0; i < stars.length; i++) {
           const s = stars[i];
-          s.y += s.speedY;
-          s.x += s.speedX;
 
-          if (s.y > height) {
-            s.y = 0;
-            s.x = Math.random() * width;
+          if (isWarping) {
+            // Draw radial streak from avatar screen position (outward when down, inward when up)
+            let dx = s.x - avatarCenterX;
+            let dy = s.y - avatarCenterY;
+            let dist = Math.hypot(dx, dy);
+            if (dist < 1) { dx = 0; dy = 1; dist = 1; }
+            const dirX = dx / dist;
+            const dirY = dy / dist;
+
+            let streakLen = scrollVelocity * s.depth * CONFIG.WARP_STRENGTH;
+            if (streakLen > 70) streakLen = 70;
+            if (streakLen < -70) streakLen = -70;
+
+            const tailX = s.x - dirX * streakLen;
+            const tailY = s.y - dirY * streakLen;
+
+            ctx.beginPath();
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(tailX, tailY);
+            ctx.strokeStyle = 'rgba(196, 181, 255, 0.35)';
+            ctx.lineWidth = s.radius * 1.6;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+            ctx.fillStyle = s.color;
+            ctx.globalAlpha = 0.55;
+            ctx.fill();
+          } else {
+            s.y += s.speedY;
+            s.x += s.speedX;
+
+            if (s.y > height) {
+              s.y = 0;
+              s.x = Math.random() * width;
+            }
+            if (s.x < 0) s.x = width;
+            if (s.x > width) s.x = 0;
+
+            const twinkle = Math.sin(elapsed * s.twinkleSpeed + s.phase) * 0.25;
+            const alpha = Math.min(1, Math.max(0.12, s.baseAlpha + twinkle));
+
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+            ctx.fillStyle = s.color;
+            ctx.globalAlpha = alpha;
+            ctx.fill();
           }
-          if (s.x < 0) s.x = width;
-          if (s.x > width) s.x = 0;
-
-          const twinkle = Math.sin(elapsed * s.twinkleSpeed + s.phase) * 0.25;
-          const alpha = Math.min(1, Math.max(0.12, s.baseAlpha + twinkle));
-
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-          ctx.fillStyle = s.color;
-          ctx.globalAlpha = alpha;
-          ctx.fill();
         }
 
         // 2. Spawn and render shooting stars (meteors)
@@ -1383,7 +1673,7 @@
     window.addEventListener('resize', () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      starCount = (window.innerWidth <= 768) ? 65 : 120;
+      starCount = (window.innerWidth <= 768) ? 40 : 100;
       populateStars();
       if (prefersReducedMotion) renderStatic();
     }, { passive: true });
@@ -1758,8 +2048,8 @@
       renderExperienceDetail(activeDetailId);
     }
 
-    // Re-anchor home avatar on language change
-    updateHomeAvatarAnchor();
+    // Re-anchor home avatar on language change & update cached dimensions
+    updateCachedDimensions();
 
     // Update nav indicator position after text changes
     setTimeout(() => updateNavIndicator(activeSectionId), 50);
@@ -1833,9 +2123,23 @@
     }
     applyLanguage(currentLang);
 
-    // Initial Indicator update
+    // Initial Indicator & cached dimensions update
+    updateCachedDimensions();
     updateNavIndicator(activeSectionId);
-    window.addEventListener('resize', () => updateNavIndicator(activeSectionId), { passive: true });
+    window.addEventListener('resize', () => {
+      updateCachedDimensions();
+      updateNavIndicator(activeSectionId);
+    }, { passive: true });
+
+    // Passive scroll listener for continuous scroll-driven flight
+    const scrollContainer = document.getElementById('scroll-container');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', () => {
+        if (manualF === null && cachedSectionHeight > 0) {
+          targetScrollF = scrollContainer.scrollTop / cachedSectionHeight;
+        }
+      }, { passive: true });
+    }
 
     // Mobile Hamburger Menu
     const menuToggleBtn = document.getElementById('menu-toggle-btn');
@@ -2110,6 +2414,34 @@
           <span>Spill Opacity: <b id="val-spill">${CONFIG.SPILL_OPACITY.toFixed(2)}</b></span>
           <input type="range" id="slider-spill" min="0" max="0.6" step="0.02" value="${CONFIG.SPILL_OPACITY}">
         </label>
+        <label class="debug-row">
+          <span>Flight Arc X: <b id="val-arc-x">${CONFIG.FLIGHT_ARC_X.toFixed(1)}vw</b></span>
+          <input type="range" id="slider-arc-x" min="0" max="25" step="0.5" value="${CONFIG.FLIGHT_ARC_X}">
+        </label>
+        <label class="debug-row">
+          <span>Flight Arc Y: <b id="val-arc-y">${CONFIG.FLIGHT_ARC_Y.toFixed(1)}vh</b></span>
+          <input type="range" id="slider-arc-y" min="0" max="20" step="0.5" value="${CONFIG.FLIGHT_ARC_Y}">
+        </label>
+        <label class="debug-row">
+          <span>Flight Swoop: <b id="val-swoop">${CONFIG.FLIGHT_SWOOP.toFixed(2)}</b></span>
+          <input type="range" id="slider-swoop" min="0" max="0.4" step="0.01" value="${CONFIG.FLIGHT_SWOOP}">
+        </label>
+        <label class="debug-row">
+          <span>Flight Roll: <b id="val-roll">${CONFIG.FLIGHT_ROLL.toFixed(2)} rad</b></span>
+          <input type="range" id="slider-roll" min="0" max="0.5" step="0.01" value="${CONFIG.FLIGHT_ROLL}">
+        </label>
+        <label class="debug-row">
+          <span>Warp Strength: <b id="val-warp">${CONFIG.WARP_STRENGTH.toFixed(0)}</b></span>
+          <input type="range" id="slider-warp" min="5" max="80" step="1" value="${CONFIG.WARP_STRENGTH}">
+        </label>
+
+        <div class="debug-toggles-row">
+          <button id="toggle-scrub-mode" class="debug-toggle-btn cursor-pointer">[ SCRUB: AUTO ]</button>
+        </div>
+        <label class="debug-row">
+          <span>Manual f: <b id="val-scrub">${fDisplay.toFixed(2)}</b></span>
+          <input type="range" id="slider-scrub" min="0" max="3" step="0.01" value="${fDisplay.toFixed(2)}">
+        </label>
 
         <div class="debug-toggles-row">
           <button id="toggle-yaw" class="debug-toggle-btn cursor-pointer">[ YAW: ${CONFIG.HEAD_YAW_SIGN > 0 ? '+1' : '-1'} ]</button>
@@ -2152,6 +2484,13 @@
     const sliderCLight = panel.querySelector('#slider-clight');
     const sliderHomeScale = panel.querySelector('#slider-home-scale');
     const sliderSpill = panel.querySelector('#slider-spill');
+    const sliderArcX = panel.querySelector('#slider-arc-x');
+    const sliderArcY = panel.querySelector('#slider-arc-y');
+    const sliderSwoop = panel.querySelector('#slider-swoop');
+    const sliderRoll = panel.querySelector('#slider-roll');
+    const sliderWarp = panel.querySelector('#slider-warp');
+    const toggleScrubMode = panel.querySelector('#toggle-scrub-mode');
+    const sliderScrub = panel.querySelector('#slider-scrub');
 
     const valZoom = panel.querySelector('#val-zoom');
     const valY = panel.querySelector('#val-y');
@@ -2165,6 +2504,12 @@
     const valCLight = panel.querySelector('#val-clight');
     const valHomeScale = panel.querySelector('#val-home-scale');
     const valSpill = panel.querySelector('#val-spill');
+    const valArcX = panel.querySelector('#val-arc-x');
+    const valArcY = panel.querySelector('#val-arc-y');
+    const valSwoop = panel.querySelector('#val-swoop');
+    const valRoll = panel.querySelector('#val-roll');
+    const valWarp = panel.querySelector('#val-warp');
+    const valScrub = panel.querySelector('#val-scrub');
 
     const toggleYaw = panel.querySelector('#toggle-yaw');
     const togglePitch = panel.querySelector('#toggle-pitch');
@@ -2191,7 +2536,12 @@ CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)},
 HOLD_ANCHOR: '${CONFIG.HOLD_ANCHOR}',
 HOLD_TITLE: ${CONFIG.HOLD_TITLE},
 HOME_AVATAR_SCALE: ${CONFIG.HOME_AVATAR_SCALE.toFixed(2)},
-SPILL_OPACITY: ${CONFIG.SPILL_OPACITY.toFixed(2)}`;
+SPILL_OPACITY: ${CONFIG.SPILL_OPACITY.toFixed(2)},
+FLIGHT_ARC_X: ${CONFIG.FLIGHT_ARC_X.toFixed(1)},
+FLIGHT_ARC_Y: ${CONFIG.FLIGHT_ARC_Y.toFixed(1)},
+FLIGHT_SWOOP: ${CONFIG.FLIGHT_SWOOP.toFixed(2)},
+FLIGHT_ROLL: ${CONFIG.FLIGHT_ROLL.toFixed(2)},
+WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       codeOutput.textContent = code;
     }
 
@@ -2295,6 +2645,54 @@ SPILL_OPACITY: ${CONFIG.SPILL_OPACITY.toFixed(2)}`;
       valSpill.textContent = CONFIG.SPILL_OPACITY.toFixed(2);
       document.documentElement.style.setProperty('--spill-opacity', CONFIG.SPILL_OPACITY);
       updateConfigReadout();
+    });
+
+    sliderArcX.addEventListener('input', (e) => {
+      CONFIG.FLIGHT_ARC_X = parseFloat(e.target.value);
+      valArcX.textContent = CONFIG.FLIGHT_ARC_X.toFixed(1) + 'vw';
+      updateConfigReadout();
+    });
+
+    sliderArcY.addEventListener('input', (e) => {
+      CONFIG.FLIGHT_ARC_Y = parseFloat(e.target.value);
+      valArcY.textContent = CONFIG.FLIGHT_ARC_Y.toFixed(1) + 'vh';
+      updateConfigReadout();
+    });
+
+    sliderSwoop.addEventListener('input', (e) => {
+      CONFIG.FLIGHT_SWOOP = parseFloat(e.target.value);
+      valSwoop.textContent = CONFIG.FLIGHT_SWOOP.toFixed(2);
+      updateConfigReadout();
+    });
+
+    sliderRoll.addEventListener('input', (e) => {
+      CONFIG.FLIGHT_ROLL = parseFloat(e.target.value);
+      valRoll.textContent = CONFIG.FLIGHT_ROLL.toFixed(2) + ' rad';
+      updateConfigReadout();
+    });
+
+    sliderWarp.addEventListener('input', (e) => {
+      CONFIG.WARP_STRENGTH = parseFloat(e.target.value);
+      valWarp.textContent = CONFIG.WARP_STRENGTH.toFixed(0);
+      updateConfigReadout();
+    });
+
+    toggleScrubMode.addEventListener('click', () => {
+      if (manualF === null) {
+        manualF = parseFloat(sliderScrub.value);
+        toggleScrubMode.textContent = '[ SCRUB: MANUAL ]';
+      } else {
+        manualF = null;
+        toggleScrubMode.textContent = '[ SCRUB: AUTO ]';
+      }
+    });
+
+    sliderScrub.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      valScrub.textContent = val.toFixed(2);
+      if (manualF !== null) {
+        manualF = val;
+      }
     });
 
     toggleHoldTitle.addEventListener('click', () => {

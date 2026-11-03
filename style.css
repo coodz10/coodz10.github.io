@@ -182,9 +182,13 @@ html, body {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: translate(0, var(--avatar-y, 0px)) scale(0.9);
-  transition: transform 900ms var(--ease-smooth), opacity 900ms var(--ease-smooth);
+  transform: translate3d(0, 0, 0);
+  transition: opacity 900ms var(--ease-smooth);
   will-change: transform, opacity;
+}
+
+.avatar-stage.stage-ready {
+  opacity: 1;
 }
 
 /* Soft Wide Haze (Behind dark silhouette, follows stage position) */
@@ -212,28 +216,6 @@ html, body {
   pointer-events: none;
   z-index: 1;
   will-change: transform;
-}
-
-/* Section State Transforms */
-.avatar-stage.stage-ready.state-home {
-  opacity: 1;
-  transform: translate(var(--home-ax, 0px), var(--home-ay, 0px)) scale(var(--home-as, 0.38));
-}
-
-.avatar-stage.stage-ready.state-chi_sono {
-  opacity: 1;
-  transform: translate(22vw, calc(var(--avatar-y, 0px) * 0.8)) scale(0.85);
-}
-
-.avatar-stage.stage-ready.state-esperienze,
-.avatar-stage.stage-ready.state-esperienze-detail {
-  opacity: 1;
-  transform: translate(-22vw, calc(var(--avatar-y, 0px) * 0.8)) scale(0.8);
-}
-
-.avatar-stage.stage-ready.state-contatti {
-  opacity: 1;
-  transform: translate(0, var(--avatar-y, 0px)) scale(0.7);
 }
 
 .avatar-canvas {
@@ -580,15 +562,7 @@ html, body {
   max-width: 96vw;
   pointer-events: auto;
   z-index: 4;
-  transition: opacity 600ms var(--ease-smooth), filter 600ms var(--ease-smooth), transform 600ms var(--ease-smooth);
   will-change: transform, opacity, filter;
-}
-
-.section-home:not(.section-active) .hero-sway-group {
-  opacity: 0;
-  filter: blur(8px);
-  transform: translate(-50%, -50%) scale(1.04) !important;
-  pointer-events: none;
 }
 
 /* Giant "coodz_10" Title with Slow Shimmer, No Glow, No Shadow */
@@ -802,24 +776,75 @@ html, body {
   user-select: none;
   z-index: 1;
   white-space: nowrap;
-  transition: transform 900ms var(--ease-smooth), opacity 900ms var(--ease-smooth);
   will-change: transform, opacity;
 }
 
-.snap-section.section-active .section-bg-word {
-  opacity: 0.07;
-  transform: translateY(-50%) translateX(0);
-}
-
 /* ==========================================================================
-   SECTION 2: CHI_SONO (ABOUT ME) - Avatar on Right, Content on Left
+   SECTION 2: CHI_SONO (ABOUT ME) - 3-Column Grid with Avatar in Center
    ========================================================================== */
 .section-about {
-  justify-content: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
 }
 
-.about-block {
-  max-width: 520px;
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr minmax(26vw, 30vw) 1fr;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 4vw;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 3;
+}
+
+.about-col-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.about-col-left .section-title {
+  margin-bottom: 1.25rem;
+}
+
+.about-col-left .about-text {
+  font-size: clamp(1rem, 1.35vw, 1.15rem);
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 32ch;
+  margin-bottom: 0;
+}
+
+.about-col-center {
+  pointer-events: none;
+  min-height: 200px;
+  width: 100%;
+}
+
+.about-col-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.about-col-right .info-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Stagger reveal of left and right blocks in chi_sono */
+.snap-section.section-active .about-col-left {
+  transition-delay: 0ms;
+}
+.snap-section.section-active .about-col-right {
+  transition-delay: 150ms;
 }
 
 .about-text {
@@ -1473,16 +1498,30 @@ html, body {
     padding: 1rem 1.25rem;
   }
 
-  /* On mobile: keep avatar small and anchored under title in home, and shifted up in other sections */
-  .avatar-stage.stage-ready.state-home {
-    transform: translate(var(--home-ax, 0px), var(--home-ay, 0px)) scale(var(--home-as, 0.3)) !important;
+  .about-grid {
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.25rem;
+    gap: 1.25rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .avatar-stage.stage-ready.state-chi_sono,
-  .avatar-stage.stage-ready.state-esperienze,
-  .avatar-stage.stage-ready.state-esperienze-detail,
-  .avatar-stage.stage-ready.state-contatti {
-    transform: translate(0, calc(-18vh + var(--avatar-y, 0px))) scale(0.6) !important;
+  .about-col-left .about-text {
+    max-width: 100%;
+  }
+
+  .about-col-center {
+    display: none;
+  }
+
+  .about-col-right {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .about-col-right .info-card {
+    max-width: 100%;
   }
 
   .avatar-haze {

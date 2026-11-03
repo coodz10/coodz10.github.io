@@ -142,26 +142,34 @@
          ====================================================================== -->
     <section id="chi_sono" class="snap-section section-about">
       <div class="section-bg-word mono" data-i18n="bgWordAbout" aria-hidden="true">CHI SONO</div>
-      <div class="section-block about-block">
-        <p class="section-tag mono" data-i18n="aboutTag">LOG_ENTRY_00 // CHI_SONO</p>
-        <h2 class="section-title" data-i18n="aboutTitle">Chi Sono</h2>
-        <p class="about-text" data-i18n="aboutText">
-          Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows alla gestione di infrastrutture server, fino alla sicurezza informatica e allo sviluppo di software su misura.
-        </p>
+      <div class="about-grid">
+        <!-- LEFT column: section tag, big title, the paragraph (max-width ~30ch per line) -->
+        <div class="about-col about-col-left section-block">
+          <p class="section-tag mono" data-i18n="aboutTag">LOG_ENTRY_00 // CHI_SONO</p>
+          <h2 class="section-title" data-i18n="aboutTitle">Chi Sono</h2>
+          <p class="about-text" data-i18n="aboutText">
+            Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows alla gestione di infrastrutture server, fino alla sicurezza informatica e allo sviluppo di software su misura.
+          </p>
+        </div>
 
-        <!-- Small Mono Info Card -->
-        <div class="info-card mono">
-          <div class="info-row">
-            <span class="info-label" data-i18n="aboutHandleLabel">HANDLE:</span>
-            <span class="info-val accent">coodz_10</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label" data-i18n="aboutRoleLabel">RUOLO:</span>
-            <span class="info-val" data-i18n="aboutRoleVal">SysAdmin // Security</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label" data-i18n="aboutStatusLabel">STATO:</span>
-            <span class="info-val accent" data-i18n="aboutStatusVal">[ OPERATIVO ]</span>
+        <!-- MIDDLE column: ~30vw wide empty corridor left for the 3D avatar -->
+        <div class="about-col about-col-center" aria-hidden="true"></div>
+
+        <!-- RIGHT column: the info card aligned to vertical middle -->
+        <div class="about-col about-col-right section-block">
+          <div class="info-card mono">
+            <div class="info-row">
+              <span class="info-label" data-i18n="aboutHandleLabel">HANDLE:</span>
+              <span class="info-val accent">coodz_10</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label" data-i18n="aboutRoleLabel">RUOLO:</span>
+              <span class="info-val" data-i18n="aboutRoleVal">SysAdmin // Security</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label" data-i18n="aboutStatusLabel">STATO:</span>
+              <span class="info-val accent" data-i18n="aboutStatusVal">[ OPERATIVO ]</span>
+            </div>
           </div>
         </div>
       </div>
