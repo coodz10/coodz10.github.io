@@ -155,55 +155,63 @@
          ====================================================================== -->
     <section id="esperienze" class="snap-section section-experiences">
       <div class="section-block experiences-block">
-        <p class="section-tag mono" data-i18n="expTag">LOG_ENTRY_01 // ESPERIENZE</p>
-        <h2 class="section-title" data-i18n="expTitle">Esperienze</h2>
 
-        <div class="cards-list">
-          <!-- Card 01: RedisMC -->
-          <a href="servers/redismc.html" class="card-minimal">
-            <div class="card-left">
-              <span class="card-index mono">01</span>
-              <div>
-                <h3 class="card-name">RedisMC</h3>
-                <p class="card-sub mono" data-i18n="expRedisRole">Helper</p>
-              </div>
-            </div>
-            <div class="card-right mono">
-              <span class="card-status accent" data-i18n="expRedisStatus">[ Stato: Attivo ]</span>
-              <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
-            </div>
-          </a>
+        <!-- Cards List View -->
+        <div id="experiences-cards-view" class="experiences-view experiences-cards-view">
+          <p class="section-tag mono" data-i18n="expTag">LOG_ENTRY_01 // ESPERIENZE</p>
+          <h2 class="section-title" data-i18n="expTitle">Esperienze</h2>
 
-          <!-- Card 02: MetaMc -->
-          <a href="servers/metamc.html" class="card-minimal">
-            <div class="card-left">
-              <span class="card-index mono">02</span>
-              <div>
-                <h3 class="card-name">MetaMc</h3>
-                <p class="card-sub mono" data-i18n="expMetaRole">Helper ★★★★☆</p>
+          <div class="cards-list">
+            <!-- Card 01: RedisMC -->
+            <a href="#esperienze/redismc" class="card-minimal" data-exp="redismc">
+              <div class="card-left">
+                <span class="card-index mono">01</span>
+                <div>
+                  <h3 class="card-name">RedisMC</h3>
+                  <p class="card-sub mono" data-i18n="expRedisRole">Helper</p>
+                </div>
               </div>
-            </div>
-            <div class="card-right mono">
-              <span class="card-status muted" data-i18n="expMetaStatus">[ Stato: Dimesso ]</span>
-              <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
-            </div>
-          </a>
+              <div class="card-right mono">
+                <span class="card-status accent" data-i18n="expRedisStatus">[ Stato: Attivo ]</span>
+                <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+              </div>
+            </a>
 
-          <!-- Card 03: PixyMC -->
-          <a href="servers/pixymc.html" class="card-minimal">
-            <div class="card-left">
-              <span class="card-index mono">03</span>
-              <div>
-                <h3 class="card-name">PixyMC</h3>
-                <p class="card-sub mono" data-i18n="expPixyRole">Owner [ SS Manager ] ★★★★☆</p>
+            <!-- Card 02: MetaMc -->
+            <a href="#esperienze/metamc" class="card-minimal" data-exp="metamc">
+              <div class="card-left">
+                <span class="card-index mono">02</span>
+                <div>
+                  <h3 class="card-name">MetaMc</h3>
+                  <p class="card-sub mono" data-i18n="expMetaRole">Helper ★★★★☆</p>
+                </div>
               </div>
-            </div>
-            <div class="card-right mono">
-              <span class="card-status muted" data-i18n="expPixyStatus">[ Stato: Dimesso ]</span>
-              <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
-            </div>
-          </a>
+              <div class="card-right mono">
+                <span class="card-status muted" data-i18n="expMetaStatus">[ Stato: Dimesso ]</span>
+                <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+              </div>
+            </a>
+
+            <!-- Card 03: PixyMC -->
+            <a href="#esperienze/pixymc" class="card-minimal" data-exp="pixymc">
+              <div class="card-left">
+                <span class="card-index mono">03</span>
+                <div>
+                  <h3 class="card-name">PixyMC</h3>
+                  <p class="card-sub mono" data-i18n="expPixyRole">Owner [ SS Manager ] ★★★★☆</p>
+                </div>
+              </div>
+              <div class="card-right mono">
+                <span class="card-status muted" data-i18n="expPixyStatus">[ Stato: Dimesso ]</span>
+                <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+              </div>
+            </a>
+          </div>
         </div>
+
+        <!-- Experience Detail View (Dynamic in-page presentation) -->
+        <div id="experience-detail-view" class="experiences-view experience-detail-view view-hidden" style="display: none;" aria-hidden="true"></div>
+
       </div>
     </section>
 
@@ -256,6 +264,20 @@
     </section>
 
   </div><!-- /scroll-container -->
+
+  <!-- Cyberpunk Minimal Proofs Modal -->
+  <div id="proofs-modal" class="proofs-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display: none;">
+    <div class="proofs-backdrop"></div>
+    <div class="proofs-card mono">
+      <div class="proofs-header">
+        <h3 id="proofs-modal-title" class="proofs-title">[ Link e Prove ]</h3>
+        <button id="proofs-modal-close" class="proofs-close-btn cursor-pointer" aria-label="Chiudi">[ × ] CHIUDI</button>
+      </div>
+      <div id="proofs-modal-links" class="proofs-links-list">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
 
   <!-- Audio Element with playlist wired in main.js -->
   <audio id="bg-audio" preload="none"></audio>
