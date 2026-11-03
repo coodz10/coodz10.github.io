@@ -1,192 +1,634 @@
 <!-- ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. -->
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>coodz_10</title>
-  <meta name="description" content="Portfolio ufficiale di coodz_10: System Administrator, Screen Share Analyst e sviluppatore di soluzioni informatiche custom.">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>coodz_10 // INCOMING TRANSMISSION</title>
+  <meta name="description" content="Portfolio ufficiale di coodz_10: System Administrator, Screen Share Analyst, Forensic Tools Builder e sviluppatore di soluzioni informatiche custom.">
   <link rel="icon" type="image/png" href="favicon.png">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://coodz10.github.io/">
-  <meta property="og:title" content="coodz_10">
+  <meta property="og:title" content="coodz_10 // INCOMING TRANSMISSION">
   <meta property="og:description" content="Portfolio ufficiale di coodz_10: System Administrator, Screen Share Analyst e sviluppatore di soluzioni informatiche custom.">
   <meta property="og:image" content="https://coodz10.github.io/favicon.png">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://coodz10.github.io/">
-  <meta property="twitter:title" content="coodz_10">
+  <meta property="twitter:title" content="coodz_10 // INCOMING TRANSMISSION">
   <meta property="twitter:description" content="Portfolio ufficiale di coodz_10: System Administrator, Screen Share Analyst e sviluppatore di soluzioni informatiche custom.">
 
-  <link rel="stylesheet" href="assets/css/tailwind.css">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <!-- Google Fonts: Space Grotesk, Syne, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
 
+  <!-- Pinned CDN Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
 </head>
-<body class="relative flex flex-col min-h-screen">
 
-<canvas id="stars"></canvas>
+<body>
 
-<!-- HUD NAV -->
-<nav class="hud-bar fixed top-0 inset-x-0 z-30 animate-in">
-  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between mono text-xs">
-    <span class="text-[var(--ink-dim)]">coodz_10 <span class="text-[var(--cyan)]">// ONLINE</span></span>
-    <div class="flex items-center gap-4 sm:gap-6 text-[var(--ink-dim)]">
-      <a href="index.html" class="text-white transition-colors">[ home ]</a>
-      <a href="about.html" class="hover:text-white transition-colors"><span class="lang-it">[ chi_sono ]</span><span class="lang-en hidden">[ about_me ]</span></a>
-      <a href="experiences.html" class="hover:text-white transition-colors"><span class="lang-it">[ esperienze ]</span><span class="lang-en hidden">[ experiences ]</span></a>
-      <a href="contact.html" class="hover:text-white transition-colors"><span class="lang-it">[ contatti ]</span><span class="lang-en hidden">[ contact ]</span></a>
-      <div class="flex items-center ml-2 border-l border-[rgba(124,108,240,.3)] pl-4 gap-3 text-xs">
-        <button onclick="setLanguage('it')" id="lang-btn-it" class="text-white transition-colors">&bull; IT</button>
-                <button onclick="setLanguage('en')" id="lang-btn-en" class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>
-                <button id="nav-audio-btn" aria-label="Attiva o Disattiva Musica" title="Attiva o Disattiva Musica" class="flex items-center justify-center p-1.5 rounded-lg border border-[rgba(124,108,240,.4)] bg-[rgba(124,108,240,.15)] text-[var(--cyan)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all ml-2 opacity-60">
-          <svg id="nav-audio-on" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-          <svg id="nav-audio-off" class="w-4 h-4 text-[var(--ink-dim)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
-        </button>
-        <button id="nav-audio-next" aria-label="Prossima Canzone Casuale" title="Prossima Canzone Casuale" class="flex items-center justify-center p-1.5 rounded-lg border border-[rgba(124,108,240,.4)] bg-[rgba(124,108,240,.15)] text-[var(--cyan)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all ml-1.5 opacity-60 hover:opacity-100 cursor-pointer">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
-        </button>
+  <!-- GLOBAL SCROLL PROGRESS BAR -->
+  <div id="global-scroll-progress"></div>
+
+  <!-- CUSTOM CURSOR (DOT + SMOOTH TRAILING RING) -->
+  <div class="cursor-dot"></div>
+  <div class="cursor-ring">
+    <span class="cursor-label"></span>
+  </div>
+
+  <!-- BACKGROUND THREE.JS CANVAS & SCI-FI ATMOSPHERE -->
+  <canvas id="bg-canvas"></canvas>
+  <div class="bg-aurora-layer">
+    <div class="aurora-blob aurora-blob-1"></div>
+    <div class="aurora-blob aurora-blob-2"></div>
+    <div class="aurora-blob aurora-blob-3"></div>
+  </div>
+  <div class="crt-overlay"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- ==========================================================================
+       1. LOADER / BOOT SEQUENCE (~2.5s, Skippable)
+       ========================================================================== -->
+  <div id="boot-screen" class="boot-active">
+    <div class="boot-terminal-box">
+      <div class="boot-terminal-header mono">
+        <span>TRANSMISSION_RX // PROTOCOL_V4</span>
+        <span class="sys-status">
+          <span class="pulse-dot"></span>
+          <span>ESTABLISHING_LINK</span>
+        </span>
+      </div>
+
+      <div class="boot-lines-container mono">
+        <div class="boot-line">
+          <span><span class="line-tag">&gt;</span>establishing link...</span>
+          <span class="line-ok">[ OK ]</span>
+        </div>
+        <div class="boot-line">
+          <span><span class="line-tag">&gt;</span>decrypting identity: coodz_10...</span>
+          <span class="line-ok">[ OK ]</span>
+        </div>
+        <div class="boot-line">
+          <span><span class="line-tag">&gt;</span>signal locked // ready</span>
+          <span class="line-ok">[ SYNCED ]</span>
+        </div>
+      </div>
+
+      <div class="boot-progress-wrapper mono">
+        <div class="boot-progress-stats">
+          <span>INITIALIZING_QUANTUM_CORE</span>
+          <span id="boot-percent">0%</span>
+        </div>
+        <div class="boot-progress-track">
+          <div id="boot-progress-fill" class="boot-progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="boot-footer-actions">
+        <button id="boot-skip-btn" class="boot-skip-btn mono">[ SKIP_BOOT ]</button>
+        <span class="mono" style="font-size:0.7rem; color:var(--muted); letter-spacing:0.1em;">ESC TO BYPASS</span>
       </div>
     </div>
   </div>
-</nav>
 
-<!-- HERO -->
-<main class="relative z-10 flex-grow flex items-center justify-center px-6 pt-28 pb-10">
-  <div class="w-full flex flex-col items-center text-center">
-    
-    <div class="animate-in delay-1">
-      <h1 class="text-7xl sm:text-9xl md:text-[11rem] lg:text-[13rem] font-extrabold glow leading-none tracking-tighter mb-12">coodz_10</h1>
-    </div>
-    
-    <div class="animate-in delay-2 flex flex-col sm:flex-row gap-6 justify-center items-center w-full max-w-3xl mx-auto px-4">
-      <a href="about.html" class="bracket-btn inline-block px-10 py-5 text-lg sm:text-xl tracking-widest uppercase text-center w-full sm:w-auto">
-        <span class="lang-it">[ chi sono ]</span>
-        <span class="lang-en hidden">[ about me ]</span>
+  <!-- Shockwave Ring during Circle Wipe Reveal -->
+  <div id="reveal-shockwave" class="reveal-shockwave"></div>
+
+  <!-- MAIN APP WRAPPER (TARGET FOR CIRCLE WIPE REVEAL) -->
+  <div id="main-app" class="main-app-container">
+
+    <!-- ==========================================================================
+         NAVIGATION (FIXED MINIMAL HUD)
+         ========================================================================== -->
+    <nav class="nav-hud">
+      <div class="nav-inner">
+        <a href="#home" class="nav-brand">
+          <span class="brand-title">coodz_10</span>
+          <span class="brand-status">[ ONLINE ]</span>
+        </a>
+
+        <!-- Desktop Nav Links -->
+        <div class="nav-links-wrap">
+          <a href="#home" class="nav-link active" data-cursor="NAV">[ home ]</a>
+          <a href="#chi_sono" class="nav-link" data-cursor="NAV">
+            <span class="lang-it">[ chi_sono ]</span>
+            <span class="lang-en hidden-lang">[ about_me ]</span>
+          </a>
+          <a href="#esperienze" class="nav-link" data-cursor="NAV">
+            <span class="lang-it">[ esperienze ]</span>
+            <span class="lang-en hidden-lang">[ experiences ]</span>
+          </a>
+          <a href="#contatti" class="nav-link" data-cursor="NAV">
+            <span class="lang-it">[ contatti ]</span>
+            <span class="lang-en hidden-lang">[ contact ]</span>
+          </a>
+        </div>
+
+        <!-- Controls: Language + Audio + Mobile Toggle -->
+        <div class="nav-controls">
+          <button id="lang-btn-it" class="lang-btn active" onclick="setLanguage('it')">&bull; IT</button>
+          <button id="lang-btn-en" class="lang-btn" onclick="setLanguage('en')">&bull; EN</button>
+
+          <!-- Audio Equalizer Toggle -->
+          <button id="nav-audio-btn" class="audio-control-btn" aria-label="Attiva / Disattiva Audio" title="Toggle Audio" data-cursor="AUDIO">
+            <div class="audio-eq-bars">
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+            </div>
+            <span>AUDIO</span>
+          </button>
+
+          <!-- Next Track Skip Button -->
+          <button id="nav-audio-next" class="audio-next-btn mono" aria-label="Prossimo Brano" title="Next Track" data-cursor="SKIP">
+            [ ⏭ ]
+          </button>
+
+          <!-- Mobile Hamburger -->
+          <button id="nav-mobile-toggle-btn" class="nav-mobile-toggle" aria-label="Menu">[ ☰ ]</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Fullscreen Mobile Navigation Menu -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay">
+      <a href="#home" class="mobile-nav-link">[ home ]</a>
+      <a href="#chi_sono" class="mobile-nav-link">
+        <span class="lang-it">[ chi_sono ]</span>
+        <span class="lang-en hidden-lang">[ about_me ]</span>
       </a>
-      <a href="experiences.html" class="bracket-btn inline-block px-10 py-5 text-lg sm:text-xl tracking-widest uppercase text-center w-full sm:w-auto">
-        <span class="lang-it">[ le mie esperienze ]</span>
-        <span class="lang-en hidden">[ my experiences ]</span>
+      <a href="#esperienze" class="mobile-nav-link">
+        <span class="lang-it">[ esperienze ]</span>
+        <span class="lang-en hidden-lang">[ experiences ]</span>
+      </a>
+      <a href="#contatti" class="mobile-nav-link">
+        <span class="lang-it">[ contatti ]</span>
+        <span class="lang-en hidden-lang">[ contact ]</span>
       </a>
     </div>
 
-  </div>
-</main>
-
-<!-- FOOTER -->
-<footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.15)] mt-10 animate-in delay-3">
-  <div class="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 mono text-xs text-[var(--ink-dim)]">
-    <span>END_TRANSMISSION // COODZ_10</span>
-    <div class="flex gap-6">
-      
-      <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">[ Discord ]</a>
-    </div>
-    <span>© <span id="year"></span></span>
-  </div>
-</footer>
-
-
-
-
-  <script>
-    let currentLang = localStorage.getItem('lang') || 'it';
-    
-    function setLanguage(lang) {
-      currentLang = lang;
-      localStorage.setItem('lang', lang);
-      
-      // Update visibility using tailwind .hidden class
-      document.querySelectorAll('.lang-it').forEach(el => {
-        if(lang === 'it') el.classList.remove('hidden'); else el.classList.add('hidden');
-      });
-      document.querySelectorAll('.lang-en').forEach(el => {
-        if(lang === 'en') el.classList.remove('hidden'); else el.classList.add('hidden');
-      });
-      
-      // Update bullets style
-      const btnIt = document.getElementById('lang-btn-it');
-      const btnEn = document.getElementById('lang-btn-en');
-      if(btnIt && btnEn) {
-        if(lang === 'it') {
-          btnIt.className = 'text-white transition-colors';
-          btnEn.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
-        } else {
-          btnEn.className = 'text-white transition-colors';
-          btnIt.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
-        }
-      }
-    }
-    
-    setLanguage(currentLang);
-  </script>
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  <!-- CYBERPUNK ENTRY OVERLAY (LOADING SCREEN) -->
-  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none cyberpunk-overlay-bg">
-    <div class="text-center max-w-md px-6 flex flex-col items-center">
-      
-      <!-- LOGO / TITLE -->
-      <h1 class="text-4xl sm:text-5xl font-extrabold text-white glow tracking-tighter mb-8">coodz_10</h1>
-      
-      <!-- LOADING STATUS -->
-      <div class="mono text-[var(--cyan)] text-xs sm:text-sm mb-4 tracking-[0.25em] uppercase font-bold" id="loading-text">INITIALIZING_SYSTEM...</div>
-      
-      <!-- GLOWING PROGRESS BAR -->
-      <div class="w-64 sm:w-72 h-1.5 bg-[rgba(124,108,240,.2)] rounded-full overflow-hidden relative mb-8 border border-[rgba(124,108,240,.35)] shadow-[0_0_15px_rgba(124,108,240,.2)]">
-        <div id="loading-bar" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[var(--violet)] to-[var(--cyan)] transition-all duration-1000"></div>
+    <!-- ==========================================================================
+         3. HERO SECTION
+         ========================================================================== -->
+    <header id="home" class="hero-section">
+      <div class="hero-meta-strip">
+        <div class="hero-meta-item">
+          <span class="pulse-dot"></span>
+          <span>STATUS: <span class="accent">[ ONLINE ]</span></span>
+        </div>
+        <div class="hero-meta-item">
+          <span>SIGNAL: <span class="accent">[ LOCKED ]</span></span>
+        </div>
+        <div class="hero-meta-item">
+          <span>SYS_TIME: <span id="live-clock" class="accent">00:00:00 UTC+1</span></span>
+        </div>
       </div>
-      
-      <!-- CLICK TO ENTER BUTTON (HIDDEN DURING LOADING) -->
-      <div id="enter-text" class="hidden text-sm sm:text-base text-white glow tracking-[0.2em] cursor-pointer font-bold uppercase py-4 px-8 rounded-xl border border-[rgba(79,209,255,.6)] bg-[rgba(11,10,26,.9)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all shadow-[0_0_25px_rgba(79,209,255,0.4)] animate-pulse">
-        [ CLICK ANYWHERE TO ENTER ]
-      </div>
-    </div>
-  </div>
 
+      <!-- Giant Scramble/Decrypt Title -->
+      <div class="hero-title-wrap">
+        <h1 id="hero-title" class="hero-title" data-cursor="COODZ">coodz_10</h1>
+      </div>
+
+      <!-- Rotating Typewriter Role Line -->
+      <div class="hero-role-wrap">
+        <span id="typewriter-text">&gt; SYSTEM ADMINISTRATOR</span>
+        <span class="typewriter-cursor"></span>
+      </div>
+
+      <!-- Hero CTA Buttons with Magnetic Effect & Monospace Brackets -->
+      <div class="hero-actions">
+        <a href="#chi_sono" class="bracket-btn btn-magnetic" data-cursor="VIEW">
+          <span class="lang-it">[ CHI SONO ]</span>
+          <span class="lang-en hidden-lang">[ ABOUT ME ]</span>
+        </a>
+        <a href="#esperienze" class="bracket-btn btn-magnetic" data-cursor="VIEW">
+          <span class="lang-it">[ LE MIE ESPERIENZE ]</span>
+          <span class="lang-en hidden-lang">[ MY EXPERIENCES ]</span>
+        </a>
+      </div>
+
+      <!-- Animated Scroll Down Indicator -->
+      <a href="#chi_sono" class="hero-scroll-indicator" aria-label="Scorri in basso">
+        <span>[ SCROLL_DOWN ]</span>
+        <div class="scroll-line"></div>
+      </a>
+    </header>
+
+    <!-- ==========================================================================
+         6. CHI_SONO (ABOUT ME) SECTION
+         ========================================================================== -->
+    <section id="chi_sono" class="section-wrap">
+      <p class="section-tag">
+        <span class="lang-it">LOG_ENTRY_00 // CHI_SONO</span>
+        <span class="lang-en hidden-lang">LOG_ENTRY_00 // ABOUT_ME</span>
+      </p>
+      <h2 class="section-title">
+        <span class="lang-it">Chi Sono</span>
+        <span class="lang-en hidden-lang">About Me</span>
+      </h2>
+
+      <div class="about-grid">
+        <!-- Left: Scroll-Linked Word-By-Word Illumination Statement (Preserving ALL original text & paragraphs) -->
+        <div class="about-statement">
+          <div class="lang-it about-statement-wrap">
+            <p class="about-p">
+              Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows alla gestione di infrastrutture server, fino alla sicurezza informatica e allo sviluppo di software su misura.
+            </p>
+            <p class="about-p">
+              A questo si affianca una solida <span class="about-highlight">competenza in ambito hardware</span>: mi dedico all'assemblaggio e alla configurazione di PC su misura, alla diagnostica dei guasti fisici, all'ottimizzazione termica e alla manutenzione dei componenti, curando con precisione la sinergia tra piattaforma hardware e sistema operativo per ottenere la massima stabilità e affidabilità.
+            </p>
+            <p class="about-p">
+              Tra i miei campi d'azione mi occupo anche di <span class="about-highlight">screen share e analisi di sicurezza</span>, effettuando controlli approfonditi sui sistemi per individuare anomalie, software non autorizzati o alterazioni e ricostruire l'attività recente di una macchina.
+            </p>
+            <p class="about-p">
+              Ciò che mi guida è la voglia di capire come funzionano davvero le cose, trasformando quella curiosità in <span class="about-highlight">soluzioni concrete</span> — che si tratti di un intervento hardware, di un'ispezione digitale approfondita o di mantenere sistemi e server sempre efficienti, stabili e sicuri.
+            </p>
+          </div>
+
+          <div class="lang-en hidden-lang about-statement-wrap">
+            <p class="about-p">
+              I have a strong passion for 360° IT: from Windows system optimization to server infrastructure management, cybersecurity, and custom software development.
+            </p>
+            <p class="about-p">
+              This is complemented by solid <span class="about-highlight">hardware expertise</span>: I assemble and configure custom PCs, perform physical fault diagnostics, thermal optimization, and component maintenance, carefully tuning the synergy between hardware platform and operating system to achieve maximum stability and reliability.
+            </p>
+            <p class="about-p">
+              Among my areas of expertise, I also specialize in <span class="about-highlight">screen share and security analysis</span>, conducting in-depth system checks to identify anomalies, unauthorized software, or tampering, and reconstruct recent machine activity.
+            </p>
+            <p class="about-p">
+              What drives me is the desire to understand how things really work, turning that curiosity into <span class="about-highlight">concrete solutions</span> — whether performing a hardware intervention, an in-depth digital inspection, or keeping systems and servers efficient, stable, and secure.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: System Info Terminal Card with 3D Tilt -->
+        <div class="system-card" data-cursor="TERMINAL">
+          <div class="system-card-header">
+            <div class="system-card-dots">
+              <span class="system-card-dot"></span>
+              <span class="system-card-dot"></span>
+              <span class="system-card-dot"></span>
+            </div>
+            <span>SYSTEM_PROFILE // COODZ_10</span>
+          </div>
+
+          <div class="system-info-rows">
+            <div class="sys-row">
+              <span class="sys-label">HANDLE:</span>
+              <span class="sys-val accent">coodz_10</span>
+            </div>
+            <div class="sys-row">
+              <span class="sys-label">ORIGIN:</span>
+              <span class="sys-val">Italy // EU [45.46° N, 9.19° E]</span>
+            </div>
+            <div class="sys-row">
+              <span class="sys-label">ROLES:</span>
+              <span class="sys-val">SysAdmin // SS Analyst // Forensics</span>
+            </div>
+            <div class="sys-row">
+              <span class="sys-label">STACK:</span>
+              <span class="sys-val">Windows Kernel, Bash, C++, Python</span>
+            </div>
+            <div class="sys-row">
+              <span class="sys-label">HARDWARE:</span>
+              <span class="sys-val">Rig Custom Architecture & Thermal Tuning</span>
+            </div>
+            <div class="sys-row">
+              <span class="sys-label">FORENSICS:</span>
+              <span class="sys-val">Prefetch, Memory, USN Journal, Registry</span>
+            </div>
+            <div class="sys-row">
+              <span class="sys-label">STATUS:</span>
+              <span class="sys-val accent">[ OPERATIONAL // READY ]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid with Real Content Counters -->
+      <div class="stats-grid">
+        <div class="stat-box" data-cursor="STAT">
+          <div class="stat-number" data-target="600" data-suffix="+">0</div>
+          <div class="stat-label">
+            <span class="lang-it">Utenti Giornalieri Analizzati (MetaMC)</span>
+            <span class="lang-en hidden-lang">Daily Users Screened (MetaMC)</span>
+          </div>
+        </div>
+
+        <div class="stat-box" data-cursor="STAT">
+          <div class="stat-number" data-target="4" data-suffix="">0</div>
+          <div class="stat-label">
+            <span class="lang-it">Network & Server Gestiti</span>
+            <span class="lang-en hidden-lang">Managed Networks & Servers</span>
+          </div>
+        </div>
+
+        <div class="stat-box" data-cursor="STAT">
+          <div class="stat-number" data-target="100" data-suffix="%">0</div>
+          <div class="stat-label">
+            <span class="lang-it">Soluzioni Hardware & Forensi Custom</span>
+            <span class="lang-en hidden-lang">Custom Hardware & Forensic Rigor</span>
+          </div>
+        </div>
+
+        <div class="stat-box" data-cursor="STAT">
+          <div class="stat-number" data-target="24" data-suffix="/7">0</div>
+          <div class="stat-label">
+            <span class="lang-it">Affidabilità & Monitoraggio Sistemi</span>
+            <span class="lang-en hidden-lang">System Reliability & Oversight</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         7. ESPERIENZE (EXPERIENCES) - PINNED HORIZONTAL SCROLL SECTION
+         Strict compliance with AGENTS.md Rule 1 (Minecraft servers always FIRST),
+         Rule 4 (Bracket style, no pills), and Rule 5 (Uniform card dimensions).
+         ========================================================================== -->
+    <section id="esperienze" class="experiences-section">
+      <div class="experiences-header-wrap">
+        <p class="section-tag">
+          <span class="lang-it">LOG_ENTRY_01 // ESPERIENZE</span>
+          <span class="lang-en hidden-lang">LOG_ENTRY_01 // EXPERIENCES</span>
+        </p>
+        <h2 class="section-title">
+          <span class="lang-it">Le Mie Esperienze</span>
+          <span class="lang-en hidden-lang">My Experiences</span>
+        </h2>
+      </div>
+
+      <div class="experiences-pin-container">
+        <div class="experiences-track">
+
+          <!-- CARD 01: RedisMC (Minecraft Server - FIRST) -->
+          <div class="experience-card" data-cursor="DOSSIER">
+            <div class="card-top">
+              <div class="card-index">01</div>
+              <div class="card-badge-row">
+                <span class="card-type">[ MINECRAFT SERVER ]</span>
+                <span class="card-status">
+                  <span class="lang-it">[ Stato: Attivo ]</span>
+                  <span class="lang-en hidden-lang">[ Status: Active ]</span>
+                </span>
+              </div>
+              <h3 class="card-title">RedisMC</h3>
+              <p class="card-role">Helper</p>
+              <p class="card-period">
+                <span class="lang-it">[ Periodo: Ottobre 2026 - ]</span>
+                <span class="lang-en hidden-lang">[ Period: October 2026 - ]</span>
+              </p>
+              <p class="card-desc">
+                <span class="lang-it">Supporto attivo ai giocatori, moderazione in tempo reale, gestione ticket e presidio della community all'interno di un network PvP strutturato.</span>
+                <span class="lang-en hidden-lang">Active player support, real-time moderation, ticket handling, and community management within a structured PvP network.</span>
+              </p>
+            </div>
+            <div class="card-bottom">
+              <div class="card-tags">
+                <span>[ MINECRAFT ]</span>
+                <span>[ HELPER ]</span>
+                <span>[ ACTIVE ]</span>
+                <span>[ TICKET ]</span>
+              </div>
+              <a href="servers/redismc.html" class="bracket-link" data-cursor="OPEN">
+                <span class="lang-it">[ Vedi Scheda Completa &rarr; ]</span>
+                <span class="lang-en hidden-lang">[ View Full Dossier &rarr; ]</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- CARD 02: MetaMc (Minecraft Server - FIRST) -->
+          <div class="experience-card" data-cursor="DOSSIER">
+            <div class="card-top">
+              <div class="card-index">02</div>
+              <div class="card-badge-row">
+                <span class="card-type">[ MINECRAFT SERVER ]</span>
+                <span class="card-status">
+                  <span class="lang-it">[ Stato: Dimesso ]</span>
+                  <span class="lang-en hidden-lang">[ Status: Resign ]</span>
+                </span>
+              </div>
+              <h3 class="card-title">MetaMc</h3>
+              <p class="card-role">Helper <span style="color:var(--text); font-size:0.85rem; margin-left:0.5rem;">★★★★☆</span></p>
+              <p class="card-period">
+                <span class="lang-it">[ Periodo: Agosto - Settembre 2026 ]</span>
+                <span class="lang-en hidden-lang">[ Period: August - September 2026 ]</span>
+              </p>
+              <p class="card-desc">
+                <span class="lang-it">Controllo su un bacino di oltre 600 utenti al giorno nelle modalità PvP, esecuzione di controlli Screen Share, supporto vocale e assistenza ticket su Discord.</span>
+                <span class="lang-en hidden-lang">Oversight of 600+ daily players in PvP modes, screen share inspections, voice assistance, and Discord ticket handling in a large network.</span>
+              </p>
+            </div>
+            <div class="card-bottom">
+              <div class="card-tags">
+                <span>[ MINECRAFT ]</span>
+                <span>[ SS_ANALYSIS ]</span>
+                <span>[ 600+_USERS ]</span>
+                <span>[ MODERATION ]</span>
+              </div>
+              <a href="servers/metamc.html" class="bracket-link" data-cursor="OPEN">
+                <span class="lang-it">[ Vedi Scheda Completa &rarr; ]</span>
+                <span class="lang-en hidden-lang">[ View Full Dossier &rarr; ]</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- CARD 03: PixyMC (Minecraft Server - FIRST) -->
+          <div class="experience-card" data-cursor="DOSSIER">
+            <div class="card-top">
+              <div class="card-index">03</div>
+              <div class="card-badge-row">
+                <span class="card-type">[ MINECRAFT SERVER ]</span>
+                <span class="card-status">
+                  <span class="lang-it">[ Stato: Dimesso ]</span>
+                  <span class="lang-en hidden-lang">[ Status: Resign ]</span>
+                </span>
+              </div>
+              <h3 class="card-title">PixyMC</h3>
+              <p class="card-role">Owner [ SS Manager ] <span style="color:var(--text); font-size:0.85rem; margin-left:0.5rem;">★★★★☆</span></p>
+              <p class="card-period">
+                <span class="lang-it">[ Periodo: Agosto 2025 - Luglio 2026 ]</span>
+                <span class="lang-en hidden-lang">[ Period: August 2025 - July 2026 ]</span>
+              </p>
+              <p class="card-desc">
+                <span class="lang-it">Gestione e coordinamento del dipartimento Screen Share, formazione staff, investigazioni forensi avanzate, rilevamento cheat custom e sicurezza infrastrutturale.</span>
+                <span class="lang-en hidden-lang">Management and oversight of the Screen Share department, staff training, advanced digital forensics, custom cheat detection, and infrastructure safety.</span>
+              </p>
+            </div>
+            <div class="card-bottom">
+              <div class="card-tags">
+                <span>[ MINECRAFT ]</span>
+                <span>[ OWNER ]</span>
+                <span>[ SS_MANAGER ]</span>
+                <span>[ FORENSICS ]</span>
+              </div>
+              <a href="servers/pixymc.html" class="bracket-link" data-cursor="OPEN">
+                <span class="lang-it">[ Vedi Scheda Completa &rarr; ]</span>
+                <span class="lang-en hidden-lang">[ View Full Dossier &rarr; ]</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- CARD 04: Elysian Tierlist (NON-Minecraft server, strictly displayed AFTER Minecraft servers!) -->
+          <div class="experience-card" data-cursor="DOSSIER">
+            <div class="card-top">
+              <div class="card-index">04</div>
+              <div class="card-badge-row">
+                <span class="card-type">[ TIERLIST // COMMUNITY ]</span>
+                <span class="card-status">
+                  <span class="lang-it">[ Stato: Attivo ]</span>
+                  <span class="lang-en hidden-lang">[ Status: Active ]</span>
+                </span>
+              </div>
+              <h3 class="card-title">Elysian Tierlist</h3>
+              <p class="card-role">SS Verified</p>
+              <p class="card-period">
+                <span class="lang-it">[ Periodo: Ottobre 2026 - ]</span>
+                <span class="lang-en hidden-lang">[ Period: October 2026 - ]</span>
+              </p>
+              <p class="card-desc">
+                <span class="lang-it">Verifica e ispezione tecnica di sicurezza per giocatori competitivi, validazione integrità software, archiviazione prove e analisi forense.</span>
+                <span class="lang-en hidden-lang">Technical security inspection and verification for competitive players, software integrity checks, proof logs, and forensic reviews.</span>
+              </p>
+            </div>
+            <div class="card-bottom">
+              <div class="card-tags">
+                <span>[ TIERLIST ]</span>
+                <span>[ SS_VERIFIED ]</span>
+                <span>[ ACTIVE ]</span>
+                <span>[ EVIDENCE ]</span>
+              </div>
+              <a href="servers/elysian.html" class="bracket-link" data-cursor="OPEN">
+                <span class="lang-it">[ Vedi Scheda Completa &rarr; ]</span>
+                <span class="lang-en hidden-lang">[ View Full Dossier &rarr; ]</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Horizontal track progress indicator -->
+      <div class="track-progress-wrap">
+        <div class="track-progress-bar">
+          <div class="track-progress-fill"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         8. CONTATTI (CONTACT) SECTION
+         ========================================================================== -->
+    <section id="contatti" class="contact-section">
+      <!-- Animated Marquee Background -->
+      <div class="contact-marquee-wrap">
+        <div class="contact-marquee mono">
+          // INCOMING TRANSMISSION // SECURE CHANNEL // DISCORD // EMAIL // ENCRYPTED DATASTREAM // FORENSIC ANALYSIS // CUSTOM HARDWARE //
+        </div>
+      </div>
+
+      <div class="contact-content">
+        <p class="section-tag">
+          <span class="lang-it">LOG_ENTRY_02 // CONTATTI</span>
+          <span class="lang-en hidden-lang">LOG_ENTRY_02 // CONTACT</span>
+        </p>
+
+        <h2 class="contact-cta-title">
+          <span class="lang-it">Parliamo</span>
+          <span class="lang-en hidden-lang">Let's Talk</span>
+        </h2>
+
+        <p class="contact-desc">
+          <span class="lang-it">Per collaborazioni, richieste di servizi di sicurezza, screen share analysis o consulenza infrastrutturale e hardware. Mettiti in contatto tramite i canali ufficiali.</span>
+          <span class="lang-en hidden-lang">For collaborations, security inquiries, screen share analysis, or custom hardware and infrastructure consulting. Reach out via the official channels.</span>
+        </p>
+
+        <!-- Large Interactive Contact Rows -->
+        <div class="contact-rows-list">
+          <!-- Discord -->
+          <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="contact-row" data-cursor="DISCORD">
+            <div class="contact-row-left">
+              <div class="contact-row-title">Discord</div>
+              <div class="contact-row-sub">coodz_10 // UID: 951554850867519548</div>
+            </div>
+            <div class="contact-row-right">
+              <span class="contact-badge">[ OPEN_CHANNEL ]</span>
+              <span class="contact-arrow">&rarr;</span>
+            </div>
+          </a>
+
+          <!-- Email -->
+          <a href="mailto:cood_ita@zohomail.eu" class="contact-row" data-cursor="EMAIL">
+            <div class="contact-row-left">
+              <div class="contact-row-title">Email</div>
+              <div class="contact-row-sub">cood_ita@zohomail.eu</div>
+            </div>
+            <div class="contact-row-right">
+              <span class="contact-badge">[ TRANSMIT_MAIL ]</span>
+              <span class="contact-arrow">&rarr;</span>
+            </div>
+          </a>
+
+          <!-- Services / Inquiries -->
+          <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="contact-row" data-cursor="INQUIRE">
+            <div class="contact-row-left">
+              <div class="contact-row-title">
+                <span class="lang-it">Consulenza & Servizi Custom</span>
+                <span class="lang-en hidden-lang">Consulting & Custom Services</span>
+              </div>
+              <div class="contact-row-sub">
+                <span class="lang-it">Screen Share Forensic Audit, Assembly PC & Server Infrastructure</span>
+                <span class="lang-en hidden-lang">Screen Share Forensic Audit, Custom PC Assembly & Server Architecture</span>
+              </div>
+            </div>
+            <div class="contact-row-right">
+              <span class="contact-badge">[ REQUEST_AUDIT ]</span>
+              <span class="contact-arrow">&rarr;</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         9. FOOTER
+         ========================================================================== -->
+    <footer class="footer-wrap">
+      <div class="footer-inner">
+        <div class="footer-end-trans mono">
+          END_TRANSMISSION // COODZ_10
+        </div>
+
+        <div class="footer-links mono">
+          <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="footer-link">[ Discord ]</a>
+          <button id="back-to-top-btn" class="back-to-top-btn mono">[ &uarr; BACK_TO_TOP ]</button>
+        </div>
+
+        <div class="mono" style="font-size:0.75rem;">
+          &copy; <span id="footer-year">2026</span> coodz_10 // [ ALL SYSTEMS OPERATIONAL ]
+        </div>
+      </div>
+    </footer>
+
+  </div><!-- /main-app -->
+
+  <!-- Audio Element -->
   <audio id="bg-audio" preload="auto"></audio>
 
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <script src="assets/js/starfield.js"></script>
-  <script src="assets/js/audio.js?v=2"></script>
-  <script src="assets/js/router.js?v=3"></script>
+  <!-- Application Script -->
+  <script src="main.js"></script>
 </body>
-
-
-
-
-
-
-
-
-
-
 
 </html>
