@@ -50,6 +50,12 @@
     HEAD_YAW_SIGN: 1,          // Mouse right -> face turns to viewer's right
     HEAD_PITCH_SIGN: 1,        // Mouse above -> face looks up
 
+    // Home Banner Anchor & Holding Dynamics (Swaying Pendulum Flight)
+    HOLD_ANCHOR: 'underscore', // 'underscore' (center of _) or 'center' (center of title)
+    HOLD_TITLE: true,          // true: hands touch bottom of title; false: floats above
+    HOME_AVATAR_SCALE: 0.38,   // Avatar scale in home state (~28vh tall)
+    SPILL_OPACITY: 0.18,       // Soft light spill opacity under title
+
     // Audio & Playlist
     DEFAULT_VOLUME: 0.4,
     PLAYLIST: [
@@ -92,7 +98,12 @@
       footerEnd: 'END_TRANSMISSION // COODZ_10',
       backToExperiences: '[ ← torna alle esperienze ]',
       openProofs: '[ APRI PROVE ]',
-      proofsTitle: 'Link e Prove'
+      proofsTitle: 'Link e Prove',
+      btnAbout: '[ CHI SONO ]',
+      btnExp: '[ LE MIE ESPERIENZE ]',
+      bgWordAbout: 'CHI SONO',
+      bgWordExp: 'ESPERIENZE',
+      bgWordContact: 'CONTATTI'
     },
     en: {
       navHome: '[ home ]',
@@ -125,7 +136,12 @@
       footerEnd: 'END_TRANSMISSION // COODZ_10',
       backToExperiences: '[ ← back to experiences ]',
       openProofs: '[ OPEN PROOFS ]',
-      proofsTitle: 'Links & Proofs'
+      proofsTitle: 'Links & Proofs',
+      btnAbout: '[ ABOUT ME ]',
+      btnExp: '[ MY EXPERIENCES ]',
+      bgWordAbout: 'ABOUT',
+      bgWordExp: 'EXPERIENCE',
+      bgWordContact: 'CONTACT'
     }
   };
 
@@ -292,6 +308,13 @@
       rightArm: { x: -2.8, y: 0.2, z: -0.35 },
       leftLeg: { x: -0.03, y: 0, z: -0.02 },
       rightLeg: { x: 0.03, y: 0, z: 0.02 }
+    },
+    hold: {
+      body: { x: -0.02, y: 0, z: 0 },
+      leftArm: { x: -2.9, y: 0.05, z: -0.12 },
+      rightArm: { x: -2.9, y: -0.05, z: 0.12 },
+      leftLeg: { x: 0.05, y: 0, z: -0.06 },
+      rightLeg: { x: -0.05, y: 0, z: 0.06 }
     }
   };
 
@@ -470,17 +493,17 @@
   class FloatAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
     constructor() {
       super();
-      this.currentPoseName = 'neutral';
-      this.sourceRotations = this.clonePose(POSES.neutral);
-      this.targetRotations = this.clonePose(POSES.neutral);
-      this.blendedRotations = this.clonePose(POSES.neutral);
+      this.currentPoseName = 'hold';
+      this.sourceRotations = this.clonePose(POSES.hold);
+      this.targetRotations = this.clonePose(POSES.hold);
+      this.blendedRotations = this.clonePose(POSES.hold);
 
       this.blendStartTime = performance.now() / 1000;
       this.blendDuration = CONFIG.POSE_BLEND;
       this.isBlending = false;
 
       this.holdStartTime = performance.now() / 1000;
-      this.holdDuration = 7.0; // Random 6-10s
+      this.holdDuration = 7.0;
 
       this.forcedPose = null;
       this.isOneShotWave = false;
@@ -490,8 +513,6 @@
       this.headPitch = 0;
 
       this.currentSection = 'home';
-      this.hasDoneHomeInitialWave = false;
-      this.nextHomeRareWaveTime = (performance.now() / 1000) + (Math.random() * 20 + 40);
     }
 
     clonePose(p) {
@@ -533,12 +554,8 @@
       this.isOneShotWave = false;
 
       if (sectionId === 'home') {
-        if (!this.hasDoneHomeInitialWave) {
-          this.hasDoneHomeInitialWave = true;
-          this.triggerWave(2.0);
-        } else {
-          this.pickNextPose();
-        }
+        this.transitionTo('hold', 1.8);
+        return;
       } else if (sectionId === 'chi_sono') {
         this.transitionTo('rest');
         this.holdDuration = Math.random() * 4 + 6;
@@ -570,6 +587,11 @@
         return;
       }
 
+      if (this.currentSection === 'home') {
+        this.transitionTo('hold');
+        return;
+      }
+
       let pool = ['neutral', 'open', 'rest'];
       if (this.currentSection === 'chi_sono') {
         pool = ['rest', 'neutral', 'open'];
@@ -581,8 +603,6 @@
         pool = ['neutral', 'point', 'rest'];
       } else if (this.currentSection === 'contatti') {
         pool = ['open', 'neutral'];
-      } else if (this.currentSection === 'home') {
-        pool = ['neutral', 'open', 'rest'];
       }
 
       const available = pool.filter((p) => p !== this.currentPoseName);
@@ -619,9 +639,10 @@
             this.pickNextPose();
           }
         } else if (!this.forcedPose) {
-          if (this.currentSection === 'home' && nowSec >= this.nextHomeRareWaveTime) {
-            this.nextHomeRareWaveTime = nowSec + (Math.random() * 20 + 40);
-            this.triggerWave(2.0);
+          if (this.currentSection === 'home') {
+            if (this.currentPoseName !== 'hold') {
+              this.transitionTo('hold', 1.5);
+            }
           } else if (nowSec - this.holdStartTime >= this.holdDuration) {
             this.pickNextPose();
           }
@@ -636,8 +657,17 @@
       let bodyNoiseX = 0;
       let bodyNoiseZ = 0;
       let waveOscZ = 0;
+      let legSway = 0;
+      let armTremorL = 0;
+      let armTremorR = 0;
 
       if (!prefersReducedMotion) {
+        if (this.currentPoseName === 'hold') {
+          legSway = 0.12 * Math.sin(nowSec * (2 * Math.PI / 5.0));
+          armTremorL = (Math.random() - 0.5) * 0.03;
+          armTremorR = (Math.random() - 0.5) * 0.03;
+        }
+
         armLDriftZ = 0.08 * Math.sin(nowSec * 1.1 + 0.5);
         armRDriftZ = -0.08 * Math.sin(nowSec * 1.3 + 2.0);
         legLDriftX = 0.06 * Math.sin(nowSec * 0.9 + 1.2);
@@ -660,19 +690,19 @@
         skin.body.rotation.z = b.body.z + bodyNoiseZ;
       }
 
-      skin.leftArm.rotation.x = b.leftArm.x;
+      skin.leftArm.rotation.x = b.leftArm.x + armTremorL;
       skin.leftArm.rotation.y = b.leftArm.y;
       skin.leftArm.rotation.z = b.leftArm.z + armLDriftZ;
 
-      skin.rightArm.rotation.x = b.rightArm.x;
+      skin.rightArm.rotation.x = b.rightArm.x + armTremorR;
       skin.rightArm.rotation.y = b.rightArm.y;
       skin.rightArm.rotation.z = b.rightArm.z + armRDriftZ + waveOscZ;
 
-      skin.leftLeg.rotation.x = b.leftLeg.x + legLDriftX;
+      skin.leftLeg.rotation.x = b.leftLeg.x + legLDriftX + legSway;
       skin.leftLeg.rotation.y = b.leftLeg.y;
       skin.leftLeg.rotation.z = b.leftLeg.z;
 
-      skin.rightLeg.rotation.x = b.rightLeg.x + legRDriftX;
+      skin.rightLeg.rotation.x = b.rightLeg.x + legRDriftX - legSway;
       skin.rightLeg.rotation.y = b.rightLeg.y;
       skin.rightLeg.rotation.z = b.rightLeg.z;
 
@@ -702,8 +732,17 @@
       const bodyYaw = player.rotation.y - CONFIG.ROT_OFFSET;
       const targetHeadYaw = rawYaw - bodyYaw;
 
-      const clampedYaw = Math.max(-0.8, Math.min(0.8, targetHeadYaw));
-      const clampedPitch = Math.max(-0.4, Math.min(0.4, rawPitch));
+      let clampedYaw = 0;
+      let clampedPitch = 0;
+
+      if (this.currentSection === 'home') {
+        const lookUpBias = -0.18; // tilt head up towards title
+        clampedYaw = Math.max(-0.45, Math.min(0.45, targetHeadYaw));
+        clampedPitch = Math.max(-0.25, Math.min(0.25, rawPitch)) + lookUpBias;
+      } else {
+        clampedYaw = Math.max(-0.8, Math.min(0.8, targetHeadYaw));
+        clampedPitch = Math.max(-0.4, Math.min(0.4, rawPitch));
+      }
 
       this.headYaw += (clampedYaw - this.headYaw) * 0.05;
       this.headPitch += (clampedPitch - this.headPitch) * 0.05;
@@ -745,15 +784,13 @@
       openingScreen.classList.add('faded-out');
       if (avatarStage) avatarStage.classList.add('stage-ready');
 
-      // Wave once on first arrival after opening sequence
-      if (floatAnimation && activeSectionId === 'home') {
-        floatAnimation.triggerWave(2.0);
-      }
-
       // Decrypt Title "coodz_10"
       if (heroTitle) {
         decryptTitle(heroTitle, 'coodz_10', 1200);
       }
+
+      // Re-anchor home avatar to banner
+      updateHomeAvatarAnchor();
 
       // Handle deep links on page arrival (e.g. #esperienze/pixymc or #esperienze)
       if (window.location.hash) {
@@ -799,39 +836,106 @@
   }
 
   // ==========================================================================
-  // TITLE DECRYPT EFFECT (Random glyphs resolving left to right)
+  // TITLE DECRYPT EFFECT (Random glyphs resolving left to right per span)
   // ==========================================================================
   function decryptTitle(el, targetText, duration) {
     const chars = '01!<>-_/[]{}*#+=';
     const len = targetText.length;
     const startTime = performance.now();
+    const spans = el.querySelectorAll('.ch');
 
     function update(now) {
       const elapsed = now - startTime;
       const progress = Math.min(1, elapsed / duration);
       const lockedCount = Math.floor(progress * len);
 
-      let output = '';
-      for (let i = 0; i < len; i++) {
-        if (i < lockedCount) {
-          output += targetText[i];
-        } else if (i === lockedCount && progress >= 0.95) {
-          output += targetText[i];
-        } else {
-          output += chars[Math.floor(Math.random() * chars.length)];
+      if (spans.length === len) {
+        for (let i = 0; i < len; i++) {
+          if (i < lockedCount) {
+            spans[i].textContent = targetText[i];
+          } else if (i === lockedCount && progress >= 0.95) {
+            spans[i].textContent = targetText[i];
+          } else {
+            spans[i].textContent = chars[Math.floor(Math.random() * chars.length)];
+          }
         }
+      } else {
+        let output = '';
+        for (let i = 0; i < len; i++) {
+          if (i < lockedCount) {
+            output += targetText[i];
+          } else if (i === lockedCount && progress >= 0.95) {
+            output += targetText[i];
+          } else {
+            output += chars[Math.floor(Math.random() * chars.length)];
+          }
+        }
+        el.textContent = output;
       }
-
-      el.textContent = output;
 
       if (progress < 1) {
         requestAnimationFrame(update);
       } else {
-        el.textContent = targetText;
+        if (spans.length === len) {
+          for (let i = 0; i < len; i++) {
+            spans[i].textContent = targetText[i];
+          }
+        } else {
+          el.textContent = targetText;
+        }
+        updateHomeAvatarAnchor();
       }
     }
 
     requestAnimationFrame(update);
+  }
+
+  // ==========================================================================
+  // HOME BANNER & AVATAR HANDS ANCHOR CALCULATION
+  // ==========================================================================
+  function updateHomeAvatarAnchor() {
+    const titleEl = document.getElementById('hero-title');
+    const heroSwayGroup = document.getElementById('hero-sway-group');
+    if (!titleEl || !heroSwayGroup) return;
+
+    const underscoreSpan = document.querySelector('.ch-underscore');
+    const anchorEl = (CONFIG.HOLD_ANCHOR === 'underscore' && underscoreSpan) ? underscoreSpan : titleEl;
+
+    const groupRect = heroSwayGroup.getBoundingClientRect();
+    const anchorRect = anchorEl.getBoundingClientRect();
+    const titleRect = titleEl.getBoundingClientRect();
+
+    // 1. Group Transform Origin at anchor
+    const originX = (anchorRect.left + anchorRect.width * 0.5) - groupRect.left;
+    const originY = (CONFIG.HOLD_TITLE ? titleRect.bottom : (titleRect.top - 20)) - groupRect.top;
+    heroSwayGroup.style.transformOrigin = `${originX.toFixed(1)}px ${originY.toFixed(1)}px`;
+
+    // 2. Avatar Home Scale
+    isMobile = window.innerWidth <= 768;
+    const scale = isMobile ? (CONFIG.HOME_AVATAR_SCALE * 0.8) : CONFIG.HOME_AVATAR_SCALE;
+
+    // 3. Hands position math
+    // Model height in unscaled canvas is ~74vh (window.innerHeight * 0.74)
+    // Distance from center of unscaled avatar to raised hands top is ~0.37 * window.innerHeight
+    const handsDistFromCenter = (window.innerHeight * 0.74 * 0.5) * scale;
+
+    const targetX = anchorRect.left + anchorRect.width * 0.5;
+    const targetY = CONFIG.HOLD_TITLE
+      ? (titleRect.bottom + window.innerHeight * 0.005)
+      : (titleRect.top - window.innerHeight * 0.04);
+
+    const ax = targetX - (window.innerWidth * 0.5);
+    const ay = targetY + handsDistFromCenter - (window.innerHeight * 0.5);
+
+    document.documentElement.style.setProperty('--home-ax', `${ax.toFixed(2)}px`);
+    document.documentElement.style.setProperty('--home-ay', `${ay.toFixed(2)}px`);
+    document.documentElement.style.setProperty('--home-as', `${scale.toFixed(3)}`);
+    document.documentElement.style.setProperty('--spill-opacity', CONFIG.SPILL_OPACITY);
+
+    const avatarFloatEl = document.getElementById('avatar-float');
+    if (avatarFloatEl && activeSectionId === 'home') {
+      avatarFloatEl.style.transformOrigin = `50% calc(50% - ${handsDistFromCenter.toFixed(2)}px)`;
+    }
   }
 
   // ==========================================================================
@@ -855,6 +959,9 @@
       targetPlayerRotY = CONFIG.ROT_EXP;
     } else if (state === 'esperienze-detail') {
       targetPlayerRotY = CONFIG.ROT_EXP_DETAIL;
+    } else if (state === 'home') {
+      targetPlayerRotY = 0.15; // slight turn in home holding banner
+      updateHomeAvatarAnchor();
     } else {
       targetPlayerRotY = 0;
     }
@@ -883,6 +990,8 @@
     if (stage) {
       stage.style.setProperty('--avatar-y', `${CONFIG.AVATAR_Y_OFFSET}px`);
     }
+
+    updateHomeAvatarAnchor();
   }
 
   function initAvatar() {
@@ -948,19 +1057,49 @@
         // 1. Update on-screen look targets
         updateLookTargetEveryFrame();
 
-        // 2. Zero-gravity JS transform on #avatar-float (bob & roll)
+        // 2. Pendulum sway in home / Zero-gravity JS transform on #avatar-float in other sections
+        const heroSwayGroup = document.getElementById('hero-sway-group');
         let yawDrift = 0;
-        if (!prefersReducedMotion) {
-          const bobPx = (window.innerHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0));
-          const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0));
-          yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
 
-          if (avatarFloatEl) {
-            avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
+        if (activeSectionId === 'home') {
+          if (!prefersReducedMotion) {
+            const thetaRad = 0.02 * Math.sin(nowSec * (2 * Math.PI / 7.0)) + 0.008 * Math.sin(nowSec * (2 * Math.PI / 3.3));
+            const bobPx = (window.innerHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0) + 0.5);
+
+            if (heroSwayGroup) {
+              heroSwayGroup.style.transform = `translate(-50%, -50%) translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
+            }
+
+            if (avatarFloatEl) {
+              const scale = isMobile ? (CONFIG.HOME_AVATAR_SCALE * 0.8) : CONFIG.HOME_AVATAR_SCALE;
+              const handsDistFromCenter = (window.innerHeight * 0.74 * 0.5) * scale;
+              avatarFloatEl.style.transformOrigin = `50% calc(50% - ${handsDistFromCenter.toFixed(2)}px)`;
+              avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
+            }
+          } else {
+            if (heroSwayGroup) heroSwayGroup.style.transform = 'translate(-50%, -50%)';
+            if (avatarFloatEl) avatarFloatEl.style.transform = 'none';
           }
         } else {
-          if (avatarFloatEl) {
-            avatarFloatEl.style.transform = 'none';
+          if (heroSwayGroup) {
+            heroSwayGroup.style.transform = '';
+            heroSwayGroup.style.transformOrigin = 'center center';
+          }
+
+          if (!prefersReducedMotion) {
+            const bobPx = (window.innerHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0));
+            const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0));
+            yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
+
+            if (avatarFloatEl) {
+              avatarFloatEl.style.transformOrigin = '50% 50%';
+              avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
+            }
+          } else {
+            if (avatarFloatEl) {
+              avatarFloatEl.style.transformOrigin = '50% 50%';
+              avatarFloatEl.style.transform = 'none';
+            }
           }
         }
 
@@ -975,6 +1114,10 @@
 
       // Set initial section state
       setAvatarState(activeSectionId || 'home');
+      updateHomeAvatarAnchor();
+      if (document.fonts) {
+        document.fonts.ready.then(updateHomeAvatarAnchor);
+      }
 
       // Track mouse across screen for head following in home section
       window.addEventListener('mousemove', (e) => {
@@ -1015,6 +1158,7 @@
         return;
       }
       if (!skinViewer || !floatAnimation) return;
+      if (currentAvatarState === 'home') return;
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -1064,6 +1208,7 @@
     let starCount = isMobile ? 65 : 120;
     const stars = [];
     const meteors = [];
+    const thrustParticles = [];
 
     function populateStars() {
       stars.length = 0;
@@ -1187,6 +1332,43 @@
           ctx.beginPath();
           ctx.arc(m.x, m.y, 1.2, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(232, 234, 255, ${m.alpha})`;
+          ctx.fill();
+        }
+
+        // 3. Subtle thrust particles under avatar feet when in home section
+        if (activeSectionId === 'home' && !prefersReducedMotion) {
+          const ax = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--home-ax')) || 0;
+          const ay = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--home-ay')) || 0;
+          const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--home-as')) || CONFIG.HOME_AVATAR_SCALE;
+          const feetX = (width * 0.5) + ax;
+          const feetY = (height * 0.5) + ay + (height * 0.74 * 0.5 * scale);
+
+          if (thrustParticles.length < 10 && Math.random() < 0.35) {
+            thrustParticles.push({
+              x: feetX + (Math.random() - 0.5) * 16 * scale,
+              y: feetY + Math.random() * 4,
+              vx: (Math.random() - 0.5) * 0.4,
+              vy: Math.random() * 0.7 + 0.5,
+              radius: Math.random() * 0.8 + 0.6,
+              alpha: 0.55,
+              color: Math.random() > 0.5 ? '#5ea8ff' : '#c4b5ff'
+            });
+          }
+        }
+
+        for (let i = thrustParticles.length - 1; i >= 0; i--) {
+          const tp = thrustParticles[i];
+          tp.x += tp.vx;
+          tp.y += tp.vy;
+          tp.alpha -= 0.015;
+          if (tp.alpha <= 0) {
+            thrustParticles.splice(i, 1);
+            continue;
+          }
+          ctx.beginPath();
+          ctx.arc(tp.x, tp.y, tp.radius, 0, Math.PI * 2);
+          ctx.fillStyle = tp.color;
+          ctx.globalAlpha = tp.alpha;
           ctx.fill();
         }
 
@@ -1576,6 +1758,9 @@
       renderExperienceDetail(activeDetailId);
     }
 
+    // Re-anchor home avatar on language change
+    updateHomeAvatarAnchor();
+
     // Update nav indicator position after text changes
     setTimeout(() => updateNavIndicator(activeSectionId), 50);
   }
@@ -1917,16 +2102,30 @@
           <span>Camera Light: <b id="val-clight">${CONFIG.CAMERA_LIGHT.toFixed(1)}</b></span>
           <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
         </label>
+        <label class="debug-row">
+          <span>Home Scale: <b id="val-home-scale">${CONFIG.HOME_AVATAR_SCALE.toFixed(2)}</b></span>
+          <input type="range" id="slider-home-scale" min="0.2" max="0.7" step="0.02" value="${CONFIG.HOME_AVATAR_SCALE}">
+        </label>
+        <label class="debug-row">
+          <span>Spill Opacity: <b id="val-spill">${CONFIG.SPILL_OPACITY.toFixed(2)}</b></span>
+          <input type="range" id="slider-spill" min="0" max="0.6" step="0.02" value="${CONFIG.SPILL_OPACITY}">
+        </label>
 
         <div class="debug-toggles-row">
           <button id="toggle-yaw" class="debug-toggle-btn cursor-pointer">[ YAW: ${CONFIG.HEAD_YAW_SIGN > 0 ? '+1' : '-1'} ]</button>
           <button id="toggle-pitch" class="debug-toggle-btn cursor-pointer">[ PITCH: ${CONFIG.HEAD_PITCH_SIGN > 0 ? '+1' : '-1'} ]</button>
         </div>
 
+        <div class="debug-toggles-row">
+          <button id="toggle-hold-title" class="debug-toggle-btn cursor-pointer">[ HOLD: ${CONFIG.HOLD_TITLE ? 'BOTTOM' : 'ABOVE'} ]</button>
+          <button id="toggle-hold-anchor" class="debug-toggle-btn cursor-pointer">[ ANCHOR: ${CONFIG.HOLD_ANCHOR} ]</button>
+        </div>
+
         <label class="debug-row">
           <span>Force Pose:</span>
           <select id="debug-pose-select" class="debug-select cursor-pointer">
             <option value="auto">[ AUTO / SECTION ]</option>
+            <option value="hold">hold</option>
             <option value="neutral">neutral</option>
             <option value="open">open</option>
             <option value="reach">reach</option>
@@ -1951,6 +2150,8 @@
     const sliderBrightness = panel.querySelector('#slider-brightness');
     const sliderGLight = panel.querySelector('#slider-glight');
     const sliderCLight = panel.querySelector('#slider-clight');
+    const sliderHomeScale = panel.querySelector('#slider-home-scale');
+    const sliderSpill = panel.querySelector('#slider-spill');
 
     const valZoom = panel.querySelector('#val-zoom');
     const valY = panel.querySelector('#val-y');
@@ -1962,9 +2163,13 @@
     const valBrightness = panel.querySelector('#val-brightness');
     const valGLight = panel.querySelector('#val-glight');
     const valCLight = panel.querySelector('#val-clight');
+    const valHomeScale = panel.querySelector('#val-home-scale');
+    const valSpill = panel.querySelector('#val-spill');
 
     const toggleYaw = panel.querySelector('#toggle-yaw');
     const togglePitch = panel.querySelector('#toggle-pitch');
+    const toggleHoldTitle = panel.querySelector('#toggle-hold-title');
+    const toggleHoldAnchor = panel.querySelector('#toggle-hold-anchor');
     const poseSelect = panel.querySelector('#debug-pose-select');
     const codeOutput = panel.querySelector('#debug-code-output');
     const copyBtn = panel.querySelector('#debug-copy-btn');
@@ -1982,7 +2187,11 @@ AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)},
 HEAD_YAW_SIGN: ${CONFIG.HEAD_YAW_SIGN},
 HEAD_PITCH_SIGN: ${CONFIG.HEAD_PITCH_SIGN},
 GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
-CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
+CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)},
+HOLD_ANCHOR: '${CONFIG.HOLD_ANCHOR}',
+HOLD_TITLE: ${CONFIG.HOLD_TITLE},
+HOME_AVATAR_SCALE: ${CONFIG.HOME_AVATAR_SCALE.toFixed(2)},
+SPILL_OPACITY: ${CONFIG.SPILL_OPACITY.toFixed(2)}`;
       codeOutput.textContent = code;
     }
 
@@ -2071,6 +2280,34 @@ CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
     togglePitch.addEventListener('click', () => {
       CONFIG.HEAD_PITCH_SIGN *= -1;
       togglePitch.textContent = `[ PITCH: ${CONFIG.HEAD_PITCH_SIGN > 0 ? '+1' : '-1'} ]`;
+      updateConfigReadout();
+    });
+
+    sliderHomeScale.addEventListener('input', (e) => {
+      CONFIG.HOME_AVATAR_SCALE = parseFloat(e.target.value);
+      valHomeScale.textContent = CONFIG.HOME_AVATAR_SCALE.toFixed(2);
+      updateHomeAvatarAnchor();
+      updateConfigReadout();
+    });
+
+    sliderSpill.addEventListener('input', (e) => {
+      CONFIG.SPILL_OPACITY = parseFloat(e.target.value);
+      valSpill.textContent = CONFIG.SPILL_OPACITY.toFixed(2);
+      document.documentElement.style.setProperty('--spill-opacity', CONFIG.SPILL_OPACITY);
+      updateConfigReadout();
+    });
+
+    toggleHoldTitle.addEventListener('click', () => {
+      CONFIG.HOLD_TITLE = !CONFIG.HOLD_TITLE;
+      toggleHoldTitle.textContent = `[ HOLD: ${CONFIG.HOLD_TITLE ? 'BOTTOM' : 'ABOVE'} ]`;
+      updateHomeAvatarAnchor();
+      updateConfigReadout();
+    });
+
+    toggleHoldAnchor.addEventListener('click', () => {
+      CONFIG.HOLD_ANCHOR = CONFIG.HOLD_ANCHOR === 'underscore' ? 'center' : 'underscore';
+      toggleHoldAnchor.textContent = `[ ANCHOR: ${CONFIG.HOLD_ANCHOR} ]`;
+      updateHomeAvatarAnchor();
       updateConfigReadout();
     });
 

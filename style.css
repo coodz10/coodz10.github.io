@@ -217,7 +217,7 @@ html, body {
 /* Section State Transforms */
 .avatar-stage.stage-ready.state-home {
   opacity: 1;
-  transform: translate(0, var(--avatar-y, 0px)) scale(1);
+  transform: translate(var(--home-ax, 0px), var(--home-ay, 0px)) scale(var(--home-as, 0.38));
 }
 
 .avatar-stage.stage-ready.state-chi_sono {
@@ -554,51 +554,224 @@ html, body {
 }
 
 /* ==========================================================================
-   SECTION 1: HOME
+   SECTION 1: HOME (GIANT TITLE AT ~40VH, SMALL AVATAR HOLDING BANNER, PENDULUM SWAY)
    ========================================================================== */
 .section-home {
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: flex-end;
-  padding-bottom: 4.8rem;
-}
-
-.hero-content {
-  text-align: center;
-  pointer-events: auto;
+  align-items: center;
+  padding: 0;
   position: relative;
-  z-index: 4;
-  margin-bottom: 0.5rem;
+  overflow: hidden;
 }
 
-.hero-title {
-  font-size: clamp(2.2rem, 5vw, 4.2rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  color: var(--text);
-  user-select: none;
-  cursor: default;
-}
-
-.scroll-hint {
+/* Title Sway Group (Driven every frame by JS pendulum sway: angle theta + bob) */
+.hero-sway-group {
   position: absolute;
-  bottom: 1.25rem;
+  top: 40vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 96vw;
+  pointer-events: auto;
+  z-index: 4;
+  transition: opacity 600ms var(--ease-smooth), filter 600ms var(--ease-smooth), transform 600ms var(--ease-smooth);
+  will-change: transform, opacity, filter;
+}
+
+.section-home:not(.section-active) .hero-sway-group {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translate(-50%, -50%) scale(1.04) !important;
+  pointer-events: none;
+}
+
+/* Giant "coodz_10" Title with Slow Shimmer, No Glow, No Shadow */
+.hero-title {
+  font-family: var(--font-title);
+  font-size: clamp(3.2rem, 15vw, 12rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  background: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 28%, #c4b5ff 50%, #8b6cff 72%, #5ea8ff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleShimmer 14s linear infinite;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  cursor: default;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes titleShimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.hero-title .ch {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Subtitle under title with fading thin lines */
+.hero-subtitle-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.15rem;
+  margin-top: 0.95rem;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-subtitle {
+  font-family: var(--font-mono);
+  font-size: clamp(0.7rem, 1.1vw, 0.92rem);
+  color: var(--muted);
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sub-line {
+  height: 1px;
+  width: clamp(2rem, 6vw, 4.8rem);
+  flex-shrink: 0;
+}
+
+.sub-line-left {
+  background: linear-gradient(90deg, transparent, rgba(124, 131, 168, 0.45));
+}
+
+.sub-line-right {
+  background: linear-gradient(90deg, rgba(124, 131, 168, 0.45), transparent);
+}
+
+/* Soft Light Spill Under Title Baseline (Lights the dark avatar silhouette from above) */
+.hero-light-spill {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(85vw, 680px);
+  height: 38vh;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 65% 100% at 50% 0%, rgba(139, 108, 255, var(--spill-opacity, 0.18)) 0%, rgba(94, 168, 255, calc(var(--spill-opacity, 0.18) * 0.45)) 40%, transparent 80%);
+  filter: blur(14px);
+}
+
+/* Bottom Center Actions (Primary outlined bracket + Secondary underline bracket + Scroll Line) */
+.home-bottom-actions {
+  position: absolute;
+  bottom: 2.25rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.45rem;
+  gap: 1.15rem;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.home-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.btn-bracket {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.3s ease, border-color 0.3s ease, transform 0.25s var(--ease-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* Primary Outlined Bracket Button with Sliding Gradient Fill on Hover (Strict Rule 4: sharp, no pills) */
+.btn-bracket-primary {
+  border: 1px solid rgba(94, 168, 255, 0.45);
+  padding: 0.55rem 1.15rem;
+  color: var(--text);
+  background: transparent;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.btn-bracket-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-gradient-h);
+  opacity: 0.2;
+  transform: translateX(-101%);
+  transition: transform 0.35s var(--ease-smooth);
+  z-index: -1;
+}
+
+.btn-bracket-primary:hover::before {
+  transform: translateX(0);
+}
+
+.btn-bracket-primary:hover {
+  border-color: var(--accent-blue);
+  color: #fff;
+}
+
+/* Secondary Bracket Button with Animated Underline on Hover */
+.btn-bracket-secondary {
+  border: none;
+  padding: 0.55rem 0.25rem;
   color: var(--muted);
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  pointer-events: none;
-  z-index: 4;
+  background: transparent;
+}
+
+.btn-bracket-secondary::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 0%;
+  height: 1px;
+  background: var(--accent-blue);
+  transition: width 0.3s var(--ease-smooth);
+}
+
+.btn-bracket-secondary:hover {
+  color: var(--text);
+}
+
+.btn-bracket-secondary:hover::after {
+  width: 100%;
+}
+
+.home-scroll-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .scroll-line {
   width: 1px;
-  height: 36px;
+  height: 32px;
   background: linear-gradient(180deg, var(--accent-blue), transparent);
   animation: scrollLineDrop 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
   will-change: transform, opacity;
@@ -609,6 +782,33 @@ html, body {
   50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
   50.1% { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
   100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+}
+
+/* Giant Faint Outlined Background Words in Non-Home Sections */
+.section-bg-word {
+  position: absolute;
+  top: 50%;
+  left: 4%;
+  transform: translateY(-50%) translateX(40px);
+  font-family: var(--font-title);
+  font-size: clamp(4rem, 14vw, 13rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  white-space: nowrap;
+  transition: transform 900ms var(--ease-smooth), opacity 900ms var(--ease-smooth);
+  will-change: transform, opacity;
+}
+
+.snap-section.section-active .section-bg-word {
+  opacity: 0.07;
+  transform: translateY(-50%) translateX(0);
 }
 
 /* ==========================================================================
@@ -1273,8 +1473,11 @@ html, body {
     padding: 1rem 1.25rem;
   }
 
-  /* On mobile: disable the left/right shifting, keep avatar small and fixed at top, text below */
-  .avatar-stage.stage-ready.state-home,
+  /* On mobile: keep avatar small and anchored under title in home, and shifted up in other sections */
+  .avatar-stage.stage-ready.state-home {
+    transform: translate(var(--home-ax, 0px), var(--home-ay, 0px)) scale(var(--home-as, 0.3)) !important;
+  }
+
   .avatar-stage.stage-ready.state-chi_sono,
   .avatar-stage.stage-ready.state-esperienze,
   .avatar-stage.stage-ready.state-esperienze-detail,
@@ -1297,8 +1500,49 @@ html, body {
   }
 
   .section-home {
-    align-items: flex-end;
-    padding-bottom: 5.5rem;
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .hero-title {
+    font-size: clamp(2.4rem, 16vw, 5.2rem);
+    max-width: 92vw;
+  }
+
+  .hero-subtitle-wrap {
+    gap: 0.65rem;
+  }
+
+  .hero-subtitle {
+    letter-spacing: 0.3em;
+    font-size: 0.65rem;
+  }
+
+  .sub-line {
+    width: 4vw;
+  }
+
+  .hero-light-spill {
+    height: 28vh;
+    width: 95vw;
+  }
+
+  .home-bottom-actions {
+    bottom: 1.5rem;
+    gap: 0.85rem;
+    width: 100%;
+  }
+
+  .home-buttons-row {
+    flex-direction: column;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .section-bg-word {
+    font-size: clamp(3rem, 18vw, 6.5rem);
+    left: 2%;
   }
 
   .about-block, .experiences-block, .contact-block {

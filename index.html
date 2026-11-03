@@ -112,13 +112,28 @@
          SECTION 1: HOME
          ====================================================================== -->
     <section id="home" class="snap-section section-home">
-      <div class="hero-content">
-        <h1 id="hero-title" class="hero-title" aria-label="coodz_10">coodz_10</h1>
+      <!-- Title Sway Group (Swings gently as pendulum with avatar) -->
+      <div id="hero-sway-group" class="hero-sway-group">
+        <h1 id="hero-title" class="hero-title" aria-label="coodz_10"><span class="ch">c</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">z</span><span class="ch ch-underscore">_</span><span class="ch">1</span><span class="ch">0</span></h1>
+
+        <div class="hero-subtitle-wrap mono">
+          <span class="sub-line sub-line-left" aria-hidden="true"></span>
+          <span class="hero-subtitle">MINECRAFT SCREENSHARER</span>
+          <span class="sub-line sub-line-right" aria-hidden="true"></span>
+        </div>
+
+        <div id="hero-light-spill" class="hero-light-spill" aria-hidden="true"></div>
       </div>
 
-      <div class="scroll-hint mono">
-        <span class="scroll-text" data-i18n="scrollHint">[ SCROLL ]</span>
-        <div class="scroll-line"></div>
+      <!-- Bottom Actions: Bracket buttons and scroll line -->
+      <div class="home-bottom-actions mono">
+        <div class="home-buttons-row">
+          <a href="#chi_sono" class="btn-bracket btn-bracket-primary mono" data-i18n="btnAbout">[ CHI SONO ]</a>
+          <a href="#esperienze" class="btn-bracket btn-bracket-secondary mono" data-i18n="btnExp">[ LE MIE ESPERIENZE ]</a>
+        </div>
+        <div class="home-scroll-indicator" aria-hidden="true">
+          <div class="scroll-line"></div>
+        </div>
       </div>
     </section>
 
@@ -126,6 +141,7 @@
          SECTION 2: CHI_SONO (ABOUT ME)
          ====================================================================== -->
     <section id="chi_sono" class="snap-section section-about">
+      <div class="section-bg-word mono" data-i18n="bgWordAbout" aria-hidden="true">CHI SONO</div>
       <div class="section-block about-block">
         <p class="section-tag mono" data-i18n="aboutTag">LOG_ENTRY_00 // CHI_SONO</p>
         <h2 class="section-title" data-i18n="aboutTitle">Chi Sono</h2>
@@ -156,6 +172,7 @@
          3 minimal cards strictly Minecraft servers first per AGENTS.md Rule 1
          ====================================================================== -->
     <section id="esperienze" class="snap-section section-experiences">
+      <div class="section-bg-word mono" data-i18n="bgWordExp" aria-hidden="true">ESPERIENZE</div>
       <div class="section-block experiences-block">
 
         <!-- Cards List View -->
@@ -221,6 +238,7 @@
          SECTION 4: CONTATTI (CONTACT)
          ====================================================================== -->
     <section id="contatti" class="snap-section section-contact">
+      <div class="section-bg-word mono" data-i18n="bgWordContact" aria-hidden="true">CONTATTI</div>
       <div class="section-block contact-block">
         <p class="section-tag mono" data-i18n="contactTag">LOG_ENTRY_02 // CONTATTI</p>
         <h2 class="contact-cta-title" data-i18n="contactTitle">Parliamo</h2>
