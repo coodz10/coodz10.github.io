@@ -1,0 +1,471 @@
+/* ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. */
+
+/* ==========================================================================
+   PORTFOLIO COODZ_10 - STEP 1: ULTRA-MINIMAL "INCOMING TRANSMISSION"
+   Style: bg #05060f, text #e8eaff, muted #7c83a8,
+   accent gradient #5ea8ff -> #8b6cff -> #c4b5ff,
+   Fonts: Space Grotesk (titles), JetBrains Mono (UI labels)
+   ========================================================================== */
+
+:root {
+  --bg: #05060f;
+  --text: #e8eaff;
+  --muted: #7c83a8;
+  --accent-blue: #5ea8ff;
+  --accent-violet: #8b6cff;
+  --accent-lilac: #c4b5ff;
+  --accent-gradient: linear-gradient(135deg, #5ea8ff 0%, #8b6cff 50%, #c4b5ff 100%);
+  --accent-gradient-h: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 50%, #c4b5ff 100%);
+  --border-thin: 1px solid rgba(124, 131, 168, 0.2);
+  --border-accent: 1px solid rgba(94, 168, 255, 0.45);
+  --font-title: 'Space Grotesk', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-title);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   1. OPENING SEQUENCE SCREEN (~2s, Skippable)
+   ========================================================================== */
+.opening-screen {
+  position: fixed;
+  inset: 0;
+  background-color: #05060f;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.8s var(--ease-smooth), visibility 0.8s var(--ease-smooth);
+}
+
+.opening-screen.faded-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.opening-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 90%;
+  max-width: 320px;
+  text-align: center;
+}
+
+.opening-terminal {
+  font-size: 0.85rem;
+  color: var(--text);
+  letter-spacing: 0.1em;
+  min-height: 1.5rem;
+  white-space: pre-wrap;
+}
+
+.opening-progress-track {
+  width: 100%;
+  height: 2px;
+  background: rgba(124, 131, 168, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.opening-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent-gradient-h);
+  transform-origin: left;
+  transition: width 0.1s linear;
+}
+
+.opening-skip-hint {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.opening-screen:hover .opening-skip-hint {
+  opacity: 1;
+  color: var(--accent-blue);
+}
+
+/* ==========================================================================
+   3. AMBIENT GLOW & STARS CANVAS (BEHIND AVATAR)
+   ========================================================================== */
+.ambient-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle 520px at 50% 48%, rgba(94, 168, 255, 0.18) 0%, rgba(139, 108, 255, 0.1) 40%, rgba(196, 181, 255, 0.02) 70%, transparent 100%);
+  animation: pulseAmbient 9s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+@keyframes pulseAmbient {
+  0% { transform: scale(0.92); opacity: 0.65; }
+  100% { transform: scale(1.08); opacity: 1; }
+}
+
+.stars-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ==========================================================================
+   2. AVATAR CONTAINER #avatar-stage (FIXED FULL-SCREEN)
+   ========================================================================== */
+.avatar-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 1.2s var(--ease-smooth), transform 1.2s var(--ease-smooth);
+  will-change: transform, opacity;
+}
+
+.avatar-stage.stage-ready {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.avatar-canvas {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+.avatar-fallback {
+  max-height: 75vh;
+  width: auto;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 40px rgba(94, 168, 255, 0.35));
+}
+
+/* ==========================================================================
+   4. NAVIGATION (FIXED MINIMAL MONO BRACKET STYLE)
+   ========================================================================== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  background: transparent;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  transition: background-color 0.3s ease;
+}
+
+.nav-left, .nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue);
+  animation: statusPulse 2s ease-in-out infinite;
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.nav-link {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.35rem 0.5rem;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--text);
+}
+
+.nav-link.active {
+  color: var(--accent-blue);
+}
+
+/* Bracket UI Buttons (No Pills, Strict AGENTS.md Rule 4) */
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.nav-btn:hover {
+  color: var(--text);
+}
+
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-left: var(--border-thin);
+  padding-left: 0.85rem;
+}
+
+.audio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.audio-btn.playing {
+  color: var(--accent-blue);
+}
+
+.eq-icon {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 10px;
+  height: 10px;
+}
+
+.eq-bar {
+  width: 2px;
+  height: 100%;
+  background: currentColor;
+  transform-origin: bottom;
+  transform: scaleY(0.3);
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+
+.audio-btn.playing .eq-bar:nth-child(1) {
+  animation: eqJump 0.75s ease-in-out infinite alternate;
+}
+
+.audio-btn.playing .eq-bar:nth-child(2) {
+  animation: eqJump 0.55s ease-in-out infinite alternate 0.15s;
+}
+
+.audio-btn.playing .eq-bar:nth-child(3) {
+  animation: eqJump 0.95s ease-in-out infinite alternate 0.35s;
+}
+
+@keyframes eqJump {
+  0% { transform: scaleY(0.25); }
+  100% { transform: scaleY(1); }
+}
+
+.audio-skip-btn.pulse {
+  color: var(--accent-blue);
+}
+
+.menu-btn {
+  display: none;
+}
+
+/* Mobile Fullscreen Menu */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: rgba(5, 6, 15, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease-smooth), visibility 0.35s var(--ease-smooth);
+}
+
+.mobile-menu.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.mobile-menu-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.mobile-link {
+  color: var(--muted);
+  font-size: 1.35rem;
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  transition: color 0.2s ease;
+}
+
+.mobile-link:hover, .mobile-link.active {
+  color: var(--accent-blue);
+}
+
+/* ==========================================================================
+   5. HERO CONTENT & SCROLL HINT
+   ========================================================================== */
+.hero-container {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 1.5rem 6.5rem;
+  pointer-events: none;
+}
+
+.hero-content {
+  text-align: center;
+  pointer-events: auto;
+}
+
+.hero-title {
+  font-family: var(--font-title);
+  font-size: clamp(2.75rem, 8vw, 6.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text);
+  user-select: none;
+  cursor: default;
+  transition: opacity 0.3s ease;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  pointer-events: none;
+}
+
+.scroll-line {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(180deg, var(--accent-blue), transparent);
+  animation: scrollLineDrop 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes scrollLineDrop {
+  0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+  50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
+  50.1% { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+  100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+}
+
+/* ==========================================================================
+   RESPONSIVE & ACCESSIBILITY
+   ========================================================================== */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+  .menu-btn {
+    display: block;
+  }
+  .nav-bar {
+    padding: 1rem 1.25rem;
+  }
+  .avatar-fallback {
+    max-height: 52vh;
+  }
+  .hero-container {
+    padding-bottom: 5.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .ambient-glow {
+    animation: none !important;
+  }
+  .status-dot {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .scroll-line {
+    animation: none !important;
+    opacity: 0.5 !important;
+    transform: scaleY(1) !important;
+  }
+}

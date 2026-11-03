@@ -1,0 +1,202 @@
+<!-- ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. -->
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi Sono - coodz_10</title>
+  <meta name="description" content="Scopri il percorso, la passione per la sicurezza informatica e la gestione infrastrutturale di coodz_10.">
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://coodz10.github.io/about.html">
+  <meta property="og:title" content="Chi Sono - coodz_10">
+  <meta property="og:description" content="Scopri il percorso, la passione per la sicurezza informatica e la gestione infrastrutturale di coodz_10.">
+  <meta property="og:image" content="https://coodz10.github.io/favicon.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://coodz10.github.io/about.html">
+  <meta property="twitter:title" content="Chi Sono - coodz_10">
+  <meta property="twitter:description" content="Scopri il percorso, la passione per la sicurezza informatica e la gestione infrastrutturale di coodz_10.">
+
+  <link rel="stylesheet" href="assets/css/tailwind.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  
+</head>
+
+<body class="relative flex flex-col min-h-screen">
+
+  <canvas id="stars"></canvas>
+
+  <!-- HUD NAV -->
+  <nav class="hud-bar fixed top-0 inset-x-0 z-30 animate-in">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between mono text-xs">
+      <span class="text-[var(--ink-dim)]">coodz_10 <span class="text-[var(--cyan)]">// ONLINE</span></span>
+      <div class="flex items-center gap-4 sm:gap-6 text-[var(--ink-dim)]">
+        <a href="index.html" class="hover:text-white transition-colors">[ home ]</a>
+        <a href="about.html" class="text-white transition-colors"><span class="lang-it">[ chi_sono ]</span><span
+            class="lang-en hidden">[ about_me ]</span></a>
+        <a href="experiences.html" class="hover:text-white transition-colors"><span class="lang-it">[ esperienze
+            ]</span><span class="lang-en hidden">[ experiences ]</span></a>
+        <a href="contact.html" class="hover:text-white transition-colors"><span class="lang-it">[ contatti ]</span><span
+            class="lang-en hidden">[ contact ]</span></a>
+        <div class="flex items-center ml-2 border-l border-[rgba(124,108,240,.3)] pl-4 gap-3 text-xs">
+          <button onclick="setLanguage('it')" id="lang-btn-it" class="text-white transition-colors">&bull; IT</button>
+          <button onclick="setLanguage('en')" id="lang-btn-en"
+            class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CHI SONO -->
+  <main class="relative z-10 flex-grow max-w-4xl mx-auto px-6 pt-24 pb-12 flex flex-col justify-center">
+    <div class="mb-5 sm:mb-6 animate-in delay-1">
+      <p class="mono text-xs text-[var(--cyan)] tracking-widest mb-2">
+        <span class="lang-it">LOG_ENTRY_00 // CHI_SONO</span>
+        <span class="lang-en hidden">LOG_ENTRY_00 // ABOUT_ME</span>
+      </p>
+      <h2
+        class="text-4xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-extrabold text-white glow tracking-tighter leading-none">
+        coodz_10</h2>
+    </div>
+    <div class="max-w-3xl border-l-2 border-[rgba(124,108,240,.3)] pl-6 sm:pl-8 ml-1 animate-in delay-2">
+      <p class="text-sm sm:text-base md:text-lg leading-relaxed text-[var(--ink-dim)]">
+        <span class="lang-it">
+          Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows alla gestione di infrastrutture server, fino alla sicurezza informatica e allo sviluppo di software su misura.<br><br>
+          A questo si affianca una solida <span class="text-white font-semibold">competenza in ambito hardware</span>: mi dedico all'assemblaggio e alla configurazione di PC su misura, alla diagnostica dei guasti fisici, all'ottimizzazione termica e alla manutenzione dei componenti, curando con precisione la sinergia tra piattaforma hardware e sistema operativo per ottenere la massima stabilità e affidabilità.<br><br>
+          Tra i miei campi d'azione mi occupo anche di <span class="text-white font-semibold">screen share e analisi di sicurezza</span>, effettuando controlli approfonditi sui sistemi per individuare anomalie, software non autorizzati o alterazioni e ricostruire l'attività recente di una macchina.<br><br>
+          Ciò che mi guida è la voglia di capire come funzionano davvero le cose, trasformando quella curiosità in <span class="text-white font-semibold">soluzioni concrete</span> — che si tratti di un intervento hardware, di un'ispezione digitale approfondita o di mantenere sistemi e server sempre efficienti, stabili e sicuri.
+        </span>
+        <span class="lang-en hidden">
+          I have a strong passion for 360° IT: from Windows system optimization to server infrastructure management, cybersecurity, and custom software development.<br><br>
+          This is complemented by solid <span class="text-white font-semibold">hardware expertise</span>: I assemble and configure custom PCs, perform physical fault diagnostics, thermal optimization, and component maintenance, carefully tuning the synergy between hardware platform and operating system to achieve maximum stability and reliability.<br><br>
+          Among my areas of expertise, I also specialize in <span class="text-white font-semibold">screen share and security analysis</span>, conducting in-depth system checks to identify anomalies, unauthorized software, or tampering, and reconstruct recent machine activity.<br><br>
+          What drives me is the desire to understand how things really work, turning that curiosity into <span class="text-white font-semibold">concrete solutions</span> — whether performing a hardware intervention, an in-depth digital inspection, or keeping systems and servers efficient, stable, and secure.
+        </span>
+      </p>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.15)] mt-10 animate-in delay-3">
+    <div
+      class="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 mono text-xs text-[var(--ink-dim)]">
+      <span>END_TRANSMISSION // COODZ_10</span>
+      <div class="flex gap-6">
+
+        <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer"
+          class="hover:text-white transition-colors">[ Discord ]</a>
+      </div>
+      <span>© <span id="year"></span></span>
+    </div>
+  </footer>
+
+  
+
+
+  <script>
+    let currentLang = localStorage.getItem('lang') || 'it';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('lang', lang);
+
+      // Update visibility using tailwind .hidden class
+      document.querySelectorAll('.lang-it').forEach(el => {
+        if (lang === 'it') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+      document.querySelectorAll('.lang-en').forEach(el => {
+        if (lang === 'en') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+
+      // Update bullets style
+      const btnIt = document.getElementById('lang-btn-it');
+      const btnEn = document.getElementById('lang-btn-en');
+      if (btnIt && btnEn) {
+        if (lang === 'it') {
+          btnIt.className = 'text-white transition-colors';
+          btnEn.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        } else {
+          btnEn.className = 'text-white transition-colors';
+          btnIt.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        }
+      }
+    }
+
+    setLanguage(currentLang);
+  </script>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <!-- CYBERPUNK ENTRY OVERLAY (LOADING SCREEN) -->
+  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none cyberpunk-overlay-bg">
+    <div class="text-center max-w-md px-6 flex flex-col items-center">
+      
+      <!-- LOGO / TITLE -->
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-white glow tracking-tighter mb-8">coodz_10</h1>
+      
+      <!-- LOADING STATUS -->
+      <div class="mono text-[var(--cyan)] text-xs sm:text-sm mb-4 tracking-[0.25em] uppercase font-bold" id="loading-text">INITIALIZING_SYSTEM...</div>
+      
+      <!-- GLOWING PROGRESS BAR -->
+      <div class="w-64 sm:w-72 h-1.5 bg-[rgba(124,108,240,.2)] rounded-full overflow-hidden relative mb-8 border border-[rgba(124,108,240,.35)] shadow-[0_0_15px_rgba(124,108,240,.2)]">
+        <div id="loading-bar" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[var(--violet)] to-[var(--cyan)] transition-all duration-1000"></div>
+      </div>
+      
+      <!-- CLICK TO ENTER BUTTON (HIDDEN DURING LOADING) -->
+      <div id="enter-text" class="hidden text-sm sm:text-base text-white glow tracking-[0.2em] cursor-pointer font-bold uppercase py-4 px-8 rounded-xl border border-[rgba(79,209,255,.6)] bg-[rgba(11,10,26,.9)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all shadow-[0_0_25px_rgba(79,209,255,0.4)] animate-pulse">
+        [ CLICK ANYWHERE TO ENTER ]
+      </div>
+    </div>
+  </div>
+
+  <audio id="bg-audio" preload="auto"></audio>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <script src="assets/js/starfield.js"></script>
+  <script src="assets/js/audio.js?v=2"></script>
+  <script src="assets/js/router.js?v=3"></script>
+</body>
+
+
+
+
+
+
+
+
+
+
+
+
+</html>

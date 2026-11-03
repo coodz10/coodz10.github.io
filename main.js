@@ -2,8 +2,8 @@
 
 /**
  * ============================================================================
- * PORTFOLIO COODZ_10 - STEP 1 ENGINE
- * Ultra-minimal "Incoming Transmission" with 3D Minecraft Avatar Guide
+ * PORTFOLIO COODZ_10 - STEP 2 ENGINE
+ * Ultra-minimal "Incoming Transmission" with 3D Avatar State Machine
  * ============================================================================
  */
 
@@ -32,7 +32,28 @@
       navContact: '[ contatti ]',
       onlineStatus: 'coodz_10 // ONLINE',
       audioLabel: 'AUDIO',
-      scrollHint: '[ SCROLL ]'
+      scrollHint: '[ SCROLL ]',
+      aboutTag: 'LOG_ENTRY_00 // CHI_SONO',
+      aboutTitle: 'Chi Sono',
+      aboutText: "Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows alla gestione di infrastrutture server, fino alla sicurezza informatica e allo sviluppo di software su misura.",
+      aboutHandleLabel: 'HANDLE:',
+      aboutRoleLabel: 'RUOLO:',
+      aboutRoleVal: 'SysAdmin // Security',
+      aboutStatusLabel: 'STATO:',
+      aboutStatusVal: '[ OPERATIVO ]',
+      expTag: 'LOG_ENTRY_01 // ESPERIENZE',
+      expTitle: 'Esperienze',
+      expRedisRole: 'Helper',
+      expRedisStatus: '[ Stato: Attivo ]',
+      expMetaRole: 'Helper ★★★★☆',
+      expMetaStatus: '[ Stato: Dimesso ]',
+      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
+      expPixyStatus: '[ Stato: Dimesso ]',
+      viewDossier: '[ VEDI SCHEDA ]',
+      contactTag: 'LOG_ENTRY_02 // CONTATTI',
+      contactTitle: 'Parliamo',
+      contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
+      footerEnd: 'END_TRANSMISSION // COODZ_10'
     },
     en: {
       navHome: '[ home ]',
@@ -41,7 +62,28 @@
       navContact: '[ contact ]',
       onlineStatus: 'coodz_10 // ONLINE',
       audioLabel: 'AUDIO',
-      scrollHint: '[ SCROLL ]'
+      scrollHint: '[ SCROLL ]',
+      aboutTag: 'LOG_ENTRY_00 // ABOUT_ME',
+      aboutTitle: 'About Me',
+      aboutText: 'I have a strong passion for 360° IT: from Windows system optimization to server infrastructure management, cybersecurity, and custom software development.',
+      aboutHandleLabel: 'HANDLE:',
+      aboutRoleLabel: 'ROLE:',
+      aboutRoleVal: 'SysAdmin // Security',
+      aboutStatusLabel: 'STATUS:',
+      aboutStatusVal: '[ OPERATIONAL ]',
+      expTag: 'LOG_ENTRY_01 // EXPERIENCES',
+      expTitle: 'Experiences',
+      expRedisRole: 'Helper',
+      expRedisStatus: '[ Status: Active ]',
+      expMetaRole: 'Helper ★★★★☆',
+      expMetaStatus: '[ Status: Resign ]',
+      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
+      expPixyStatus: '[ Status: Resign ]',
+      viewDossier: '[ VIEW DOSSIER ]',
+      contactTag: 'LOG_ENTRY_02 // CONTACT',
+      contactTitle: "Let's Talk",
+      contactSub: 'For collaborations, service requests or security investigations.',
+      footerEnd: 'END_TRANSMISSION // COODZ_10'
     }
   };
 
@@ -52,8 +94,68 @@
   let skinViewer = null;
   let targetHeadX = 0;
   let targetHeadY = 0;
-  let headAnimFrameId = null;
-  let starsAnimFrameId = null;
+  let targetPlayerRotY = 0;
+  let currentAvatarState = 'home';
+  let activeSectionId = 'home';
+  let isMobile = window.innerWidth <= 768;
+
+  // ==========================================================================
+  // CUSTOM SKINVIEW3D ANIMATIONS (WAVE & SHORT-WAVE-THEN-IDLE)
+  // ==========================================================================
+  class WaveAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
+    animate(player) {
+      if (!player || !player.skin) return;
+      const t = this.progress * 6;
+
+      // Right arm raised and waving
+      player.skin.rightArm.rotation.x = -Math.PI * 0.85;
+      player.skin.rightArm.rotation.z = -0.3 + Math.sin(t) * 0.35;
+      player.skin.rightArm.rotation.y = 0.2;
+
+      // Left arm relaxed idle breathing
+      player.skin.leftArm.rotation.x = 0;
+      player.skin.leftArm.rotation.z = 0.05 + Math.cos(this.progress * 2) * 0.03;
+      player.skin.leftArm.rotation.y = 0;
+
+      // Keep legs straight
+      player.skin.leftLeg.rotation.x = 0;
+      player.skin.rightLeg.rotation.x = 0;
+      player.skin.leftLeg.rotation.z = 0;
+      player.skin.rightLeg.rotation.z = 0;
+    }
+  }
+
+  class ShortWaveThenIdleAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
+    constructor(onComplete) {
+      super();
+      this.onComplete = onComplete;
+      this.waveDuration = 2.0;
+      this.hasCompleted = false;
+    }
+
+    animate(player) {
+      if (!player || !player.skin) return;
+
+      if (this.progress < this.waveDuration) {
+        const t = this.progress * 7;
+        player.skin.rightArm.rotation.x = -Math.PI * 0.85;
+        player.skin.rightArm.rotation.z = -0.3 + Math.sin(t) * 0.35;
+        player.skin.rightArm.rotation.y = 0.2;
+
+        player.skin.leftArm.rotation.x = 0;
+        player.skin.leftArm.rotation.z = 0.05 + Math.cos(this.progress * 2) * 0.03;
+        player.skin.leftArm.rotation.y = 0;
+
+        player.skin.leftLeg.rotation.x = 0;
+        player.skin.rightLeg.rotation.x = 0;
+      } else {
+        if (!this.hasCompleted) {
+          this.hasCompleted = true;
+          if (this.onComplete) this.onComplete();
+        }
+      }
+    }
+  }
 
   // ==========================================================================
   // 1. OPENING SEQUENCE (~2s, Skippable by Click or Keypress)
@@ -166,36 +268,95 @@
   }
 
   // ==========================================================================
-  // 2. AVATAR (skinview3d SkinViewer with Idle Animation & Mouse Head Tracking)
+  // 2. AVATAR STATE MACHINE & CONTINUOUS FRAME TICK
   // ==========================================================================
+  function setAvatarState(state) {
+    if (currentAvatarState === state) return;
+    currentAvatarState = state;
+
+    const stage = document.getElementById('avatar-stage');
+    if (stage) {
+      stage.classList.remove('state-home', 'state-chi_sono', 'state-esperienze', 'state-contatti');
+      stage.classList.add(`state-${state}`);
+    }
+
+    if (!skinViewer) return;
+
+    // Reset arm/leg rotations smoothly before switching animation
+    if (skinViewer.playerObject && skinViewer.playerObject.skin) {
+      const s = skinViewer.playerObject.skin;
+      s.leftArm.rotation.x = 0;
+      s.rightArm.rotation.x = 0;
+      s.leftArm.rotation.z = 0;
+      s.rightArm.rotation.z = 0;
+      s.leftLeg.rotation.x = 0;
+      s.rightLeg.rotation.x = 0;
+    }
+
+    switch (state) {
+      case 'home':
+        targetPlayerRotY = 0;
+        skinViewer.animation = new skinview3d.IdleAnimation();
+        skinViewer.animation.speed = 0.8;
+        break;
+
+      case 'chi_sono':
+        // Avatar shifts to right, turns 3/4 toward text on left, waving with right arm
+        targetPlayerRotY = -0.65;
+        skinViewer.animation = new WaveAnimation();
+        break;
+
+      case 'esperienze':
+        // Avatar shifts to left, walking in place slowly, looking toward cards on right
+        targetPlayerRotY = 0.65;
+        const walk = new skinview3d.WalkingAnimation();
+        walk.speed = 0.45;
+        skinViewer.animation = walk;
+        break;
+
+      case 'contatti':
+        // Back to center, facing front, short wave then idle
+        targetPlayerRotY = 0;
+        skinViewer.animation = new ShortWaveThenIdleAnimation(() => {
+          if (currentAvatarState === 'contatti' && skinViewer) {
+            skinViewer.animation = new skinview3d.IdleAnimation();
+            skinViewer.animation.speed = 0.8;
+          }
+        });
+        break;
+    }
+  }
+
   function updateViewerSize() {
     if (!skinViewer) return;
     const w = window.innerWidth;
     const h = window.innerHeight;
+    isMobile = w <= 768;
     skinViewer.width = w;
     skinViewer.height = h;
 
-    // Mobile avatar smaller, desktop giant (~80vh tall)
-    if (w < 768) {
-      skinViewer.zoom = 0.65;
+    // On mobile keep avatar smaller, on desktop giant (~80vh tall)
+    if (isMobile) {
+      skinViewer.zoom = 0.6;
     } else {
       skinViewer.zoom = 1.05;
     }
   }
 
-  function animateHead() {
-    if (document.hidden) {
-      headAnimFrameId = requestAnimationFrame(animateHead);
-      return;
+  function avatarFrameTick() {
+    if (!document.hidden && skinViewer && skinViewer.playerObject) {
+      // Smooth lerp on player.rotation.y (NEVER move the camera)
+      skinViewer.playerObject.rotation.y += (targetPlayerRotY - skinViewer.playerObject.rotation.y) * 0.06;
+
+      // Smooth lerp on head rotation (adds subtle cursor following)
+      if (skinViewer.playerObject.skin && skinViewer.playerObject.skin.head) {
+        const head = skinViewer.playerObject.skin.head;
+        head.rotation.y += (targetHeadY - head.rotation.y) * 0.08;
+        head.rotation.x += (targetHeadX - head.rotation.x) * 0.08;
+      }
     }
 
-    if (skinViewer && skinViewer.playerObject && skinViewer.playerObject.skin && skinViewer.playerObject.skin.head) {
-      const head = skinViewer.playerObject.skin.head;
-      head.rotation.y += (targetHeadY - head.rotation.y) * 0.08;
-      head.rotation.x += (targetHeadX - head.rotation.x) * 0.08;
-    }
-
-    headAnimFrameId = requestAnimationFrame(animateHead);
+    requestAnimationFrame(avatarFrameTick);
   }
 
   function initAvatar() {
@@ -207,7 +368,6 @@
       if (fallbackImg) fallbackImg.style.display = 'block';
     }
 
-    // Check WebGL availability
     let isWebGLAvailable = false;
     try {
       const testCanvas = document.createElement('canvas');
@@ -229,36 +389,33 @@
         skin: CONFIG.SKIN_URL
       });
 
-      // Configuration
       skinViewer.controls.enabled = false;
-      skinViewer.autoRotate = true;
-      skinViewer.autoRotateSpeed = 0.35;
+      skinViewer.autoRotate = false; // Rotation controlled smoothly via state machine lerp
 
-      // Idle breathing animation
+      // Initial state: home idle breathing
       skinViewer.animation = new skinview3d.IdleAnimation();
       skinViewer.animation.speed = 0.8;
 
       updateViewerSize();
 
-      // Track mouse across window for smooth head following
+      // Track mouse across screen for head following
       window.addEventListener('mousemove', (e) => {
         const halfW = window.innerWidth / 2;
         const halfH = window.innerHeight / 2;
         const normX = (e.clientX - halfW) / halfW;
         const normY = (e.clientY - halfH) / halfH;
 
-        // Natural head rotation angles (clamped in radians)
-        targetHeadY = -normX * 0.65;
-        targetHeadX = normY * 0.45;
+        targetHeadY = -normX * 0.55;
+        targetHeadX = normY * 0.35;
       }, { passive: true });
 
-      // Start head tracking animation loop
-      animateHead();
+      // Start continuous lerp RAF loop
+      avatarFrameTick();
 
-      // Handle Resize
+      // Resize
       window.addEventListener('resize', updateViewerSize, { passive: true });
 
-      // Pause rendering when tab is hidden
+      // Pause rendering when tab hidden
       document.addEventListener('visibilitychange', () => {
         if (skinViewer) {
           skinViewer.renderPaused = document.hidden;
@@ -271,7 +428,7 @@
   }
 
   // ==========================================================================
-  // 3. CANVAS STARS (~60 Tiny Twinkling Stars, No Heavy Motion)
+  // 3. CANVAS STARS (~60 Tiny Twinkling Stars)
   // ==========================================================================
   function initStars() {
     const canvas = document.getElementById('stars-canvas');
@@ -316,27 +473,24 @@
     let startTime = performance.now();
 
     function renderStars(now) {
-      if (document.hidden) {
-        starsAnimFrameId = requestAnimationFrame(renderStars);
-        return;
+      if (!document.hidden) {
+        const elapsed = (now - startTime) / 1000;
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = 0; i < starCount; i++) {
+          const s = stars[i];
+          const alpha = Math.max(0.1, s.baseAlpha + Math.sin(elapsed * s.speed + s.phase) * 0.25);
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(232, 234, 255, ${alpha.toFixed(2)})`;
+          ctx.fill();
+        }
       }
 
-      const elapsed = (now - startTime) / 1000;
-      ctx.clearRect(0, 0, width, height);
-
-      for (let i = 0; i < starCount; i++) {
-        const s = stars[i];
-        const alpha = Math.max(0.1, s.baseAlpha + Math.sin(elapsed * s.speed + s.phase) * 0.25);
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(232, 234, 255, ${alpha.toFixed(2)})`;
-        ctx.fill();
-      }
-
-      starsAnimFrameId = requestAnimationFrame(renderStars);
+      requestAnimationFrame(renderStars);
     }
 
-    starsAnimFrameId = requestAnimationFrame(renderStars);
+    requestAnimationFrame(renderStars);
 
     window.addEventListener('resize', () => {
       width = canvas.width = window.innerWidth;
@@ -350,8 +504,36 @@
   }
 
   // ==========================================================================
-  // 4. NAVIGATION, IT/EN TOGGLE & AUDIO CONTROLS
+  // 4. NAVIGATION, UNDERLINE INDICATOR, i18n & SCROLL-SNAP INTERSECTIONOBSERVER
   // ==========================================================================
+  function updateNavIndicator(activeId) {
+    const navIndicator = document.getElementById('nav-indicator');
+    const activeLink = document.querySelector(`.nav-link[href="#${activeId}"]`);
+    if (!navIndicator || !activeLink) return;
+
+    const left = activeLink.offsetLeft;
+    const width = activeLink.offsetWidth;
+
+    navIndicator.style.transform = `translateX(${left}px)`;
+    navIndicator.style.width = `${width}px`;
+
+    document.querySelectorAll('.nav-link').forEach((link) => {
+      if (link === activeLink) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+
+    document.querySelectorAll('.mobile-link').forEach((link) => {
+      if (link.getAttribute('href') === `#${activeId}`) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+
   function applyLanguage(lang) {
     currentLang = lang;
     localStorage.setItem('coodz_lang', lang);
@@ -368,6 +550,58 @@
         el.textContent = dict[key];
       }
     });
+
+    // Update nav indicator position after text changes
+    setTimeout(() => updateNavIndicator(activeSectionId), 50);
+  }
+
+  function initSectionObserver() {
+    const scrollContainer = document.getElementById('scroll-container');
+    const sections = document.querySelectorAll('.snap-section');
+
+    if (!sections.length) return;
+
+    // Use IntersectionObserver with threshold 0.6 as specified
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          activeSectionId = entry.target.id;
+          entry.target.classList.add('section-active');
+          setAvatarState(activeSectionId);
+          updateNavIndicator(activeSectionId);
+        } else {
+          entry.target.classList.remove('section-active');
+        }
+      });
+    }, {
+      root: scrollContainer,
+      threshold: 0.6
+    });
+
+    sections.forEach((sec) => observer.observe(sec));
+
+    // Nav Links smooth scroll click
+    document.querySelectorAll('.nav-link, .mobile-link').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        const targetId = link.getAttribute('href');
+        if (targetId && targetId.startsWith('#')) {
+          e.preventDefault();
+          const targetSec = document.querySelector(targetId);
+          if (targetSec) {
+            targetSec.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      });
+    });
+
+    // Experience Card Mouse Spotlight (--mx, --my)
+    document.querySelectorAll('.card-minimal').forEach((card) => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+      });
+    });
   }
 
   function initNavigation() {
@@ -380,6 +614,10 @@
     }
     applyLanguage(currentLang);
 
+    // Initial Indicator update
+    updateNavIndicator(activeSectionId);
+    window.addEventListener('resize', () => updateNavIndicator(activeSectionId), { passive: true });
+
     // Audio Controls (UI wired to <audio> element with placeholder src)
     const audio = document.getElementById('bg-audio');
     const audioToggleBtn = document.getElementById('audio-toggle-btn');
@@ -391,9 +629,7 @@
         isPlaying = !isPlaying;
         if (isPlaying) {
           audioToggleBtn.classList.add('playing');
-          audio.play().catch(() => {
-            // Handled gracefully for placeholder audio
-          });
+          audio.play().catch(() => {});
         } else {
           audioToggleBtn.classList.remove('playing');
           audio.pause();
@@ -445,6 +681,7 @@
     initAvatar();
     initStars();
     initNavigation();
+    initSectionObserver();
   });
 
 })();

@@ -46,7 +46,7 @@
   <canvas id="stars-canvas" class="stars-canvas"></canvas>
 
   <!-- 2. AVATAR: FIXED FULL-SCREEN CONTAINER #avatar-stage -->
-  <div id="avatar-stage" class="avatar-stage">
+  <div id="avatar-stage" class="avatar-stage state-home">
     <canvas id="avatar-canvas" class="avatar-canvas"></canvas>
     <img id="avatar-fallback" src="assets/skin.png" alt="coodz_10 Minecraft avatar" class="avatar-fallback" style="display: none;">
   </div>
@@ -65,6 +65,7 @@
       <a href="#chi_sono" class="nav-link" data-i18n="navAbout">[ chi_sono ]</a>
       <a href="#esperienze" class="nav-link" data-i18n="navExp">[ esperienze ]</a>
       <a href="#contatti" class="nav-link" data-i18n="navContact">[ contatti ]</a>
+      <span id="nav-indicator" class="nav-indicator"></span>
     </div>
 
     <div class="nav-right">
@@ -96,17 +97,159 @@
     </div>
   </div>
 
-  <!-- 5. HERO CONTENT WITH DECRYPTING TITLE & SCROLL HINT -->
-  <main class="hero-container">
-    <div class="hero-content">
-      <h1 id="hero-title" class="hero-title" aria-label="coodz_10">coodz_10</h1>
-    </div>
+  <!-- SCROLL CONTAINER WITH SCROLL-SNAP-TYPE: Y MANDATORY -->
+  <div id="scroll-container" class="scroll-container">
 
-    <div class="scroll-hint mono">
-      <span class="scroll-text" data-i18n="scrollHint">[ SCROLL ]</span>
-      <div class="scroll-line"></div>
-    </div>
-  </main>
+    <!-- ======================================================================
+         SECTION 1: HOME
+         ====================================================================== -->
+    <section id="home" class="snap-section section-home">
+      <div class="hero-content">
+        <h1 id="hero-title" class="hero-title" aria-label="coodz_10">coodz_10</h1>
+      </div>
+
+      <div class="scroll-hint mono">
+        <span class="scroll-text" data-i18n="scrollHint">[ SCROLL ]</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SECTION 2: CHI_SONO (ABOUT ME)
+         ====================================================================== -->
+    <section id="chi_sono" class="snap-section section-about">
+      <div class="section-block about-block">
+        <p class="section-tag mono" data-i18n="aboutTag">LOG_ENTRY_00 // CHI_SONO</p>
+        <h2 class="section-title" data-i18n="aboutTitle">Chi Sono</h2>
+        <p class="about-text" data-i18n="aboutText">
+          Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows alla gestione di infrastrutture server, fino alla sicurezza informatica e allo sviluppo di software su misura.
+        </p>
+
+        <!-- Small Mono Info Card -->
+        <div class="info-card mono">
+          <div class="info-row">
+            <span class="info-label" data-i18n="aboutHandleLabel">HANDLE:</span>
+            <span class="info-val accent">coodz_10</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label" data-i18n="aboutRoleLabel">RUOLO:</span>
+            <span class="info-val" data-i18n="aboutRoleVal">SysAdmin // Security</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label" data-i18n="aboutStatusLabel">STATO:</span>
+            <span class="info-val accent" data-i18n="aboutStatusVal">[ OPERATIVO ]</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SECTION 3: ESPERIENZE (EXPERIENCES)
+         3 minimal cards strictly Minecraft servers first per AGENTS.md Rule 1
+         ====================================================================== -->
+    <section id="esperienze" class="snap-section section-experiences">
+      <div class="section-block experiences-block">
+        <p class="section-tag mono" data-i18n="expTag">LOG_ENTRY_01 // ESPERIENZE</p>
+        <h2 class="section-title" data-i18n="expTitle">Esperienze</h2>
+
+        <div class="cards-list">
+          <!-- Card 01: RedisMC -->
+          <a href="servers/redismc.html" class="card-minimal">
+            <div class="card-left">
+              <span class="card-index mono">01</span>
+              <div>
+                <h3 class="card-name">RedisMC</h3>
+                <p class="card-sub mono" data-i18n="expRedisRole">Helper</p>
+              </div>
+            </div>
+            <div class="card-right mono">
+              <span class="card-status accent" data-i18n="expRedisStatus">[ Stato: Attivo ]</span>
+              <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+            </div>
+          </a>
+
+          <!-- Card 02: MetaMc -->
+          <a href="servers/metamc.html" class="card-minimal">
+            <div class="card-left">
+              <span class="card-index mono">02</span>
+              <div>
+                <h3 class="card-name">MetaMc</h3>
+                <p class="card-sub mono" data-i18n="expMetaRole">Helper ★★★★☆</p>
+              </div>
+            </div>
+            <div class="card-right mono">
+              <span class="card-status muted" data-i18n="expMetaStatus">[ Stato: Dimesso ]</span>
+              <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+            </div>
+          </a>
+
+          <!-- Card 03: PixyMC -->
+          <a href="servers/pixymc.html" class="card-minimal">
+            <div class="card-left">
+              <span class="card-index mono">03</span>
+              <div>
+                <h3 class="card-name">PixyMC</h3>
+                <p class="card-sub mono" data-i18n="expPixyRole">Owner [ SS Manager ] ★★★★☆</p>
+              </div>
+            </div>
+            <div class="card-right mono">
+              <span class="card-status muted" data-i18n="expPixyStatus">[ Stato: Dimesso ]</span>
+              <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SECTION 4: CONTATTI (CONTACT)
+         ====================================================================== -->
+    <section id="contatti" class="snap-section section-contact">
+      <div class="section-block contact-block">
+        <p class="section-tag mono" data-i18n="contactTag">LOG_ENTRY_02 // CONTATTI</p>
+        <h2 class="contact-cta-title" data-i18n="contactTitle">Parliamo</h2>
+        <p class="contact-sub" data-i18n="contactSub">
+          Per collaborazioni, richieste di servizi o investigazioni di sicurezza.
+        </p>
+
+        <!-- Large Link Rows -->
+        <div class="contact-rows-wrap">
+          <!-- Discord -->
+          <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="contact-row">
+            <span class="contact-row-title">Discord</span>
+            <div class="contact-row-meta mono">
+              <span class="contact-tag">[ DISCORD ]</span>
+              <span class="contact-arrow">&rarr;</span>
+            </div>
+          </a>
+
+          <!-- GitHub -->
+          <a href="https://github.com/coodz10" target="_blank" rel="noopener noreferrer" class="contact-row">
+            <span class="contact-row-title">GitHub</span>
+            <div class="contact-row-meta mono">
+              <span class="contact-tag">[ GITHUB ]</span>
+              <span class="contact-arrow">&rarr;</span>
+            </div>
+          </a>
+
+          <!-- Email -->
+          <a href="mailto:cood_ita@zohomail.eu" class="contact-row">
+            <span class="contact-row-title">Email</span>
+            <div class="contact-row-meta mono">
+              <span class="contact-tag">[ EMAIL ]</span>
+              <span class="contact-arrow">&rarr;</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Footer Line -->
+        <div class="footer-line mono" data-i18n="footerEnd">
+          END_TRANSMISSION // COODZ_10
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /scroll-container -->
 
   <!-- Audio Element with placeholder src (UI wired) -->
   <audio id="bg-audio" preload="none" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>

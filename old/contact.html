@@ -1,0 +1,198 @@
+<!-- ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contatti - coodz_10</title>
+  <meta name="description" content="Mettiti in contatto con coodz_10 per consulenze di sicurezza, gestione server e screen share analysis.">
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://coodz10.github.io/contact.html">
+  <meta property="og:title" content="Contatti - coodz_10">
+  <meta property="og:description" content="Mettiti in contatto con coodz_10 per consulenze di sicurezza, gestione server e screen share analysis.">
+  <meta property="og:image" content="https://coodz10.github.io/favicon.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://coodz10.github.io/contact.html">
+  <meta property="twitter:title" content="Contatti - coodz_10">
+  <meta property="twitter:description" content="Mettiti in contatto con coodz_10 per consulenze di sicurezza, gestione server e screen share analysis.">
+
+  <link rel="stylesheet" href="assets/css/tailwind.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+</head>
+<body class="relative flex flex-col min-h-screen">
+
+<canvas id="stars"></canvas>
+
+<!-- HUD NAV -->
+<nav class="hud-bar fixed top-0 inset-x-0 z-30 animate-in">
+  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between mono text-xs">
+    <span class="text-[var(--ink-dim)]">coodz_10 <span class="text-[var(--cyan)]">// ONLINE</span></span>
+    <div class="flex items-center gap-4 sm:gap-6 text-[var(--ink-dim)]">
+      <a href="index.html" class="hover:text-white transition-colors">[ home ]</a>
+      <a href="about.html" class="hover:text-white transition-colors"><span class="lang-it">[ chi_sono ]</span><span class="lang-en hidden">[ about_me ]</span></a>
+      <a href="experiences.html" class="hover:text-white transition-colors"><span class="lang-it">[ esperienze ]</span><span class="lang-en hidden">[ experiences ]</span></a>
+      <a href="contact.html" class="text-white transition-colors"><span class="lang-it">[ contatti ]</span><span class="lang-en hidden">[ contact ]</span></a>
+      <div class="flex items-center ml-2 border-l border-[rgba(124,108,240,.3)] pl-4 gap-3 text-xs">
+        <button onclick="setLanguage('it')" id="lang-btn-it" class="text-white transition-colors">&bull; IT</button>
+                <button onclick="setLanguage('en')" id="lang-btn-en" class="text-[var(--ink-dim)] hover:text-white transition-colors">&bull; EN</button>
+                <button id="nav-audio-btn" aria-label="Attiva o Disattiva Musica" title="Attiva o Disattiva Musica" class="flex items-center justify-center p-1.5 rounded-lg border border-[rgba(124,108,240,.4)] bg-[rgba(124,108,240,.15)] text-[var(--cyan)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all ml-2 opacity-60">
+          <svg id="nav-audio-on" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="nav-audio-off" class="w-4 h-4 text-[var(--ink-dim)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+        </button>
+        <button id="nav-audio-next" aria-label="Prossima Canzone Casuale" title="Prossima Canzone Casuale" class="flex items-center justify-center p-1.5 rounded-lg border border-[rgba(124,108,240,.4)] bg-[rgba(124,108,240,.15)] text-[var(--cyan)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all ml-1.5 opacity-60 hover:opacity-100 cursor-pointer">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- CONTATTI -->
+<main class="relative z-10 flex-grow max-w-3xl mx-auto w-full px-6 pt-32 pb-24 flex flex-col justify-center text-center">
+  <div class="animate-in delay-1">
+      <p class="mono text-xs text-[var(--cyan)] tracking-widest mb-6">
+        <span class="lang-it">LOG_ENTRY_02 // CONTATTI</span>
+        <span class="lang-en hidden">LOG_ENTRY_02 // CONTACT</span>
+      </p>
+    <h2 class="text-6xl sm:text-7xl md:text-8xl font-extrabold text-white mb-8 glow tracking-tight leading-none">
+        <span class="lang-it">Rimaniamo in Contatto</span>
+        <span class="lang-en hidden">Let's Get in Touch</span>
+    </h2>
+  </div>
+  <div class="animate-in delay-2">
+    <p class="text-xl md:text-2xl leading-relaxed text-[var(--ink-dim)] mb-12">
+      <span class="lang-it">Per collaborazioni, richieste di servizi o investigazioni di sicurezza.<br>Mettiti in contatto tramite i canali ufficiali.</span>
+      <span class="lang-en hidden">For collaborations, service requests or security investigations.<br>Get in touch via the official channels.</span>
+    </p>
+  </div>
+  
+  <div class="flex flex-col sm:flex-row justify-center gap-6 animate-in delay-3">
+    <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="mono border border-[rgba(124,108,240,.5)] text-white hover:bg-[rgba(124,108,240,.12)] px-10 py-5 transition-all hover:shadow-[0_0_30px_rgba(124,108,240,.25)] text-xl hover:-translate-y-1">
+      [ Discord ]
+    </a>
+    <a href="mailto:cood_ita@zohomail.eu" class="mono border border-[rgba(124,108,240,.5)] text-white hover:bg-[rgba(124,108,240,.12)] px-10 py-5 transition-all hover:shadow-[0_0_30px_rgba(124,108,240,.25)] text-xl hover:-translate-y-1">
+      [ Email ]
+    </a>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer id="footer" class="relative z-10 border-t border-[rgba(124,108,240,.15)] mt-10 animate-in delay-4">
+  <div class="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 mono text-xs text-[var(--ink-dim)]">
+    <span>END_TRANSMISSION // COODZ_10</span>
+    <div class="flex gap-6">
+      
+      <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">[ Discord ]</a>
+    </div>
+    <span>© <span id="year"></span></span>
+  </div>
+</footer>
+
+
+
+
+  <script>
+    let currentLang = localStorage.getItem('lang') || 'it';
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('lang', lang);
+      
+      // Update visibility using tailwind .hidden class
+      document.querySelectorAll('.lang-it').forEach(el => {
+        if(lang === 'it') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+      document.querySelectorAll('.lang-en').forEach(el => {
+        if(lang === 'en') el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+      
+      // Update bullets style
+      const btnIt = document.getElementById('lang-btn-it');
+      const btnEn = document.getElementById('lang-btn-en');
+      if(btnIt && btnEn) {
+        if(lang === 'it') {
+          btnIt.className = 'text-white transition-colors';
+          btnEn.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        } else {
+          btnEn.className = 'text-white transition-colors';
+          btnIt.className = 'text-[var(--ink-dim)] hover:text-white transition-colors';
+        }
+      }
+    }
+    
+    setLanguage(currentLang);
+  </script>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <!-- CYBERPUNK ENTRY OVERLAY (LOADING SCREEN) -->
+  <div id="entry-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0a1a] transition-opacity duration-700 select-none cyberpunk-overlay-bg">
+    <div class="text-center max-w-md px-6 flex flex-col items-center">
+      
+      <!-- LOGO / TITLE -->
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-white glow tracking-tighter mb-8">coodz_10</h1>
+      
+      <!-- LOADING STATUS -->
+      <div class="mono text-[var(--cyan)] text-xs sm:text-sm mb-4 tracking-[0.25em] uppercase font-bold" id="loading-text">INITIALIZING_SYSTEM...</div>
+      
+      <!-- GLOWING PROGRESS BAR -->
+      <div class="w-64 sm:w-72 h-1.5 bg-[rgba(124,108,240,.2)] rounded-full overflow-hidden relative mb-8 border border-[rgba(124,108,240,.35)] shadow-[0_0_15px_rgba(124,108,240,.2)]">
+        <div id="loading-bar" class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[var(--violet)] to-[var(--cyan)] transition-all duration-1000"></div>
+      </div>
+      
+      <!-- CLICK TO ENTER BUTTON (HIDDEN DURING LOADING) -->
+      <div id="enter-text" class="hidden text-sm sm:text-base text-white glow tracking-[0.2em] cursor-pointer font-bold uppercase py-4 px-8 rounded-xl border border-[rgba(79,209,255,.6)] bg-[rgba(11,10,26,.9)] hover:bg-[rgba(124,108,240,.3)] hover:scale-105 transition-all shadow-[0_0_25px_rgba(79,209,255,0.4)] animate-pulse">
+        [ CLICK ANYWHERE TO ENTER ]
+      </div>
+    </div>
+  </div>
+
+  <audio id="bg-audio" preload="auto"></audio>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <script src="assets/js/starfield.js"></script>
+  <script src="assets/js/audio.js?v=2"></script>
+  <script src="assets/js/router.js?v=3"></script>
+</body>
+
+
+
+
+
+
+
+
+
+
+
+</html>
