@@ -21,8 +21,9 @@
   --font-title: 'Space Grotesk', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-  --avatar-contrast: 0.78;
-  --avatar-brightness: 1.5;
+  --avatar-contrast: 0.92;
+  --avatar-brightness: 1.25;
+  --avatar-haze-opacity: 0.35;
 }
 
 *, *::before, *::after {
@@ -186,20 +187,31 @@ html, body {
   will-change: transform, opacity;
 }
 
-/* Floor Shadow/Glow (under avatar feet) */
-.avatar-floor-glow {
+/* Soft Wide Haze (Behind dark silhouette, follows stage position) */
+.avatar-haze {
   position: absolute;
-  width: 28vh;
-  height: 3.5vh;
+  width: 110vh; /* radius ~55vh */
+  height: 110vh;
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, 28vh);
-  background: radial-gradient(ellipse at center, rgba(94, 168, 255, 0.45) 0%, rgba(139, 108, 255, 0.22) 50%, transparent 80%);
-  filter: blur(5px);
-  box-shadow: 0 0 24px rgba(94, 168, 255, 0.35);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, #1a2250 0%, rgba(26, 34, 80, 0.55) 35%, rgba(26, 34, 80, 0) 70%);
+  opacity: var(--avatar-haze-opacity, 0.35);
+}
+
+/* Floating Inner Container (driven every frame by JS: bob & roll) */
+.avatar-float {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
 }
 
 /* Section State Transforms */
@@ -230,11 +242,9 @@ html, body {
   display: block;
   position: relative;
   z-index: 1;
-  filter: contrast(var(--avatar-contrast, 0.78))
-          brightness(var(--avatar-brightness, 1.5))
-          saturate(1.2)
-          drop-shadow(0 0 24px rgba(94, 168, 255, 0.65))
-          drop-shadow(0 0 70px rgba(139, 108, 255, 0.4));
+  filter: contrast(var(--avatar-contrast, 0.92))
+          brightness(var(--avatar-brightness, 1.25))
+          drop-shadow(0 0 6px rgba(120, 160, 255, 0.3));
 }
 
 .avatar-fallback {
@@ -242,11 +252,9 @@ html, body {
   width: auto;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: contrast(var(--avatar-contrast, 0.78))
-          brightness(var(--avatar-brightness, 1.5))
-          saturate(1.2)
-          drop-shadow(0 0 24px rgba(94, 168, 255, 0.65))
-          drop-shadow(0 0 70px rgba(139, 108, 255, 0.4));
+  filter: contrast(var(--avatar-contrast, 0.92))
+          brightness(var(--avatar-brightness, 1.25))
+          drop-shadow(0 0 6px rgba(120, 160, 255, 0.3));
 }
 
 /* ==========================================================================
@@ -1274,10 +1282,9 @@ html, body {
     transform: translate(0, calc(-18vh + var(--avatar-y, 0px))) scale(0.6) !important;
   }
 
-  .avatar-floor-glow {
-    width: 20vh;
-    height: 2.5vh;
-    transform: translate(-50%, 20vh);
+  .avatar-haze {
+    width: 70vh;
+    height: 70vh;
   }
 
   .avatar-fallback {
@@ -1385,7 +1392,11 @@ html, body {
   top: 4.5rem;
   left: 1.5rem;
   z-index: 1000;
-  width: 280px;
+  width: 290px;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 168, 255, 0.35) transparent;
   background: rgba(10, 11, 36, 0.95);
   border: 1px solid rgba(94, 168, 255, 0.4);
   padding: 0.85rem 1rem;
@@ -1394,6 +1405,13 @@ html, body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+.avatar-debug-panel::-webkit-scrollbar {
+  width: 3px;
+}
+.avatar-debug-panel::-webkit-scrollbar-thumb {
+  background: rgba(94, 168, 255, 0.35);
 }
 
 .debug-header {
@@ -1453,6 +1471,39 @@ html, body {
   width: 100%;
   accent-color: var(--accent-blue);
   cursor: pointer;
+}
+
+.debug-select {
+  background: rgba(5, 6, 15, 0.85);
+  border: 1px solid rgba(94, 168, 255, 0.3);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.25rem 0.4rem;
+  outline: none;
+  border-radius: 0;
+}
+
+.debug-toggles-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-top: 0.2rem;
+}
+
+.debug-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.debug-toggle-btn:hover {
+  color: var(--accent-blue);
 }
 
 .debug-output {

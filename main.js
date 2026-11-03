@@ -37,9 +37,18 @@
     GLOBAL_LIGHT: 4.5,         // Global ambient light intensity
     CAMERA_LIGHT: 1.8,         // Directional camera light intensity
 
-    // Display Filters (CSS variables --avatar-contrast, --avatar-brightness)
-    AVATAR_CONTRAST: 0.78,     // Lift pure blacks
-    AVATAR_BRIGHTNESS: 1.5,    // Brighten dark skin
+    // Display Filters & Backdrop Haze (Mild lift, faint edge, soft wide haze)
+    AVATAR_CONTRAST: 0.92,     // Mild lift contrast
+    AVATAR_BRIGHTNESS: 1.25,   // Mild lift brightness
+    HAZE_OPACITY: 0.35,        // Soft wide haze backdrop opacity
+
+    // Zero-Gravity Float Dynamics
+    FLOAT_BOB: 1.2,            // Vertical bob amplitude in vh (period ~6s)
+    POSE_BLEND: 2.0,           // Pose blend duration in seconds (easeInOutCubic)
+
+    // Head Tracking Look-At Signs (+1: right->right, above->up; -1: inverted)
+    HEAD_YAW_SIGN: 1,          // Mouse right -> face turns to viewer's right
+    HEAD_PITCH_SIGN: 1,        // Mouse above -> face looks up
 
     // Audio & Playlist
     DEFAULT_VOLUME: 0.4,
@@ -231,321 +240,477 @@
 
   // Global state references
   let skinViewer = null;
-  let targetHeadX = 0;
-  let targetHeadY = 0;
-  let currentHeadX = 0;
-  let currentHeadY = 0;
-  let gestureHeadX = 0;
-  let gestureHeadY = 0;
-
+  let floatAnimation = null;
   let targetPlayerRotY = 0; // State rotation relative to ROT_OFFSET
-  let bonusSpinRotY = 0;    // Dynamic 360-spin offset on click/interaction
   let currentAvatarState = 'home';
   let activeSectionId = 'home';
   let activeDetailId = null; // Currently open experience detail key ('redismc', 'metamc', 'pixymc')
   let isMobile = window.innerWidth <= 768;
 
-  // Timers and transitions
-  let gestureTimer = null;
-  let transitionTimer = null;
-  let isTransitioning = false;
-  let lastHomeGesture = null;
+  // ==========================================================================
+  // ZERO-GRAVITY POSES & CUBIC EASING ENGINE
+  // ==========================================================================
+  const POSES = {
+    neutral: {
+      body: { x: 0, y: 0, z: 0 },
+      leftArm: { x: 0.08, y: 0, z: -0.18 },
+      rightArm: { x: 0.08, y: 0, z: 0.18 },
+      leftLeg: { x: -0.05, y: 0, z: -0.04 },
+      rightLeg: { x: 0.05, y: 0, z: 0.04 }
+    },
+    open: {
+      body: { x: -0.02, y: 0, z: 0 },
+      leftArm: { x: -0.15, y: 0.15, z: -0.5 },
+      rightArm: { x: -0.15, y: -0.15, z: 0.5 },
+      leftLeg: { x: -0.06, y: 0, z: -0.06 },
+      rightLeg: { x: 0.06, y: 0, z: 0.06 }
+    },
+    reach: {
+      body: { x: 0.03, y: 0.08, z: 0 },
+      leftArm: { x: 0.1, y: 0, z: -0.15 },
+      rightArm: { x: -1.2, y: -0.1, z: -0.2 },
+      leftLeg: { x: 0.1, y: 0, z: -0.03 },
+      rightLeg: { x: -0.12, y: 0, z: 0.04 }
+    },
+    rest: {
+      body: { x: 0.05, y: 0, z: 0 },
+      leftArm: { x: 0.04, y: 0, z: -0.1 },
+      rightArm: { x: 0.04, y: 0, z: 0.1 },
+      leftLeg: { x: 0.12, y: 0, z: -0.02 },
+      rightLeg: { x: -0.08, y: 0, z: 0.02 }
+    },
+    point: {
+      body: { x: 0.02, y: 0.2, z: 0 },
+      leftArm: { x: 0.08, y: 0, z: -0.15 },
+      rightArm: { x: -1.45, y: -0.3, z: 0.15 },
+      leftLeg: { x: -0.05, y: 0, z: -0.03 },
+      rightLeg: { x: 0.08, y: 0, z: 0.03 }
+    },
+    wave: {
+      body: { x: 0, y: 0, z: 0 },
+      leftArm: { x: 0.08, y: 0, z: -0.15 },
+      rightArm: { x: -2.8, y: 0.2, z: -0.35 },
+      leftLeg: { x: -0.03, y: 0, z: -0.02 },
+      rightLeg: { x: 0.03, y: 0, z: 0.02 }
+    }
+  };
 
-  const HOME_GESTURES = ['wave', 'lookAround', 'stretch', 'headTilt', 'smallHop', 'handsOnHips', 'armsCrossed'];
-
-  function pickRandomGesture(list, last) {
-    const pool = list.filter((g) => g !== last);
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-
-  function clearTimers() {
-    if (gestureTimer) clearTimeout(gestureTimer);
-    if (transitionTimer) clearTimeout(transitionTimer);
-    gestureTimer = null;
-    transitionTimer = null;
-    gestureHeadX = 0;
-    gestureHeadY = 0;
+  function easeInOutCubic(x) {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   }
 
   // ==========================================================================
-  // CUSTOM SKINVIEW3D COMPOSITE GESTURE ANIMATION (Half-sine ease-in/out)
+  // SCREEN LOOK-AT TARGET SYSTEM
   // ==========================================================================
-  class CompositeGestureAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
-    constructor(gestureName, onComplete) {
+  let currentLookTargetX = window.innerWidth * 0.5;
+  let currentLookTargetY = window.innerHeight * 0.3;
+  let desiredLookTargetX = currentLookTargetX;
+  let desiredLookTargetY = currentLookTargetY;
+  let blendLookSourceX = currentLookTargetX;
+  let blendLookSourceY = currentLookTargetY;
+  let blendLookStartTime = performance.now() / 1000;
+  let blendLookDuration = 0.8;
+
+  let mouseInWindow = true;
+  let mouseX = window.innerWidth * 0.5;
+  let mouseY = window.innerHeight * 0.3;
+  const isTouchDevice = ('ontouchstart' in window) && (navigator.maxTouchPoints > 0);
+
+  let readingTargetTimer = null;
+  let currentReadingIndex = 0;
+  let hoveredCard = null;
+  let hoveredContactRow = null;
+
+  function setDesiredLookTarget(x, y, duration = 0.8) {
+    blendLookSourceX = currentLookTargetX;
+    blendLookSourceY = currentLookTargetY;
+    desiredLookTargetX = x;
+    desiredLookTargetY = y;
+    blendLookStartTime = performance.now() / 1000;
+    blendLookDuration = duration;
+  }
+
+  function updateLookTargetEveryFrame() {
+    const nowSec = performance.now() / 1000;
+
+    if (activeSectionId === 'home') {
+      if (mouseInWindow && !isTouchDevice) {
+        desiredLookTargetX = mouseX;
+        desiredLookTargetY = mouseY;
+      } else {
+        // Slowly scan between title and buttons
+        const titleEl = document.getElementById('hero-title');
+        const actionsEl = document.querySelector('.hero-actions') || document.querySelector('[data-i18n="scrollHint"]');
+        let p1 = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.85 };
+        let p2 = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.94 };
+
+        if (titleEl) {
+          const r1 = titleEl.getBoundingClientRect();
+          p1 = { x: r1.left + r1.width * 0.5, y: r1.top + r1.height * 0.5 };
+        }
+        if (actionsEl) {
+          const r2 = actionsEl.getBoundingClientRect();
+          p2 = { x: r2.left + r2.width * 0.5, y: r2.top + r2.height * 0.5 };
+        }
+
+        const scan = (Math.sin(nowSec * (2 * Math.PI / 5.0)) + 1) / 2;
+        desiredLookTargetX = p1.x * (1 - scan) + p2.x * scan;
+        desiredLookTargetY = p1.y * (1 - scan) + p2.y * scan;
+      }
+    } else {
+      // In other sections: ignore mouse completely
+      if (activeSectionId === 'esperienze' && hoveredCard) {
+        const rect = hoveredCard.getBoundingClientRect();
+        desiredLookTargetX = rect.left + rect.width * 0.5;
+        desiredLookTargetY = rect.top + rect.height * 0.5;
+      } else if (activeSectionId === 'contatti' && hoveredContactRow) {
+        const rect = hoveredContactRow.getBoundingClientRect();
+        desiredLookTargetX = rect.left + rect.width * 0.5;
+        desiredLookTargetY = rect.top + rect.height * 0.5;
+      }
+    }
+
+    // Blend between old and new look targets over ~0.8s (no snapping)
+    const elapsed = nowSec - blendLookStartTime;
+    const p = Math.min(1, Math.max(0, elapsed / Math.max(0.01, blendLookDuration)));
+    const ease = easeInOutCubic(p);
+    currentLookTargetX = blendLookSourceX + (desiredLookTargetX - blendLookSourceX) * ease;
+    currentLookTargetY = blendLookSourceY + (desiredLookTargetY - blendLookSourceY) * ease;
+  }
+
+  function scheduleNextReadingTarget() {
+    clearTimeout(readingTargetTimer);
+    if (activeSectionId === 'home') return;
+
+    const delay = Math.random() * 1500 + 2500; // 2.5s to 4s
+    readingTargetTimer = setTimeout(() => {
+      if (activeSectionId === 'home') return;
+
+      if (activeSectionId === 'chi_sono') {
+        const steps = ['.section-tag', '.section-title', '.about-text', '.about-text', '.info-card'];
+        currentReadingIndex = (currentReadingIndex + 1) % steps.length;
+        const sel = steps[currentReadingIndex];
+        const el = document.querySelector(`#chi_sono ${sel}`);
+        if (el) {
+          const r = el.getBoundingClientRect();
+          let targetX = r.left + r.width * 0.5;
+          let targetY = r.top + r.height * 0.5;
+          if (sel === '.about-text') {
+            if (currentReadingIndex === 2) {
+              targetX = r.left + r.width * 0.25;
+              targetY = r.top + r.height * 0.3;
+            } else {
+              targetX = r.left + r.width * 0.75;
+              targetY = r.top + r.height * 0.7;
+            }
+          }
+          setDesiredLookTarget(targetX, targetY, 0.8);
+        }
+      } else if (activeSectionId === 'esperienze' || activeSectionId === 'esperienze-detail') {
+        if (activeDetailId) {
+          const steps = ['.detail-title', '.detail-paragraphs', '.detail-pros-cons-grid'];
+          currentReadingIndex = (currentReadingIndex + 1) % steps.length;
+          const el = document.querySelector(`#experience-detail-view ${steps[currentReadingIndex]}`);
+          if (el) {
+            const r = el.getBoundingClientRect();
+            setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+          }
+        } else if (!hoveredCard) {
+          const cards = document.querySelectorAll('#esperienze .card-minimal');
+          const count = cards.length + 1;
+          currentReadingIndex = (currentReadingIndex + 1) % count;
+          if (currentReadingIndex === 0) {
+            const el = document.querySelector('#esperienze .section-title');
+            if (el) {
+              const r = el.getBoundingClientRect();
+              setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+            }
+          } else {
+            const c = cards[currentReadingIndex - 1];
+            if (c) {
+              const r = c.getBoundingClientRect();
+              setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+            }
+          }
+        }
+      } else if (activeSectionId === 'contatti') {
+        if (!hoveredContactRow) {
+          const rows = document.querySelectorAll('#contatti .contact-row');
+          const count = rows.length + 2;
+          currentReadingIndex = (currentReadingIndex + 1) % count;
+          if (currentReadingIndex === 0) {
+            const el = document.querySelector('#contatti .contact-cta-title');
+            if (el) {
+              const r = el.getBoundingClientRect();
+              setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+            }
+          } else if (currentReadingIndex === 1) {
+            const el = document.querySelector('#contatti .contact-sub');
+            if (el) {
+              const r = el.getBoundingClientRect();
+              setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+            }
+          } else {
+            const row = rows[currentReadingIndex - 2];
+            if (row) {
+              const r = row.getBoundingClientRect();
+              setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+            }
+          }
+        }
+      }
+
+      scheduleNextReadingTarget();
+    }, delay);
+  }
+
+  // ==========================================================================
+  // CUSTOM ZERO-GRAVITY FLOAT ANIMATION ENGINE (Owns all joints every frame)
+  // ==========================================================================
+  class FloatAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
+    constructor() {
       super();
-      this.gestureName = gestureName;
-      this.onComplete = onComplete;
-      this.hasCompleted = false;
+      this.currentPoseName = 'neutral';
+      this.sourceRotations = this.clonePose(POSES.neutral);
+      this.targetRotations = this.clonePose(POSES.neutral);
+      this.blendedRotations = this.clonePose(POSES.neutral);
 
-      // Base idle animation running continuously beneath gestures
-      this.idleAnim = new skinview3d.IdleAnimation();
-      this.idleAnim.speed = 0.8;
+      this.blendStartTime = performance.now() / 1000;
+      this.blendDuration = CONFIG.POSE_BLEND;
+      this.isBlending = false;
 
-      // Gestures duration between 1.2s and 2.4s
-      const durations = {
-        wave: 2.1,
-        lookAround: 2.2,
-        stretch: 2.4,
-        headTilt: 1.8,
-        smallHop: 1.4,
-        handsOnHips: 2.2,
-        armsCrossed: 2.4,
-        pointCards: 2.2,
-        nod: 1.2 // Polite nod for detail view open
+      this.holdStartTime = performance.now() / 1000;
+      this.holdDuration = 7.0; // Random 6-10s
+
+      this.forcedPose = null;
+      this.isOneShotWave = false;
+      this.oneShotHoldDuration = 2.0;
+
+      this.headYaw = 0;
+      this.headPitch = 0;
+
+      this.currentSection = 'home';
+      this.hasDoneHomeInitialWave = false;
+      this.nextHomeRareWaveTime = (performance.now() / 1000) + (Math.random() * 20 + 40);
+    }
+
+    clonePose(p) {
+      return {
+        body: { ...p.body },
+        leftArm: { ...p.leftArm },
+        rightArm: { ...p.rightArm },
+        leftLeg: { ...p.leftLeg },
+        rightLeg: { ...p.rightLeg }
       };
-      this.duration = durations[gestureName] || 2.0;
+    }
+
+    interpolateJoints(from, to, factor, target) {
+      for (const joint of ['body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg']) {
+        target[joint].x = from[joint].x + (to[joint].x - from[joint].x) * factor;
+        target[joint].y = from[joint].y + (to[joint].y - from[joint].y) * factor;
+        target[joint].z = from[joint].z + (to[joint].z - from[joint].z) * factor;
+      }
+    }
+
+    transitionTo(poseName, customDuration) {
+      if (!POSES[poseName]) return;
+      this.sourceRotations = this.clonePose(this.blendedRotations);
+      this.targetRotations = this.clonePose(POSES[poseName]);
+      this.currentPoseName = poseName;
+      this.blendStartTime = performance.now() / 1000;
+      this.blendDuration = (typeof customDuration === 'number') ? customDuration : CONFIG.POSE_BLEND;
+      this.isBlending = true;
+    }
+
+    triggerWave(duration = 2.0) {
+      this.isOneShotWave = true;
+      this.oneShotHoldDuration = duration;
+      this.transitionTo('wave', 0.8);
+    }
+
+    onSectionChange(sectionId) {
+      this.currentSection = sectionId;
+      this.isOneShotWave = false;
+
+      if (sectionId === 'home') {
+        if (!this.hasDoneHomeInitialWave) {
+          this.hasDoneHomeInitialWave = true;
+          this.triggerWave(2.0);
+        } else {
+          this.pickNextPose();
+        }
+      } else if (sectionId === 'chi_sono') {
+        this.transitionTo('rest');
+        this.holdDuration = Math.random() * 4 + 6;
+        this.holdStartTime = performance.now() / 1000;
+      } else if (sectionId === 'esperienze') {
+        this.transitionTo('neutral');
+        this.holdDuration = Math.random() * 4 + 6;
+        this.holdStartTime = performance.now() / 1000;
+      } else if (sectionId === 'esperienze-detail') {
+        this.transitionTo('point');
+      } else if (sectionId === 'contatti') {
+        this.triggerWave(2.0);
+      }
+    }
+
+    onCardHover(isHovered) {
+      if (this.currentSection === 'esperienze' && !activeDetailId && !this.forcedPose) {
+        if (isHovered) {
+          this.transitionTo('point', 0.8);
+        } else {
+          this.transitionTo('neutral', 1.2);
+        }
+      }
+    }
+
+    pickNextPose() {
+      if (this.forcedPose) {
+        this.transitionTo(this.forcedPose);
+        return;
+      }
+
+      let pool = ['neutral', 'open', 'rest'];
+      if (this.currentSection === 'chi_sono') {
+        pool = ['rest', 'neutral', 'open'];
+      } else if (this.currentSection === 'esperienze') {
+        if (activeDetailId) {
+          this.transitionTo('point');
+          return;
+        }
+        pool = ['neutral', 'point', 'rest'];
+      } else if (this.currentSection === 'contatti') {
+        pool = ['open', 'neutral'];
+      } else if (this.currentSection === 'home') {
+        pool = ['neutral', 'open', 'rest'];
+      }
+
+      const available = pool.filter((p) => p !== this.currentPoseName);
+      const next = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : pool[0];
+      this.transitionTo(next);
+      this.holdDuration = Math.random() * 4 + 6;
+      this.holdStartTime = performance.now() / 1000;
     }
 
     animate(player) {
       if (!player || !player.skin) return;
 
-      // 1. Maintain underlying idle breathing on chest and limbs
-      this.idleAnim.progress = this.progress;
-      this.idleAnim.animate(player);
+      const nowSec = performance.now() / 1000;
 
-      // 2. Smooth half-sine envelope (0 at start -> 1 at peak -> 0 at finish)
-      const t = this.progress / this.duration;
-      if (t >= 1) {
-        if (!this.hasCompleted) {
-          this.hasCompleted = true;
-          player.position.y = 0;
-          gestureHeadX = 0;
-          gestureHeadY = 0;
-          player.skin.head.rotation.z = 0;
-          if (this.onComplete) setTimeout(this.onComplete, 0);
+      // 1. Pose Blend
+      if (this.isBlending) {
+        const elapsed = nowSec - this.blendStartTime;
+        const p = Math.min(1, Math.max(0, elapsed / Math.max(0.1, this.blendDuration)));
+        const ease = easeInOutCubic(p);
+
+        this.interpolateJoints(this.sourceRotations, this.targetRotations, ease, this.blendedRotations);
+
+        if (p >= 1) {
+          this.isBlending = false;
+          this.holdStartTime = nowSec;
+          if (!this.isOneShotWave) {
+            this.holdDuration = Math.random() * 4 + 6;
+          }
         }
-        return;
+      } else {
+        if (this.isOneShotWave) {
+          if (nowSec - this.holdStartTime >= (this.oneShotHoldDuration || 2.0)) {
+            this.isOneShotWave = false;
+            this.pickNextPose();
+          }
+        } else if (!this.forcedPose) {
+          if (this.currentSection === 'home' && nowSec >= this.nextHomeRareWaveTime) {
+            this.nextHomeRareWaveTime = nowSec + (Math.random() * 20 + 40);
+            this.triggerWave(2.0);
+          } else if (nowSec - this.holdStartTime >= this.holdDuration) {
+            this.pickNextPose();
+          }
+        }
       }
 
-      const w = Math.sin(t * Math.PI);
+      // 2. Secondary Limb Drift & Noise (Weightless float feel)
+      let armLDriftZ = 0;
+      let armRDriftZ = 0;
+      let legLDriftX = 0;
+      let legRDriftX = 0;
+      let bodyNoiseX = 0;
+      let bodyNoiseZ = 0;
+      let waveOscZ = 0;
 
-      // 3. Blend specific gesture pose
-      switch (this.gestureName) {
-        case 'wave': {
-          const wave = Math.sin(this.progress * 8) * 0.35;
-          player.skin.rightArm.rotation.x = (-Math.PI * 0.85) * w + player.skin.rightArm.rotation.x * (1 - w);
-          player.skin.rightArm.rotation.z = (-0.25 + wave) * w + player.skin.rightArm.rotation.z * (1 - w);
-          player.skin.rightArm.rotation.y = 0.2 * w;
-          break;
-        }
+      if (!prefersReducedMotion) {
+        armLDriftZ = 0.08 * Math.sin(nowSec * 1.1 + 0.5);
+        armRDriftZ = -0.08 * Math.sin(nowSec * 1.3 + 2.0);
+        legLDriftX = 0.06 * Math.sin(nowSec * 0.9 + 1.2);
+        legRDriftX = -0.06 * Math.sin(nowSec * 1.05 + 3.4);
+        bodyNoiseX = 0.02 * Math.sin(nowSec * 0.8 + 0.2);
+        bodyNoiseZ = 0.015 * Math.sin(nowSec * 0.7 + 1.5);
 
-        case 'lookAround': {
-          gestureHeadY = Math.sin(this.progress * 3.5) * 0.45 * w;
-          break;
-        }
-
-        case 'stretch': {
-          player.skin.rightArm.rotation.x = (-Math.PI * 0.92) * w + player.skin.rightArm.rotation.x * (1 - w);
-          player.skin.leftArm.rotation.x = (-Math.PI * 0.92) * w + player.skin.leftArm.rotation.x * (1 - w);
-          player.skin.rightArm.rotation.z = 0.25 * w + player.skin.rightArm.rotation.z * (1 - w);
-          player.skin.leftArm.rotation.z = -0.25 * w + player.skin.leftArm.rotation.z * (1 - w);
-          gestureHeadX = -0.22 * w;
-          break;
-        }
-
-        case 'headTilt': {
-          player.skin.head.rotation.z = Math.sin(this.progress * 3.5) * 0.32 * w;
-          break;
-        }
-
-        case 'smallHop': {
-          player.position.y = Math.sin(t * Math.PI) * 4.0;
-          player.skin.leftLeg.rotation.x = -0.35 * w;
-          player.skin.rightLeg.rotation.x = -0.35 * w;
-          break;
-        }
-
-        case 'handsOnHips': {
-          player.skin.leftArm.rotation.x = -0.25 * w + player.skin.leftArm.rotation.x * (1 - w);
-          player.skin.leftArm.rotation.z = -0.55 * w + player.skin.leftArm.rotation.z * (1 - w);
-          player.skin.leftArm.rotation.y = -0.2 * w;
-          player.skin.rightArm.rotation.x = -0.25 * w + player.skin.rightArm.rotation.x * (1 - w);
-          player.skin.rightArm.rotation.z = 0.55 * w + player.skin.rightArm.rotation.z * (1 - w);
-          player.skin.rightArm.rotation.y = 0.2 * w;
-          break;
-        }
-
-        case 'armsCrossed': {
-          player.skin.leftArm.rotation.x = (-Math.PI * 0.45) * w + player.skin.leftArm.rotation.x * (1 - w);
-          player.skin.leftArm.rotation.z = 0.45 * w + player.skin.leftArm.rotation.z * (1 - w);
-          player.skin.rightArm.rotation.x = (-Math.PI * 0.45) * w + player.skin.rightArm.rotation.x * (1 - w);
-          player.skin.rightArm.rotation.z = -0.45 * w + player.skin.rightArm.rotation.z * (1 - w);
-          break;
-        }
-
-        case 'pointCards': {
-          player.skin.rightArm.rotation.x = (-Math.PI * 0.55) * w + player.skin.rightArm.rotation.x * (1 - w);
-          player.skin.rightArm.rotation.y = -0.38 * w;
-          player.skin.rightArm.rotation.z = 0.28 * w + player.skin.rightArm.rotation.z * (1 - w);
-          break;
-        }
-
-        case 'nod': {
-          // Polite nod of acknowledgement when detail view opens
-          const nod = Math.sin(t * Math.PI) * 0.35 * w;
-          gestureHeadX = nod;
-          break;
+        if (this.currentPoseName === 'wave' || this.isOneShotWave) {
+          waveOscZ = Math.sin(nowSec * 7.0) * 0.35;
         }
       }
-    }
-  }
 
-  function playGesture(gestureName, onComplete) {
-    if (!skinViewer) return;
-    skinViewer.animation = new CompositeGestureAnimation(gestureName, () => {
-      if (onComplete) onComplete();
-    });
-  }
+      // 3. Apply to Joints
+      const skin = player.skin;
+      const b = this.blendedRotations;
 
-  // ==========================================================================
-  // GESTURE SCHEDULERS FOR SECTIONS
-  // ==========================================================================
-  function scheduleHomeGesture() {
-    clearTimeout(gestureTimer);
-    if (currentAvatarState !== 'home' || isTransitioning) return;
-    const delay = Math.random() * 4000 + 5000; // Random interval 5-9 seconds
-    gestureTimer = setTimeout(() => {
-      if (currentAvatarState !== 'home' || isTransitioning) return;
-      const g = pickRandomGesture(HOME_GESTURES, lastHomeGesture);
-      lastHomeGesture = g;
-      playGesture(g, () => {
-        if (currentAvatarState === 'home' && !isTransitioning && skinViewer) {
-          skinViewer.animation = new skinview3d.IdleAnimation();
-          skinViewer.animation.speed = 0.8;
-          scheduleHomeGesture();
-        }
-      });
-    }, delay);
-  }
+      if (skin.body) {
+        skin.body.rotation.x = b.body.x + bodyNoiseX;
+        skin.body.rotation.y = b.body.y;
+        skin.body.rotation.z = b.body.z + bodyNoiseZ;
+      }
 
-  function scheduleChiSonoHeadTilt() {
-    clearTimeout(gestureTimer);
-    if (currentAvatarState !== 'chi_sono' || isTransitioning) return;
-    const delay = Math.random() * 3000 + 6000; // Occasional head tilt 6-9 seconds
-    gestureTimer = setTimeout(() => {
-      if (currentAvatarState !== 'chi_sono' || isTransitioning) return;
-      playGesture('headTilt', () => {
-        if (currentAvatarState === 'chi_sono' && !isTransitioning && skinViewer) {
-          skinViewer.animation = new skinview3d.IdleAnimation();
-          skinViewer.animation.speed = 0.8;
-          scheduleChiSonoHeadTilt();
-        }
-      });
-    }, delay);
-  }
+      skin.leftArm.rotation.x = b.leftArm.x;
+      skin.leftArm.rotation.y = b.leftArm.y;
+      skin.leftArm.rotation.z = b.leftArm.z + armLDriftZ;
 
-  function scheduleEsperienzePoint() {
-    clearTimeout(gestureTimer);
-    if (currentAvatarState !== 'esperienze' || isTransitioning) return;
-    const delay = Math.random() * 3000 + 6000; // Occasional stop & point 6-9 seconds
-    gestureTimer = setTimeout(() => {
-      if (currentAvatarState !== 'esperienze' || isTransitioning) return;
-      // Stop walking, point towards cards for 2.2s, then resume walking
-      playGesture('pointCards', () => {
-        if (currentAvatarState === 'esperienze' && !isTransitioning && skinViewer) {
-          const walk = new skinview3d.WalkingAnimation();
-          walk.speed = 0.45;
-          walk.headBobbing = false;
-          skinViewer.animation = walk;
-          scheduleEsperienzePoint();
-        }
-      });
-    }, delay);
-  }
+      skin.rightArm.rotation.x = b.rightArm.x;
+      skin.rightArm.rotation.y = b.rightArm.y;
+      skin.rightArm.rotation.z = b.rightArm.z + armRDriftZ + waveOscZ;
 
-  function scheduleContattiGesture() {
-    clearTimeout(gestureTimer);
-    if (currentAvatarState !== 'contatti' || isTransitioning) return;
-    const delay = Math.random() * 4000 + 5000; // Random idle gestures 5-9 seconds
-    gestureTimer = setTimeout(() => {
-      if (currentAvatarState !== 'contatti' || isTransitioning) return;
-      const g = pickRandomGesture(HOME_GESTURES, lastHomeGesture);
-      lastHomeGesture = g;
-      playGesture(g, () => {
-        if (currentAvatarState === 'contatti' && !isTransitioning && skinViewer) {
-          skinViewer.animation = new skinview3d.IdleAnimation();
-          skinViewer.animation.speed = 0.8;
-          scheduleContattiGesture();
-        }
-      });
-    }, delay);
-  }
+      skin.leftLeg.rotation.x = b.leftLeg.x + legLDriftX;
+      skin.leftLeg.rotation.y = b.leftLeg.y;
+      skin.leftLeg.rotation.z = b.leftLeg.z;
 
-  // ==========================================================================
-  // SECTION POSE ACTIVATOR
-  // ==========================================================================
-  function activateSectionPose(state) {
-    if (!skinViewer) return;
+      skin.rightLeg.rotation.x = b.rightLeg.x + legRDriftX;
+      skin.rightLeg.rotation.y = b.rightLeg.y;
+      skin.rightLeg.rotation.z = b.rightLeg.z;
 
-    // Reset arm, leg, and head rotations smoothly before starting section pose
-    if (skinViewer.playerObject && skinViewer.playerObject.skin) {
-      const s = skinViewer.playerObject.skin;
-      s.leftArm.rotation.x = 0;
-      s.rightArm.rotation.x = 0;
-      s.leftArm.rotation.y = 0;
-      s.rightArm.rotation.y = 0;
-      s.leftArm.rotation.z = 0;
-      s.rightArm.rotation.z = 0;
-      s.leftLeg.rotation.x = 0;
-      s.rightLeg.rotation.x = 0;
-      s.head.rotation.z = 0;
-    }
-    if (skinViewer.playerObject) {
-      skinViewer.playerObject.position.y = 0;
+      // 4. Drive Head inside FloatAnimation (after pose blend)
+      this.updateHeadLook(player);
     }
 
-    switch (state) {
-      case 'home':
-        targetPlayerRotY = 0;
-        skinViewer.animation = new skinview3d.IdleAnimation();
-        skinViewer.animation.speed = 0.8;
-        scheduleHomeGesture();
-        break;
+    updateHeadLook(player) {
+      if (!player.skin || !player.skin.head) return;
 
-      case 'chi_sono':
-        // Avatar shifts to right, turns 3/4 toward text on left, initial wave then head tilt
-        targetPlayerRotY = CONFIG.ROT_ABOUT;
-        playGesture('wave', () => {
-          if (currentAvatarState === 'chi_sono' && !isTransitioning && skinViewer) {
-            skinViewer.animation = new skinview3d.IdleAnimation();
-            skinViewer.animation.speed = 0.8;
-            scheduleChiSonoHeadTilt();
-          }
-        });
-        break;
+      const stage = document.getElementById('avatar-stage');
+      if (!stage) return;
 
-      case 'esperienze':
-        // Avatar shifts to left, walking in place, turns 3/4 toward cards on right
-        targetPlayerRotY = CONFIG.ROT_EXP;
-        const walk = new skinview3d.WalkingAnimation();
-        walk.speed = 0.45;
-        walk.headBobbing = false;
-        skinViewer.animation = walk;
-        scheduleEsperienzePoint();
-        break;
+      const stageRect = stage.getBoundingClientRect();
+      const headScreenX = stageRect.left + stageRect.width * 0.5;
+      const headScreenY = stageRect.top + stageRect.height * 0.15;
 
-      case 'esperienze-detail':
-        // Avatar stays on left, turns further toward panel on right, plays polite nod then idle
-        targetPlayerRotY = CONFIG.ROT_EXP_DETAIL;
-        playGesture('nod', () => {
-          if (currentAvatarState === 'esperienze-detail' && !isTransitioning && skinViewer) {
-            skinViewer.animation = new skinview3d.IdleAnimation();
-            skinViewer.animation.speed = 0.8;
-          }
-        });
-        break;
+      const dx = currentLookTargetX - headScreenX;
+      const dy = currentLookTargetY - headScreenY;
 
-      case 'contatti':
-        // Back to center, facing front, short wave then random gestures
-        targetPlayerRotY = 0;
-        playGesture('wave', () => {
-          if (currentAvatarState === 'contatti' && !isTransitioning && skinViewer) {
-            skinViewer.animation = new skinview3d.IdleAnimation();
-            skinViewer.animation.speed = 0.8;
-            scheduleContattiGesture();
-          }
-        });
-        break;
+      const halfW = Math.max(1, window.innerWidth * 0.5);
+      const halfH = Math.max(1, window.innerHeight * 0.5);
+
+      const rawYaw = (dx / halfW) * CONFIG.HEAD_YAW_SIGN;
+      const rawPitch = (dy / halfH) * CONFIG.HEAD_PITCH_SIGN;
+
+      const bodyYaw = player.rotation.y - CONFIG.ROT_OFFSET;
+      const targetHeadYaw = rawYaw - bodyYaw;
+
+      const clampedYaw = Math.max(-0.8, Math.min(0.8, targetHeadYaw));
+      const clampedPitch = Math.max(-0.4, Math.min(0.4, rawPitch));
+
+      this.headYaw += (clampedYaw - this.headYaw) * 0.05;
+      this.headPitch += (clampedPitch - this.headPitch) * 0.05;
+
+      player.skin.head.rotation.y = this.headYaw;
+      player.skin.head.rotation.x = this.headPitch;
+      player.skin.head.rotation.z = 0;
     }
   }
 
@@ -579,6 +744,11 @@
 
       openingScreen.classList.add('faded-out');
       if (avatarStage) avatarStage.classList.add('stage-ready');
+
+      // Wave once on first arrival after opening sequence
+      if (floatAnimation && activeSectionId === 'home') {
+        floatAnimation.triggerWave(2.0);
+      }
 
       // Decrypt Title "coodz_10"
       if (heroTitle) {
@@ -665,12 +835,9 @@
   }
 
   // ==========================================================================
-  // 2. AVATAR STATE MACHINE & CONTINUOUS FRAME TICK
+  // 2. AVATAR STATE MACHINE & ZERO-GRAVITY FRAME TICK
   // ==========================================================================
   function setAvatarState(state) {
-    if (currentAvatarState === state && skinViewer && skinViewer.animation) return;
-    const previousState = currentAvatarState;
-    const isStateChange = (currentAvatarState !== state);
     currentAvatarState = state;
 
     const stage = document.getElementById('avatar-stage');
@@ -680,8 +847,6 @@
     }
 
     if (!skinViewer) return;
-
-    clearTimers();
 
     // Directional rotation for state
     if (state === 'chi_sono') {
@@ -694,28 +859,13 @@
       targetPlayerRotY = 0;
     }
 
-    // Transitions between 'esperienze' and 'esperienze-detail' do not require running animation
-    // because the avatar remains in the exact same place on the left
-    const isSubstateTransition = (
-      (previousState === 'esperienze' && state === 'esperienze-detail') ||
-      (previousState === 'esperienze-detail' && state === 'esperienze')
-    );
-
-    if (isStateChange && !isSubstateTransition) {
-      // 900ms Section Transition: avatar RUNS while CSS stage moves across viewport
-      isTransitioning = true;
-      const run = new skinview3d.RunningAnimation();
-      run.speed = 1.0;
-      run.headBobbing = false;
-      skinViewer.animation = run;
-
-      transitionTimer = setTimeout(() => {
-        isTransitioning = false;
-        activateSectionPose(state);
-      }, 900);
-    } else {
-      activateSectionPose(state);
+    if (floatAnimation) {
+      floatAnimation.onSectionChange(state);
     }
+
+    currentReadingIndex = 0;
+    setDesiredLookTarget(desiredLookTargetX, desiredLookTargetY, 0.8);
+    scheduleNextReadingTarget();
   }
 
   function updateViewerSize() {
@@ -766,15 +916,20 @@
       });
 
       skinViewer.controls.enabled = false;
-      skinViewer.autoRotate = false; // Controlled smoothly via continuous per-frame lerp
+      skinViewer.autoRotate = false; // Smoothly controlled via zero-g per-frame lerp
 
-      // Apply light intensities from CONFIG (illuminates dark skin on dark backgrounds)
+      // Single custom FloatAnimation engine owning all joints
+      skinViewer.animation = new FloatAnimation();
+      floatAnimation = skinViewer.animation;
+
+      // Apply light intensities from CONFIG
       if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
       if (skinViewer.cameraLight) skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
 
-      // Ensure CSS filter variables match CONFIG
+      // Ensure CSS filter variables and haze opacity match CONFIG
       document.documentElement.style.setProperty('--avatar-contrast', CONFIG.AVATAR_CONTRAST);
       document.documentElement.style.setProperty('--avatar-brightness', CONFIG.AVATAR_BRIGHTNESS);
+      document.documentElement.style.setProperty('--avatar-haze-opacity', CONFIG.HAZE_OPACITY);
 
       // Initial rotation facing front (ROT_OFFSET = 0)
       if (skinViewer.playerObject) {
@@ -783,44 +938,58 @@
 
       updateViewerSize();
 
-      // Hook skinViewer.render to run right after animation.update() and before composer.render().
-      // This guarantees cursor head-following and rotation lerp are applied smoothly on every single frame,
-      // including in walking and running states and across all gestures.
+      const avatarFloatEl = document.getElementById('avatar-float');
+
+      // Hook skinViewer.render: runs per frame
       const origRender = skinViewer.render.bind(skinViewer);
       skinViewer.render = function () {
-        if (skinViewer.playerObject) {
-          // Continuous lerp on player.rotation.y (NEVER move the camera)
-          // CONFIG.ROT_OFFSET is added inside the per-frame lerp so it cannot be bypassed or overwritten
-          const finalTargetRotY = targetPlayerRotY + CONFIG.ROT_OFFSET + bonusSpinRotY;
-          skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
+        const nowSec = performance.now() / 1000;
 
-          // Smooth lerp on head rotation (cursor follow + gesture offset)
-          currentHeadY += (targetHeadY - currentHeadY) * 0.08;
-          currentHeadX += (targetHeadX - currentHeadX) * 0.08;
+        // 1. Update on-screen look targets
+        updateLookTargetEveryFrame();
 
-          if (skinViewer.playerObject.skin && skinViewer.playerObject.skin.head) {
-            const head = skinViewer.playerObject.skin.head;
-            head.rotation.y = gestureHeadY + currentHeadY;
-            head.rotation.x = gestureHeadX + currentHeadX;
+        // 2. Zero-gravity JS transform on #avatar-float (bob & roll)
+        let yawDrift = 0;
+        if (!prefersReducedMotion) {
+          const bobPx = (window.innerHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0));
+          const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0));
+          yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
+
+          if (avatarFloatEl) {
+            avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
           }
+        } else {
+          if (avatarFloatEl) {
+            avatarFloatEl.style.transform = 'none';
+          }
+        }
+
+        // 3. Continuous rotation lerp on player.rotation.y (NEVER move the camera)
+        if (skinViewer.playerObject) {
+          const finalTargetRotY = targetPlayerRotY + CONFIG.ROT_OFFSET + yawDrift;
+          skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
         }
 
         origRender();
       };
 
-      // Activate initial pose for active section
-      activateSectionPose(activeSectionId || 'home');
+      // Set initial section state
+      setAvatarState(activeSectionId || 'home');
 
-      // Track mouse across screen for head following
+      // Track mouse across screen for head following in home section
       window.addEventListener('mousemove', (e) => {
-        const halfW = window.innerWidth / 2;
-        const halfH = window.innerHeight / 2;
-        const normX = (e.clientX - halfW) / halfW;
-        const normY = (e.clientY - halfH) / halfH;
-
-        targetHeadY = -normX * 0.55;
-        targetHeadX = normY * 0.35;
+        mouseInWindow = true;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
       }, { passive: true });
+
+      document.addEventListener('mouseenter', () => {
+        mouseInWindow = true;
+      });
+
+      document.addEventListener('mouseleave', () => {
+        mouseInWindow = false;
+      });
 
       // Resize
       window.addEventListener('resize', updateViewerSize, { passive: true });
@@ -838,63 +1007,14 @@
   }
 
   // ==========================================================================
-  // CLICK / TAP INTERACTION (360-degree Spin or Jump Hop)
+  // CLICK / TAP INTERACTION (Single Small Wave, No Jumps, No Spins)
   // ==========================================================================
   function initAvatarInteraction() {
-    let isSpinning = false;
-
-    function triggerSpin() {
-      if (isSpinning) return;
-      isSpinning = true;
-      const startTime = performance.now();
-      const duration = 650; // Snappy 360-degree rotation
-
-      function spinStep(now) {
-        const elapsed = now - startTime;
-        const t = Math.min(1, elapsed / duration);
-        const ease = 1 - Math.pow(1 - t, 3); // Ease-out cubic
-        bonusSpinRotY = ease * Math.PI * 2;
-
-        if (t < 1) {
-          requestAnimationFrame(spinStep);
-        } else {
-          if (skinViewer && skinViewer.playerObject) {
-            skinViewer.playerObject.rotation.y -= Math.PI * 2;
-          }
-          bonusSpinRotY = 0;
-          isSpinning = false;
-        }
-      }
-      requestAnimationFrame(spinStep);
-    }
-
-    function triggerJump() {
-      playGesture('smallHop', () => {
-        if (currentAvatarState === 'home') {
-          skinViewer.animation = new skinview3d.IdleAnimation();
-          skinViewer.animation.speed = 0.8;
-          scheduleHomeGesture();
-        } else if (currentAvatarState === 'esperienze') {
-          const walk = new skinview3d.WalkingAnimation();
-          walk.speed = 0.45;
-          walk.headBobbing = false;
-          skinViewer.animation = walk;
-          scheduleEsperienzePoint();
-        } else if (currentAvatarState === 'esperienze-detail') {
-          skinViewer.animation = new skinview3d.IdleAnimation();
-          skinViewer.animation.speed = 0.8;
-        } else {
-          skinViewer.animation = new skinview3d.IdleAnimation();
-          skinViewer.animation.speed = 0.8;
-        }
-      });
-    }
-
     function handleInteraction(clientX, clientY, target) {
       if (target && target.closest('button, a, input, select, textarea, [role="button"], #opening-screen, .opening-screen, .avatar-debug-panel, #proofs-modal, .proofs-modal')) {
         return;
       }
-      if (!skinViewer) return;
+      if (!skinViewer || !floatAnimation) return;
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -919,11 +1039,7 @@
       const dy = Math.abs(clientY - centerY);
 
       if (dx <= boxWidth / 2 && dy <= boxHeight / 2) {
-        if (Math.random() > 0.5) {
-          triggerSpin();
-        } else {
-          triggerJump();
-        }
+        floatAnimation.triggerWave(2.0);
       }
     }
 
@@ -1342,6 +1458,35 @@
           openExperienceDetail(key, true);
         }
       });
+
+      card.addEventListener('mouseenter', () => {
+        hoveredCard = card;
+        const r = card.getBoundingClientRect();
+        setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+        if (floatAnimation) {
+          floatAnimation.onCardHover(true);
+        }
+      });
+
+      card.addEventListener('mouseleave', () => {
+        hoveredCard = null;
+        if (floatAnimation) {
+          floatAnimation.onCardHover(false);
+        }
+      });
+    });
+
+    // Contact rows hover targeting
+    document.querySelectorAll('#contatti .contact-row').forEach((row) => {
+      row.addEventListener('mouseenter', () => {
+        hoveredContactRow = row;
+        const r = row.getBoundingClientRect();
+        setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+      });
+
+      row.addEventListener('mouseleave', () => {
+        hoveredContactRow = null;
+      });
     });
   }
 
@@ -1729,7 +1874,7 @@
     panel.innerHTML = `
       <div class="debug-header">
         <span class="debug-title">[ AVATAR DEBUG ]</span>
-        <button id="debug-copy-btn" class="debug-btn" title="Copy to clipboard">[ COPY ]</button>
+        <button id="debug-copy-btn" class="debug-btn cursor-pointer" title="Copy to clipboard">[ COPY ]</button>
       </div>
       <div class="debug-controls">
         <label class="debug-row">
@@ -1745,12 +1890,16 @@
           <input type="range" id="slider-rot" min="0" max="6.28" step="0.02" value="${CONFIG.ROT_OFFSET}">
         </label>
         <label class="debug-row">
-          <span>Global Light: <b id="val-glight">${CONFIG.GLOBAL_LIGHT.toFixed(1)}</b></span>
-          <input type="range" id="slider-glight" min="0" max="8.0" step="0.1" value="${CONFIG.GLOBAL_LIGHT}">
+          <span>Float Bob: <b id="val-bob">${CONFIG.FLOAT_BOB.toFixed(1)}vh</b></span>
+          <input type="range" id="slider-bob" min="0" max="3.0" step="0.1" value="${CONFIG.FLOAT_BOB}">
         </label>
         <label class="debug-row">
-          <span>Camera Light: <b id="val-clight">${CONFIG.CAMERA_LIGHT.toFixed(1)}</b></span>
-          <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
+          <span>Pose Blend: <b id="val-blend">${CONFIG.POSE_BLEND.toFixed(1)}s</b></span>
+          <input type="range" id="slider-blend" min="0.5" max="4.0" step="0.1" value="${CONFIG.POSE_BLEND}">
+        </label>
+        <label class="debug-row">
+          <span>Haze Opacity: <b id="val-haze">${CONFIG.HAZE_OPACITY.toFixed(2)}</b></span>
+          <input type="range" id="slider-haze" min="0" max="1.0" step="0.05" value="${CONFIG.HAZE_OPACITY}">
         </label>
         <label class="debug-row">
           <span>Contrast: <b id="val-contrast">${CONFIG.AVATAR_CONTRAST.toFixed(2)}</b></span>
@@ -1759,6 +1908,32 @@
         <label class="debug-row">
           <span>Brightness: <b id="val-brightness">${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)}</b></span>
           <input type="range" id="slider-brightness" min="0.8" max="2.5" step="0.05" value="${CONFIG.AVATAR_BRIGHTNESS}">
+        </label>
+        <label class="debug-row">
+          <span>Global Light: <b id="val-glight">${CONFIG.GLOBAL_LIGHT.toFixed(1)}</b></span>
+          <input type="range" id="slider-glight" min="0" max="8.0" step="0.1" value="${CONFIG.GLOBAL_LIGHT}">
+        </label>
+        <label class="debug-row">
+          <span>Camera Light: <b id="val-clight">${CONFIG.CAMERA_LIGHT.toFixed(1)}</b></span>
+          <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
+        </label>
+
+        <div class="debug-toggles-row">
+          <button id="toggle-yaw" class="debug-toggle-btn cursor-pointer">[ YAW: ${CONFIG.HEAD_YAW_SIGN > 0 ? '+1' : '-1'} ]</button>
+          <button id="toggle-pitch" class="debug-toggle-btn cursor-pointer">[ PITCH: ${CONFIG.HEAD_PITCH_SIGN > 0 ? '+1' : '-1'} ]</button>
+        </div>
+
+        <label class="debug-row">
+          <span>Force Pose:</span>
+          <select id="debug-pose-select" class="debug-select cursor-pointer">
+            <option value="auto">[ AUTO / SECTION ]</option>
+            <option value="neutral">neutral</option>
+            <option value="open">open</option>
+            <option value="reach">reach</option>
+            <option value="rest">rest</option>
+            <option value="point">point</option>
+            <option value="wave">wave</option>
+          </select>
         </label>
       </div>
       <pre id="debug-code-output" class="debug-output"></pre>
@@ -1769,18 +1944,28 @@
     const sliderZoom = panel.querySelector('#slider-zoom');
     const sliderY = panel.querySelector('#slider-y');
     const sliderRot = panel.querySelector('#slider-rot');
-    const sliderGLight = panel.querySelector('#slider-glight');
-    const sliderCLight = panel.querySelector('#slider-clight');
+    const sliderBob = panel.querySelector('#slider-bob');
+    const sliderBlend = panel.querySelector('#slider-blend');
+    const sliderHaze = panel.querySelector('#slider-haze');
     const sliderContrast = panel.querySelector('#slider-contrast');
     const sliderBrightness = panel.querySelector('#slider-brightness');
+    const sliderGLight = panel.querySelector('#slider-glight');
+    const sliderCLight = panel.querySelector('#slider-clight');
 
     const valZoom = panel.querySelector('#val-zoom');
     const valY = panel.querySelector('#val-y');
     const valRot = panel.querySelector('#val-rot');
-    const valGLight = panel.querySelector('#val-glight');
-    const valCLight = panel.querySelector('#val-clight');
+    const valBob = panel.querySelector('#val-bob');
+    const valBlend = panel.querySelector('#val-blend');
+    const valHaze = panel.querySelector('#val-haze');
     const valContrast = panel.querySelector('#val-contrast');
     const valBrightness = panel.querySelector('#val-brightness');
+    const valGLight = panel.querySelector('#val-glight');
+    const valCLight = panel.querySelector('#val-clight');
+
+    const toggleYaw = panel.querySelector('#toggle-yaw');
+    const togglePitch = panel.querySelector('#toggle-pitch');
+    const poseSelect = panel.querySelector('#debug-pose-select');
     const codeOutput = panel.querySelector('#debug-code-output');
     const copyBtn = panel.querySelector('#debug-copy-btn');
 
@@ -1789,10 +1974,15 @@
 AVATAR_ZOOM_DESKTOP: ${CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2)},
 AVATAR_Y_OFFSET: ${CONFIG.AVATAR_Y_OFFSET},
 ROT_OFFSET: ${(CONFIG.ROT_OFFSET / Math.PI).toFixed(2)} * Math.PI, // ${(CONFIG.ROT_OFFSET).toFixed(3)} rad
-GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
-CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)},
+FLOAT_BOB: ${CONFIG.FLOAT_BOB.toFixed(1)},
+POSE_BLEND: ${CONFIG.POSE_BLEND.toFixed(1)},
+HAZE_OPACITY: ${CONFIG.HAZE_OPACITY.toFixed(2)},
 AVATAR_CONTRAST: ${CONFIG.AVATAR_CONTRAST.toFixed(2)},
-AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)}`;
+AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)},
+HEAD_YAW_SIGN: ${CONFIG.HEAD_YAW_SIGN},
+HEAD_PITCH_SIGN: ${CONFIG.HEAD_PITCH_SIGN},
+GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
+CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
       codeOutput.textContent = code;
     }
 
@@ -1821,6 +2011,39 @@ AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)}`;
       updateConfigReadout();
     });
 
+    sliderBob.addEventListener('input', (e) => {
+      CONFIG.FLOAT_BOB = parseFloat(e.target.value);
+      valBob.textContent = CONFIG.FLOAT_BOB.toFixed(1) + 'vh';
+      updateConfigReadout();
+    });
+
+    sliderBlend.addEventListener('input', (e) => {
+      CONFIG.POSE_BLEND = parseFloat(e.target.value);
+      valBlend.textContent = CONFIG.POSE_BLEND.toFixed(1) + 's';
+      updateConfigReadout();
+    });
+
+    sliderHaze.addEventListener('input', (e) => {
+      CONFIG.HAZE_OPACITY = parseFloat(e.target.value);
+      valHaze.textContent = CONFIG.HAZE_OPACITY.toFixed(2);
+      document.documentElement.style.setProperty('--avatar-haze-opacity', CONFIG.HAZE_OPACITY);
+      updateConfigReadout();
+    });
+
+    sliderContrast.addEventListener('input', (e) => {
+      CONFIG.AVATAR_CONTRAST = parseFloat(e.target.value);
+      valContrast.textContent = CONFIG.AVATAR_CONTRAST.toFixed(2);
+      document.documentElement.style.setProperty('--avatar-contrast', CONFIG.AVATAR_CONTRAST);
+      updateConfigReadout();
+    });
+
+    sliderBrightness.addEventListener('input', (e) => {
+      CONFIG.AVATAR_BRIGHTNESS = parseFloat(e.target.value);
+      valBrightness.textContent = CONFIG.AVATAR_BRIGHTNESS.toFixed(2);
+      document.documentElement.style.setProperty('--avatar-brightness', CONFIG.AVATAR_BRIGHTNESS);
+      updateConfigReadout();
+    });
+
     sliderGLight.addEventListener('input', (e) => {
       CONFIG.GLOBAL_LIGHT = parseFloat(e.target.value);
       valGLight.textContent = CONFIG.GLOBAL_LIGHT.toFixed(1);
@@ -1839,18 +2062,29 @@ AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)}`;
       updateConfigReadout();
     });
 
-    sliderContrast.addEventListener('input', (e) => {
-      CONFIG.AVATAR_CONTRAST = parseFloat(e.target.value);
-      valContrast.textContent = CONFIG.AVATAR_CONTRAST.toFixed(2);
-      document.documentElement.style.setProperty('--avatar-contrast', CONFIG.AVATAR_CONTRAST);
+    toggleYaw.addEventListener('click', () => {
+      CONFIG.HEAD_YAW_SIGN *= -1;
+      toggleYaw.textContent = `[ YAW: ${CONFIG.HEAD_YAW_SIGN > 0 ? '+1' : '-1'} ]`;
       updateConfigReadout();
     });
 
-    sliderBrightness.addEventListener('input', (e) => {
-      CONFIG.AVATAR_BRIGHTNESS = parseFloat(e.target.value);
-      valBrightness.textContent = CONFIG.AVATAR_BRIGHTNESS.toFixed(2);
-      document.documentElement.style.setProperty('--avatar-brightness', CONFIG.AVATAR_BRIGHTNESS);
+    togglePitch.addEventListener('click', () => {
+      CONFIG.HEAD_PITCH_SIGN *= -1;
+      togglePitch.textContent = `[ PITCH: ${CONFIG.HEAD_PITCH_SIGN > 0 ? '+1' : '-1'} ]`;
       updateConfigReadout();
+    });
+
+    poseSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (floatAnimation) {
+        if (val === 'auto') {
+          floatAnimation.forcedPose = null;
+          floatAnimation.pickNextPose();
+        } else {
+          floatAnimation.forcedPose = val;
+          floatAnimation.transitionTo(val, 1.0);
+        }
+      }
     });
 
     copyBtn.addEventListener('click', () => {
