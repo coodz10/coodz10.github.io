@@ -140,7 +140,7 @@ html, body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(circle 520px at 50% 48%, rgba(94, 168, 255, 0.16) 0%, rgba(139, 108, 255, 0.1) 40%, rgba(196, 181, 255, 0.02) 70%, transparent 100%);
+  background: radial-gradient(circle 650px at 50% 45%, rgba(94, 168, 255, 0.32) 0%, rgba(139, 108, 255, 0.22) 42%, rgba(196, 181, 255, 0.06) 70%, transparent 100%);
   animation: pulseAmbient 9s ease-in-out infinite alternate;
   will-change: transform, opacity;
 }
@@ -171,44 +171,78 @@ html, body {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: translate(0, 0) scale(0.9);
+  transform: translate(0, var(--avatar-y, 0px)) scale(0.9);
   transition: transform 900ms var(--ease-smooth), opacity 900ms var(--ease-smooth);
   will-change: transform, opacity;
+}
+
+/* Silhouette Disc & Floor Shadow/Glow (behind dark avatar skin) */
+.avatar-backdrop-disc {
+  position: absolute;
+  width: 45vh;
+  height: 45vh;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(28, 38, 80, 0.72) 0%, rgba(14, 18, 44, 0.42) 60%, transparent 80%);
+  border: 1px solid rgba(94, 168, 255, 0.3);
+  box-shadow: 0 0 50px rgba(94, 168, 255, 0.22), inset 0 0 35px rgba(139, 108, 255, 0.15);
+}
+
+.avatar-floor-glow {
+  position: absolute;
+  width: 28vh;
+  height: 3.5vh;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 28vh);
+  background: radial-gradient(ellipse at center, rgba(94, 168, 255, 0.5) 0%, rgba(139, 108, 255, 0.25) 50%, transparent 80%);
+  filter: blur(5px);
+  box-shadow: 0 0 24px rgba(94, 168, 255, 0.35);
 }
 
 /* Section State Transforms */
 .avatar-stage.stage-ready.state-home {
   opacity: 1;
-  transform: translate(0, 0) scale(1);
+  transform: translate(0, var(--avatar-y, 0px)) scale(1);
 }
 
 .avatar-stage.stage-ready.state-chi_sono {
   opacity: 1;
-  transform: translate(22vw, 0) scale(0.85);
+  transform: translate(22vw, calc(var(--avatar-y, 0px) * 0.8)) scale(0.85);
 }
 
 .avatar-stage.stage-ready.state-esperienze {
   opacity: 1;
-  transform: translate(-22vw, 0) scale(0.8);
+  transform: translate(-22vw, calc(var(--avatar-y, 0px) * 0.8)) scale(0.8);
 }
 
 .avatar-stage.stage-ready.state-contatti {
   opacity: 1;
-  transform: translate(0, 0) scale(0.7);
+  transform: translate(0, var(--avatar-y, 0px)) scale(0.7);
 }
 
 .avatar-canvas {
   width: 100vw;
   height: 100vh;
   display: block;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 28px rgba(94, 168, 255, 0.55)) drop-shadow(0 0 70px rgba(139, 108, 255, 0.35));
 }
 
 .avatar-fallback {
-  max-height: 75vh;
+  max-height: 65vh;
   width: auto;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: drop-shadow(0 0 40px rgba(94, 168, 255, 0.35));
+  filter: drop-shadow(0 0 28px rgba(94, 168, 255, 0.55)) drop-shadow(0 0 70px rgba(139, 108, 255, 0.35));
 }
 
 /* ==========================================================================
@@ -513,16 +547,18 @@ html, body {
 .section-home {
   justify-content: center;
   align-items: flex-end;
-  padding-bottom: 7rem;
+  padding-bottom: 5.75rem;
 }
 
 .hero-content {
   text-align: center;
   pointer-events: auto;
+  position: relative;
+  z-index: 4;
 }
 
 .hero-title {
-  font-size: clamp(2.75rem, 8vw, 6.5rem);
+  font-size: clamp(2.5rem, 6vw, 5rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -533,7 +569,7 @@ html, body {
 
 .scroll-hint {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 1.25rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -544,6 +580,7 @@ html, body {
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   pointer-events: none;
+  z-index: 4;
 }
 
 .scroll-line {
@@ -837,7 +874,18 @@ html, body {
   .avatar-stage.stage-ready.state-chi_sono,
   .avatar-stage.stage-ready.state-esperienze,
   .avatar-stage.stage-ready.state-contatti {
-    transform: translate(0, -22vh) scale(0.55) !important;
+    transform: translate(0, calc(-18vh + var(--avatar-y, 0px))) scale(0.6) !important;
+  }
+
+  .avatar-backdrop-disc {
+    width: 30vh;
+    height: 30vh;
+  }
+
+  .avatar-floor-glow {
+    width: 20vh;
+    height: 2.5vh;
+    transform: translate(-50%, 20vh);
   }
 
   .avatar-fallback {
@@ -917,4 +965,96 @@ html, body {
     transform: none !important;
     opacity: 1 !important;
   }
+}
+
+/* ==========================================================================
+   DEBUG HELPER PANEL (?debug query parameter only)
+   ========================================================================== */
+.avatar-debug-panel {
+  position: fixed;
+  top: 4.5rem;
+  left: 1.5rem;
+  z-index: 1000;
+  width: 280px;
+  background: rgba(10, 11, 36, 0.95);
+  border: 1px solid rgba(94, 168, 255, 0.4);
+  padding: 0.85rem 1rem;
+  color: var(--text);
+  font-size: 0.72rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(94, 168, 255, 0.2);
+  padding-bottom: 0.4rem;
+}
+
+.debug-title {
+  color: var(--accent-blue);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.debug-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  transition: color 0.2s ease;
+}
+
+.debug-btn:hover {
+  color: #fff;
+}
+
+.debug-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.debug-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.debug-row span {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.debug-row span b {
+  color: var(--accent-lilac);
+  font-weight: 500;
+}
+
+.debug-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+}
+
+.debug-output {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(5, 6, 15, 0.9);
+  border: 1px solid rgba(124, 131, 168, 0.25);
+  color: var(--accent-lilac);
+  font-size: 0.62rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  user-select: all;
+  max-height: 130px;
+  overflow-y: auto;
 }

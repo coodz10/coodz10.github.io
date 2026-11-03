@@ -11,7 +11,7 @@
   'use strict';
 
   // ==========================================================================
-  // CONFIGURATION CONSTANTS
+  // CONFIGURATION CONSTANTS (All tunable values)
   // ==========================================================================
   const CONFIG = {
     SKIN_URL: 'assets/skin.png',
@@ -21,10 +21,22 @@
     bg: '#05060f',
     text: '#e8eaff',
     muted: '#7c83a8',
-    AVATAR_ZOOM_DESKTOP: 1.15,
-    AVATAR_ZOOM_MOBILE: 0.6,
-    ROT_ABOUT: -0.65,
-    ROT_EXP: 0.65,
+
+    // Avatar Sizing & Vertical Placement (~65vh tall, leaves space for title below)
+    AVATAR_ZOOM_DESKTOP: 0.65, // Desktop camera zoom (~65vh tall, head below nav, feet above title)
+    AVATAR_ZOOM_MOBILE: 0.45,  // Mobile camera zoom for small viewports
+    AVATAR_Y_OFFSET: -35,      // Vertical stage nudge in px (negative moves avatar up toward center)
+
+    // Avatar Rotations (ROT_OFFSET turns model 180° so it faces forward)
+    ROT_OFFSET: Math.PI,       // Base rotation offset (Math.PI makes front face the camera)
+    ROT_ABOUT: -0.65,          // chi_sono: relative rotation turning toward text on the left
+    ROT_EXP: 0.65,             // esperienze: relative rotation turning toward cards on the right
+
+    // Lighting (illuminates dark skin on dark backgrounds)
+    GLOBAL_LIGHT: 3.5,         // Ambient global light intensity
+    CAMERA_LIGHT: 1.2,         // Direct camera light intensity
+
+    // Audio & Playlist
     DEFAULT_VOLUME: 0.4,
     PLAYLIST: [
       { name: 'dorado', src: 'music/dorado.mp3' },
@@ -104,7 +116,7 @@
   let skinViewer = null;
   let targetHeadX = 0;
   let targetHeadY = 0;
-  let targetPlayerRotY = 0;
+  let targetPlayerRotY = CONFIG.ROT_OFFSET;
   let currentAvatarState = 'home';
   let activeSectionId = 'home';
   let isMobile = window.innerWidth <= 768;
@@ -315,20 +327,20 @@
 
     switch (state) {
       case 'home':
-        targetPlayerRotY = 0;
+        targetPlayerRotY = CONFIG.ROT_OFFSET;
         skinViewer.animation = new skinview3d.IdleAnimation();
         skinViewer.animation.speed = 0.8;
         break;
 
       case 'chi_sono':
         // Avatar shifts to right, turns 3/4 toward text on left, waving with right arm
-        targetPlayerRotY = CONFIG.ROT_ABOUT;
+        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_ABOUT;
         skinViewer.animation = new WaveAnimation();
         break;
 
       case 'esperienze':
         // Avatar shifts to left, walking in place slowly, looking toward cards on right
-        targetPlayerRotY = CONFIG.ROT_EXP;
+        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_EXP;
         const walk = new skinview3d.WalkingAnimation();
         walk.speed = 0.45;
         walk.headBobbing = false; // Disables walking head sway so cursor head-follow is not overridden
@@ -337,7 +349,7 @@
 
       case 'contatti':
         // Back to center, facing front, short wave then idle
-        targetPlayerRotY = 0;
+        targetPlayerRotY = CONFIG.ROT_OFFSET;
         skinViewer.animation = new ShortWaveThenIdleAnimation(() => {
           if (currentAvatarState === 'contatti' && skinViewer) {
             skinViewer.animation = new skinview3d.IdleAnimation();
@@ -356,8 +368,13 @@
     skinViewer.width = w;
     skinViewer.height = h;
 
-    // Use configurable zoom from CONFIG (~80vh tall on desktop)
+    // Use configurable zoom from CONFIG (~65vh tall on desktop)
     skinViewer.zoom = isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP;
+
+    const stage = document.getElementById('avatar-stage');
+    if (stage) {
+      stage.style.setProperty('--avatar-y', `${CONFIG.AVATAR_Y_OFFSET}px`);
+    }
   }
 
   function initAvatar() {
@@ -392,6 +409,15 @@
 
       skinViewer.controls.enabled = false;
       skinViewer.autoRotate = false; // Rotation controlled smoothly via state machine lerp
+
+      // Apply light intensities from CONFIG (illuminates dark skin on dark backgrounds)
+      if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
+      if (skinViewer.cameraLight) skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
+
+      // Initial rotation facing front
+      if (skinViewer.playerObject) {
+        skinViewer.playerObject.rotation.y = CONFIG.ROT_OFFSET;
+      }
 
       // Initial state: home idle breathing
       skinViewer.animation = new skinview3d.IdleAnimation();
@@ -823,6 +849,142 @@
   }
 
   // ==========================================================================
+  // 8. DEBUG HELPER PANEL (?debug query parameter only)
+  // ==========================================================================
+  function initDebugHelper() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('debug')) return;
+
+    const panel = document.createElement('div');
+    panel.id = 'avatar-debug-panel';
+    panel.className = 'avatar-debug-panel mono';
+
+    panel.innerHTML = `
+      <div class="debug-header">
+        <span class="debug-title">[ AVATAR DEBUG ]</span>
+        <button id="debug-copy-btn" class="debug-btn" title="Copy to clipboard">[ COPY ]</button>
+      </div>
+      <div class="debug-controls">
+        <label class="debug-row">
+          <span>Zoom: <b id="val-zoom">${CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2)}</b></span>
+          <input type="range" id="slider-zoom" min="0.2" max="1.5" step="0.01" value="${CONFIG.AVATAR_ZOOM_DESKTOP}">
+        </label>
+        <label class="debug-row">
+          <span>Y Offset: <b id="val-y">${CONFIG.AVATAR_Y_OFFSET}px</b></span>
+          <input type="range" id="slider-y" min="-200" max="200" step="1" value="${CONFIG.AVATAR_Y_OFFSET}">
+        </label>
+        <label class="debug-row">
+          <span>Rot Offset: <b id="val-rot">${CONFIG.ROT_OFFSET.toFixed(2)} rad</b></span>
+          <input type="range" id="slider-rot" min="0" max="6.28" step="0.02" value="${CONFIG.ROT_OFFSET}">
+        </label>
+        <label class="debug-row">
+          <span>Global Light: <b id="val-glight">${CONFIG.GLOBAL_LIGHT.toFixed(1)}</b></span>
+          <input type="range" id="slider-glight" min="0" max="8.0" step="0.1" value="${CONFIG.GLOBAL_LIGHT}">
+        </label>
+        <label class="debug-row">
+          <span>Camera Light: <b id="val-clight">${CONFIG.CAMERA_LIGHT.toFixed(1)}</b></span>
+          <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
+        </label>
+      </div>
+      <pre id="debug-code-output" class="debug-output"></pre>
+    `;
+
+    document.body.appendChild(panel);
+
+    const sliderZoom = panel.querySelector('#slider-zoom');
+    const sliderY = panel.querySelector('#slider-y');
+    const sliderRot = panel.querySelector('#slider-rot');
+    const sliderGLight = panel.querySelector('#slider-glight');
+    const sliderCLight = panel.querySelector('#slider-clight');
+
+    const valZoom = panel.querySelector('#val-zoom');
+    const valY = panel.querySelector('#val-y');
+    const valRot = panel.querySelector('#val-rot');
+    const valGLight = panel.querySelector('#val-glight');
+    const valCLight = panel.querySelector('#val-clight');
+    const codeOutput = panel.querySelector('#debug-code-output');
+    const copyBtn = panel.querySelector('#debug-copy-btn');
+
+    function updateConfigReadout() {
+      const code = `// COPY INTO CONFIG:
+AVATAR_ZOOM_DESKTOP: ${CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2)},
+AVATAR_Y_OFFSET: ${CONFIG.AVATAR_Y_OFFSET},
+ROT_OFFSET: ${(CONFIG.ROT_OFFSET / Math.PI).toFixed(2)} * Math.PI, // ${(CONFIG.ROT_OFFSET).toFixed(3)} rad
+GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
+CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)}`;
+      codeOutput.textContent = code;
+      console.log('AVATAR CONFIG:', {
+        AVATAR_ZOOM_DESKTOP: CONFIG.AVATAR_ZOOM_DESKTOP,
+        AVATAR_Y_OFFSET: CONFIG.AVATAR_Y_OFFSET,
+        ROT_OFFSET: CONFIG.ROT_OFFSET,
+        GLOBAL_LIGHT: CONFIG.GLOBAL_LIGHT,
+        CAMERA_LIGHT: CONFIG.CAMERA_LIGHT
+      });
+    }
+
+    sliderZoom.addEventListener('input', (e) => {
+      CONFIG.AVATAR_ZOOM_DESKTOP = parseFloat(e.target.value);
+      valZoom.textContent = CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2);
+      if (skinViewer && !isMobile) {
+        skinViewer.zoom = CONFIG.AVATAR_ZOOM_DESKTOP;
+      }
+      updateConfigReadout();
+    });
+
+    sliderY.addEventListener('input', (e) => {
+      CONFIG.AVATAR_Y_OFFSET = parseInt(e.target.value, 10);
+      valY.textContent = CONFIG.AVATAR_Y_OFFSET + 'px';
+      const stage = document.getElementById('avatar-stage');
+      if (stage) {
+        stage.style.setProperty('--avatar-y', `${CONFIG.AVATAR_Y_OFFSET}px`);
+      }
+      updateConfigReadout();
+    });
+
+    sliderRot.addEventListener('input', (e) => {
+      CONFIG.ROT_OFFSET = parseFloat(e.target.value);
+      valRot.textContent = CONFIG.ROT_OFFSET.toFixed(2) + ' rad';
+      if (activeSectionId === 'chi_sono') {
+        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_ABOUT;
+      } else if (activeSectionId === 'esperienze') {
+        targetPlayerRotY = CONFIG.ROT_OFFSET + CONFIG.ROT_EXP;
+      } else {
+        targetPlayerRotY = CONFIG.ROT_OFFSET;
+      }
+      updateConfigReadout();
+    });
+
+    sliderGLight.addEventListener('input', (e) => {
+      CONFIG.GLOBAL_LIGHT = parseFloat(e.target.value);
+      valGLight.textContent = CONFIG.GLOBAL_LIGHT.toFixed(1);
+      if (skinViewer && skinViewer.globalLight) {
+        skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
+      }
+      updateConfigReadout();
+    });
+
+    sliderCLight.addEventListener('input', (e) => {
+      CONFIG.CAMERA_LIGHT = parseFloat(e.target.value);
+      valCLight.textContent = CONFIG.CAMERA_LIGHT.toFixed(1);
+      if (skinViewer && skinViewer.cameraLight) {
+        skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
+      }
+      updateConfigReadout();
+    });
+
+    copyBtn.addEventListener('click', () => {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(codeOutput.textContent).then(() => {
+          copyBtn.textContent = '[ COPIED! ]';
+          setTimeout(() => (copyBtn.textContent = '[ COPY ]'), 1500);
+        });
+      }
+    });
+
+    updateConfigReadout();
+  }
+
+  // ==========================================================================
   // INITIALIZATION ON DOMContentLoaded
   // ==========================================================================
   document.addEventListener('DOMContentLoaded', () => {
@@ -834,6 +996,7 @@
     initScrollProgress();
     initKeyboardNav();
     initSectionObserver();
+    initDebugHelper();
   });
 
 })();
