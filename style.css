@@ -784,6 +784,13 @@ html, body {
   will-change: transform, opacity;
 }
 
+#contatti .section-bg-word,
+.section-contact .section-bg-word {
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  text-align: center;
+}
+
 /* ==========================================================================
    SECTION 2: CHI_SONO (ABOUT ME) - 3-Column Grid with Avatar in Center
    ========================================================================== */
@@ -1587,6 +1594,13 @@ html, body {
   .section-bg-word {
     font-size: clamp(3rem, 18vw, 6.5rem);
     left: 2%;
+  }
+
+  #contatti .section-bg-word,
+  .section-contact .section-bg-word {
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    text-align: center;
   }
 
   .about-block, .experiences-block, .contact-block {

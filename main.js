@@ -294,6 +294,7 @@
   let cachedAnchorScale = 0.38;
   let lastComputedStageX = 0;
   let lastComputedStageY = 0;
+  let tryStartAudioGlobal = null;
 
   // ==========================================================================
   // ZERO-GRAVITY POSES & CUBIC EASING ENGINE
@@ -691,8 +692,8 @@
 
       // In home section (fDisplay < 0.15): ALWAYS stay in 'hold' pose holding the banner!
       if (fDisplay < 0.15) {
-        if (this.currentPoseName !== 'hold' && !this.forcedPose && !this.isBlending) {
-          this.transitionTo('hold', 0.8);
+        if (this.currentPoseName !== 'hold' && !this.forcedPose) {
+          this.transitionTo('hold', 0.6);
         }
       } else {
         // When leaving home: transition out of 'hold'
@@ -862,12 +863,19 @@
         decryptTitle(heroTitle, 'coodz_10', 1200);
       }
 
+      // Start audio immediately if not yet playing
+      if (tryStartAudioGlobal) {
+        tryStartAudioGlobal();
+      }
+
       // Re-anchor home avatar to banner
       updateHomeAvatarAnchor();
 
       // Handle deep links on page arrival (e.g. #esperienze/pixymc or #esperienze)
-      if (window.location.hash) {
+      if (window.location.hash && window.location.hash !== '#home') {
         setTimeout(handleRoute, 150);
+      } else {
+        updateNavIndicator('home');
       }
 
       setTimeout(() => {
@@ -987,31 +995,33 @@
     if (!titleEl || !heroSwayGroup) return;
 
     const underscoreSpan = document.querySelector('.ch-underscore');
-    const anchorEl = (CONFIG.HOLD_ANCHOR === 'underscore' && underscoreSpan) ? underscoreSpan : titleEl;
 
-    const groupRect = heroSwayGroup.getBoundingClientRect();
-    const anchorRect = anchorEl.getBoundingClientRect();
-    const titleRect = titleEl.getBoundingClientRect();
-
-    // 1. Group Transform Origin at anchor
-    const originX = (anchorRect.left + anchorRect.width * 0.5) - groupRect.left;
-    const bottomY = Math.max(titleRect.bottom, groupRect.bottom);
-    const originY = (CONFIG.HOLD_TITLE ? (bottomY - groupRect.top) : (titleRect.top - 20 - groupRect.top));
-    heroSwayGroup.style.transformOrigin = `${originX.toFixed(1)}px ${originY.toFixed(1)}px`;
-
-    // 2. Avatar Home Scale
+    // 1. Avatar Home Scale
     isMobile = window.innerWidth <= 768;
     const scale = isMobile ? (CONFIG.HOME_AVATAR_SCALE * 0.8) : CONFIG.HOME_AVATAR_SCALE;
+
+    // 2. Intrinsic Layout Dimensions (Independent of scroll position and live transforms)
+    // .hero-sway-group is placed at top: 40vh, left: 50%, transform: translate(-50%, -50%)
+    const groupHeight = heroSwayGroup.offsetHeight || (window.innerHeight * 0.2);
+    const groupTop = (window.innerHeight * 0.40) - (groupHeight * 0.5);
+    const titleTop = groupTop + (titleEl.offsetTop || 0);
+    const titleHeight = titleEl.offsetHeight || (window.innerHeight * 0.15);
+    const bottomY = titleTop + titleHeight;
 
     // 3. Hands position math
     // Model height in unscaled canvas is ~74vh (window.innerHeight * 0.74)
     // Distance from center of unscaled avatar to raised hands top is ~0.37 * window.innerHeight
     const handsDistFromCenter = (window.innerHeight * 0.74 * 0.5) * scale;
 
-    const targetX = anchorRect.left + anchorRect.width * 0.5;
+    let targetX = window.innerWidth * 0.5;
+    if (CONFIG.HOLD_ANCHOR === 'underscore' && underscoreSpan) {
+      const titleLeft = (window.innerWidth * 0.5) - (titleEl.offsetWidth * 0.5);
+      targetX = titleLeft + (underscoreSpan.offsetLeft || 0) + ((underscoreSpan.offsetWidth || 0) * 0.5);
+    }
+
     const targetY = CONFIG.HOLD_TITLE
       ? (bottomY + window.innerHeight * 0.012)
-      : (titleRect.top - window.innerHeight * 0.04);
+      : (titleTop - window.innerHeight * 0.04);
 
     const ax = targetX - (window.innerWidth * 0.5);
     const ay = targetY + handsDistFromCenter - (window.innerHeight * 0.5);
@@ -1025,9 +1035,10 @@
     document.documentElement.style.setProperty('--home-as', `${scale.toFixed(3)}`);
     document.documentElement.style.setProperty('--spill-opacity', CONFIG.SPILL_OPACITY);
 
+    heroSwayGroup.style.transformOrigin = '50% 50%';
     const avatarFloatEl = document.getElementById('avatar-float');
-    if (avatarFloatEl && fDisplay < 0.2) {
-      avatarFloatEl.style.transformOrigin = `50% calc(50% - ${handsDistFromCenter.toFixed(2)}px)`;
+    if (avatarFloatEl) {
+      avatarFloatEl.style.transformOrigin = '50% 50%';
     }
   }
 
@@ -1130,7 +1141,7 @@
       targetPlayerRotY = baseYaw;
     }
 
-    // 6. Home pendulum bob & sway (fade smoothly between f 0 and 0.35)
+    // 6. Home pendulum bob (pure vertical gentle synchronized bob, no tilting/rotation)
     const heroSwayGroup = document.getElementById('hero-sway-group');
     const avatarFloatEl = document.getElementById('avatar-float');
     let homeWeight = 0;
@@ -1139,17 +1150,15 @@
     }
 
     if (!prefersReducedMotion && homeWeight > 0.001) {
-      const thetaRad = (0.02 * Math.sin(nowSec * (2 * Math.PI / 7.0)) + 0.008 * Math.sin(nowSec * (2 * Math.PI / 3.3))) * homeWeight;
-      const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0) + 0.5) * homeWeight;
+      const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * homeWeight;
 
       if (heroSwayGroup) {
-        heroSwayGroup.style.transform = `translate(-50%, -50%) translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
+        heroSwayGroup.style.transform = `translate(-50%, -50%) translate3d(0, ${bobPx.toFixed(2)}px, 0)`;
       }
 
       if (avatarFloatEl) {
-        const handsDistFromCenter = (cachedWindowHeight * 0.74 * 0.5) * cachedAnchorScale;
-        avatarFloatEl.style.transformOrigin = `50% calc(50% - ${handsDistFromCenter.toFixed(2)}px)`;
-        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${thetaRad.toFixed(5)}rad)`;
+        avatarFloatEl.style.transformOrigin = '50% 50%';
+        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0)`;
       }
     } else {
       if (heroSwayGroup) {
@@ -1213,7 +1222,11 @@
         if (Math.abs(dist) < 1.2) {
           const op = Math.max(0, 1 - Math.abs(dist)) * 0.12;
           const shiftPx = dist * 70;
-          el.style.transform = `translateY(-50%) translateX(${shiftPx.toFixed(1)}px)`;
+          if (item.sel.includes('contatti')) {
+            el.style.transform = `translate(-50%, -50%) translateX(${shiftPx.toFixed(1)}px)`;
+          } else {
+            el.style.transform = `translateY(-50%) translateX(${shiftPx.toFixed(1)}px)`;
+          }
           el.style.opacity = op.toFixed(3);
         } else {
           el.style.opacity = '0';
@@ -1266,6 +1279,11 @@
     isMobile = w <= 768;
     skinViewer.width = w;
     skinViewer.height = h;
+
+    if (skinViewer.renderer) {
+      skinViewer.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      skinViewer.renderer.setSize(w, h, false);
+    }
 
     // Use configurable zoom from CONFIG (~74vh tall on desktop)
     skinViewer.zoom = isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP;
@@ -1320,6 +1338,11 @@
         height: window.innerHeight,
         skin: CONFIG.SKIN_URL
       });
+
+      if (skinViewer.renderer) {
+        skinViewer.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        skinViewer.renderer.setSize(window.innerWidth, window.innerHeight, false);
+      }
 
       skinViewer.controls.enabled = false;
       skinViewer.autoRotate = false; // Smoothly controlled via zero-g per-frame lerp
@@ -1480,8 +1503,8 @@
           y: Math.random() * height,
           radius: Math.random() * 0.9 + 0.4,
           baseAlpha: Math.random() * 0.45 + 0.2,
-          speedY: Math.random() * 0.3 + 0.2, // Slow vertical drift (0.2..0.5 px/frame for light cyber-rain)
-          speedX: (Math.random() - 0.5) * 0.06,
+          speedY: (Math.random() - 0.5) * 0.04, // Calm, subtle omnidirectional floating (no fast downward rain)
+          speedX: (Math.random() - 0.5) * 0.04,
           twinkleSpeed: Math.random() * 1.6 + 0.8,
           phase: Math.random() * Math.PI * 2,
           depth: Math.random() * 0.8 + 0.2, // Depth z (0.2..1.0) for radial warp streaks
@@ -1510,7 +1533,7 @@
       return;
     }
 
-    let nextMeteorTime = performance.now() + (Math.random() * 3000 + 2000); // 2-5 seconds
+    let nextMeteorTime = performance.now() + (Math.random() * 8000 + 7000); // 7-15 seconds
 
     function spawnMeteor() {
       const angleDeg = Math.random() * 15 + 30; // 30-45 degrees angle
@@ -1577,10 +1600,8 @@
             s.y += s.speedY;
             s.x += s.speedX;
 
-            if (s.y > height) {
-              s.y = 0;
-              s.x = Math.random() * width;
-            }
+            if (s.y < 0) s.y = height;
+            if (s.y > height) s.y = 0;
             if (s.x < 0) s.x = width;
             if (s.x > width) s.x = 0;
 
@@ -1598,7 +1619,7 @@
         // 2. Spawn and render shooting stars (meteors)
         if (now >= nextMeteorTime) {
           spawnMeteor();
-          nextMeteorTime = now + (Math.random() * 3000 + 2000); // 2-5s
+          nextMeteorTime = now + (Math.random() * 8000 + 7000); // 7-15s
         }
 
         for (let i = meteors.length - 1; i >= 0; i--) {
@@ -1972,6 +1993,7 @@
 
   function handleRoute() {
     const hash = window.location.hash;
+    if (!hash) return;
 
     // Check deep links like #esperienze/pixymc
     if (hash.startsWith('#esperienze/')) {
@@ -1987,18 +2009,15 @@
       }
     }
 
-    // Hash is just #esperienze
-    if (hash === '#esperienze') {
-      if (activeDetailId) {
+    // Top-level sections (#home, #chi_sono, #esperienze, #contatti)
+    const secId = hash.replace('#', '');
+    const targetSec = document.getElementById(secId);
+    if (targetSec) {
+      if (activeDetailId && secId !== 'esperienze') {
         closeExperienceDetail(false);
       }
-      updateNavIndicator('esperienze');
-      return;
-    }
-
-    // Any other top-level hash (#home, #chi_sono, #contatti)
-    if (activeDetailId) {
-      closeExperienceDetail(false);
+      targetSec.scrollIntoView({ behavior: 'smooth' });
+      updateNavIndicator(secId);
     }
   }
 
@@ -2169,14 +2188,6 @@
       });
     }
 
-    // Hero title re-scramble on hover
-    const heroTitle = document.getElementById('hero-title');
-    if (heroTitle) {
-      heroTitle.addEventListener('mouseenter', () => {
-        decryptTitle(heroTitle, 'coodz_10', 900);
-      });
-    }
-
     // History & routing events
     window.addEventListener('popstate', handleRoute);
     window.addEventListener('hashchange', handleRoute);
@@ -2211,16 +2222,61 @@
       }
     }
 
-    // Load initial track (dorado) without autoplay (respects browser autoplay policy)
+    function tryStartAudio() {
+      if (audio && audio.paused) {
+        const p = audio.play();
+        if (p !== undefined) {
+          p.then(() => {
+            isPlaying = true;
+            if (audioToggleBtn) audioToggleBtn.classList.add('playing');
+            removeGestureListeners();
+          }).catch(() => {
+            // Autoplay blocked until user interaction
+          });
+        }
+      }
+    }
+
+    tryStartAudioGlobal = tryStartAudio;
+
+    function onUserGesture() {
+      tryStartAudio();
+    }
+
+    function removeGestureListeners() {
+      ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach((evt) => {
+        window.removeEventListener(evt, onUserGesture, true);
+      });
+      const scrollEl = document.getElementById('scroll-container');
+      if (scrollEl) {
+        scrollEl.removeEventListener('scroll', onUserGesture, true);
+      }
+    }
+
+    function addGestureListeners() {
+      ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach((evt) => {
+        window.addEventListener(evt, onUserGesture, { capture: true, once: false, passive: true });
+      });
+      const scrollEl = document.getElementById('scroll-container');
+      if (scrollEl) {
+        scrollEl.addEventListener('scroll', onUserGesture, { capture: true, once: false, passive: true });
+      }
+    }
+
+    // Load initial track (dorado), attempt immediate playback and attach gesture triggers
     loadTrack(0);
+    tryStartAudio();
+    addGestureListeners();
 
     // Audio Play/Pause Button
     if (audioToggleBtn) {
-      audioToggleBtn.addEventListener('click', () => {
+      audioToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (!isPlaying) {
           audio.play().then(() => {
             isPlaying = true;
             audioToggleBtn.classList.add('playing');
+            removeGestureListeners();
           }).catch((err) => {
             console.warn('Audio play request blocked or failed:', err);
           });
@@ -2746,6 +2802,7 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
   // INITIALIZATION ON DOMContentLoaded
   // ==========================================================================
   document.addEventListener('DOMContentLoaded', () => {
+    initAudio();
     initOpeningSequence();
     initAvatar();
     initAvatarInteraction();
@@ -2753,7 +2810,6 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
     initNavigation();
     initExperienceCards();
     initProofsModal();
-    initAudio();
     initScrollProgress();
     initKeyboardNav();
     initSectionObserver();
