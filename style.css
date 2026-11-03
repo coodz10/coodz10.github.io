@@ -45,6 +45,24 @@ html, body {
 }
 
 /* ==========================================================================
+   SCROLL PROGRESS BAR (THIN ACCENT GRADIENT AT VERY TOP)
+   ========================================================================== */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-gradient-h);
+  z-index: 99;
+  transform-origin: left;
+  transform: scaleX(0);
+  pointer-events: none;
+  transition: transform 0.08s linear;
+  box-shadow: 0 0 8px rgba(94, 168, 255, 0.6);
+}
+
+/* ==========================================================================
    1. OPENING SEQUENCE SCREEN (~2s, Skippable)
    ========================================================================== */
 .opening-screen {
@@ -353,6 +371,24 @@ html, body {
   color: var(--accent-blue);
 }
 
+.track-name {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  line-height: 1;
+}
+
+.audio-btn.playing ~ .track-name {
+  color: var(--accent-lilac);
+}
+
 .menu-btn {
   display: none;
 }
@@ -402,7 +438,8 @@ html, body {
    ========================================================================== */
 .scroll-container {
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   overflow-y: scroll;
   overflow-x: hidden;
   scroll-snap-type: y mandatory;
@@ -823,6 +860,33 @@ html, body {
 
   .card-minimal {
     padding: 1.15rem 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-bar {
+    padding: 0.75rem 1rem;
+  }
+  .nav-right {
+    gap: 0.35rem;
+  }
+  .audio-controls {
+    padding-left: 0.45rem;
+    gap: 0.25rem;
+  }
+  .track-name {
+    max-width: 52px;
+    font-size: 0.62rem;
+  }
+  .nav-btn {
+    padding: 0.25rem 0.35rem;
+    font-size: 0.72rem;
+  }
+  .status-indicator {
+    font-size: 0.7rem;
+  }
+  .snap-section {
+    padding: 32vh 1rem 2rem;
   }
 }
 

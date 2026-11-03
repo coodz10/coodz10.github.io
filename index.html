@@ -30,6 +30,9 @@
 
 <body>
 
+  <!-- Top Scroll Progress Bar -->
+  <div id="scroll-progress-bar" class="scroll-progress-bar"></div>
+
   <!-- 1. OPENING SEQUENCE SCREEN (~2s, Skippable by click) -->
   <div id="opening-screen" class="opening-screen" role="dialog" aria-label="Transmission Link Screen">
     <div class="opening-content">
@@ -80,6 +83,7 @@
           </span>
           <span class="audio-text" data-i18n="audioLabel">AUDIO</span>
         </button>
+        <span id="current-track-name" class="track-name mono" aria-live="polite">dorado</span>
         <button id="audio-skip-btn" class="nav-btn audio-skip-btn" aria-label="Salta Brano" title="Salta Brano">[ ⏭ ]</button>
       </div>
 
@@ -251,8 +255,8 @@
 
   </div><!-- /scroll-container -->
 
-  <!-- Audio Element with placeholder src (UI wired) -->
-  <audio id="bg-audio" preload="none" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
+  <!-- Audio Element with playlist wired in main.js -->
+  <audio id="bg-audio" preload="none"></audio>
 
   <!-- Application Engine -->
   <script src="main.js"></script>

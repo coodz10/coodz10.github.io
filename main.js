@@ -20,7 +20,17 @@
     accentLilac: '#c4b5ff',
     bg: '#05060f',
     text: '#e8eaff',
-    muted: '#7c83a8'
+    muted: '#7c83a8',
+    AVATAR_ZOOM_DESKTOP: 1.15,
+    AVATAR_ZOOM_MOBILE: 0.6,
+    ROT_ABOUT: -0.65,
+    ROT_EXP: 0.65,
+    DEFAULT_VOLUME: 0.4,
+    PLAYLIST: [
+      { name: 'dorado', src: 'music/dorado.mp3' },
+      { name: '30C', src: 'music/30C.mp3' },
+      { name: 'Grinch3', src: 'music/Grinch3.mp3' }
+    ]
   };
 
   // Translations object for data-i18n attributes
@@ -193,6 +203,16 @@
         decryptTitle(heroTitle, 'coodz_10', 1200);
       }
 
+      // Smooth scroll to target hash if arriving with an anchor (e.g. #esperienze)
+      if (window.location.hash) {
+        const targetSec = document.querySelector(window.location.hash);
+        if (targetSec) {
+          setTimeout(() => {
+            targetSec.scrollIntoView({ behavior: 'smooth' });
+          }, 150);
+        }
+      }
+
       setTimeout(() => {
         openingScreen.style.display = 'none';
       }, 850);
@@ -302,15 +322,16 @@
 
       case 'chi_sono':
         // Avatar shifts to right, turns 3/4 toward text on left, waving with right arm
-        targetPlayerRotY = -0.65;
+        targetPlayerRotY = CONFIG.ROT_ABOUT;
         skinViewer.animation = new WaveAnimation();
         break;
 
       case 'esperienze':
         // Avatar shifts to left, walking in place slowly, looking toward cards on right
-        targetPlayerRotY = 0.65;
+        targetPlayerRotY = CONFIG.ROT_EXP;
         const walk = new skinview3d.WalkingAnimation();
         walk.speed = 0.45;
+        walk.headBobbing = false; // Disables walking head sway so cursor head-follow is not overridden
         skinViewer.animation = walk;
         break;
 
@@ -335,28 +356,8 @@
     skinViewer.width = w;
     skinViewer.height = h;
 
-    // On mobile keep avatar smaller, on desktop giant (~80vh tall)
-    if (isMobile) {
-      skinViewer.zoom = 0.6;
-    } else {
-      skinViewer.zoom = 1.05;
-    }
-  }
-
-  function avatarFrameTick() {
-    if (!document.hidden && skinViewer && skinViewer.playerObject) {
-      // Smooth lerp on player.rotation.y (NEVER move the camera)
-      skinViewer.playerObject.rotation.y += (targetPlayerRotY - skinViewer.playerObject.rotation.y) * 0.06;
-
-      // Smooth lerp on head rotation (adds subtle cursor following)
-      if (skinViewer.playerObject.skin && skinViewer.playerObject.skin.head) {
-        const head = skinViewer.playerObject.skin.head;
-        head.rotation.y += (targetHeadY - head.rotation.y) * 0.08;
-        head.rotation.x += (targetHeadX - head.rotation.x) * 0.08;
-      }
-    }
-
-    requestAnimationFrame(avatarFrameTick);
+    // Use configurable zoom from CONFIG (~80vh tall on desktop)
+    skinViewer.zoom = isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP;
   }
 
   function initAvatar() {
@@ -398,6 +399,26 @@
 
       updateViewerSize();
 
+      // Hook skinViewer.render to run right after animation.update() and before composer.render()
+      // This guarantees mouse head-follow and rotation lerp are applied smoothly on every rendered frame,
+      // including in the walking state (esperienze) where animation updates head properties.
+      const origRender = skinViewer.render.bind(skinViewer);
+      skinViewer.render = function () {
+        if (skinViewer.playerObject) {
+          // Smooth lerp on player.rotation.y (NEVER move the camera)
+          skinViewer.playerObject.rotation.y += (targetPlayerRotY - skinViewer.playerObject.rotation.y) * 0.06;
+
+          // Smooth lerp on head rotation (cursor following applied AFTER animation update)
+          if (skinViewer.playerObject.skin && skinViewer.playerObject.skin.head) {
+            const head = skinViewer.playerObject.skin.head;
+            head.rotation.y += (targetHeadY - head.rotation.y) * 0.08;
+            head.rotation.x += (targetHeadX - head.rotation.x) * 0.08;
+          }
+        }
+
+        origRender();
+      };
+
       // Track mouse across screen for head following
       window.addEventListener('mousemove', (e) => {
         const halfW = window.innerWidth / 2;
@@ -408,9 +429,6 @@
         targetHeadY = -normX * 0.55;
         targetHeadX = normY * 0.35;
       }, { passive: true });
-
-      // Start continuous lerp RAF loop
-      avatarFrameTick();
 
       // Resize
       window.addEventListener('resize', updateViewerSize, { passive: true });
@@ -618,32 +636,6 @@
     updateNavIndicator(activeSectionId);
     window.addEventListener('resize', () => updateNavIndicator(activeSectionId), { passive: true });
 
-    // Audio Controls (UI wired to <audio> element with placeholder src)
-    const audio = document.getElementById('bg-audio');
-    const audioToggleBtn = document.getElementById('audio-toggle-btn');
-    const audioSkipBtn = document.getElementById('audio-skip-btn');
-    let isPlaying = false;
-
-    if (audioToggleBtn && audio) {
-      audioToggleBtn.addEventListener('click', () => {
-        isPlaying = !isPlaying;
-        if (isPlaying) {
-          audioToggleBtn.classList.add('playing');
-          audio.play().catch(() => {});
-        } else {
-          audioToggleBtn.classList.remove('playing');
-          audio.pause();
-        }
-      });
-    }
-
-    if (audioSkipBtn) {
-      audioSkipBtn.addEventListener('click', () => {
-        audioSkipBtn.classList.add('pulse');
-        setTimeout(() => audioSkipBtn.classList.remove('pulse'), 300);
-      });
-    }
-
     // Mobile Hamburger Menu
     const menuToggleBtn = document.getElementById('menu-toggle-btn');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -674,6 +666,163 @@
   }
 
   // ==========================================================================
+  // 5. AUDIO CONTROLS & REAL PLAYLIST ENGINE
+  // ==========================================================================
+  function initAudio() {
+    const audio = document.getElementById('bg-audio');
+    const audioToggleBtn = document.getElementById('audio-toggle-btn');
+    const audioSkipBtn = document.getElementById('audio-skip-btn');
+    const trackNameEl = document.getElementById('current-track-name');
+
+    if (!audio) return;
+
+    let playlistIndex = 0;
+    let isPlaying = false;
+
+    // Volume remembered via localStorage, defaulting to CONFIG.DEFAULT_VOLUME (0.4)
+    const savedVol = localStorage.getItem('coodz_audio_volume');
+    audio.volume = savedVol !== null ? parseFloat(savedVol) : CONFIG.DEFAULT_VOLUME;
+    audio.loop = false;
+
+    function loadTrack(index) {
+      playlistIndex = ((index % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
+      const track = CONFIG.PLAYLIST[playlistIndex];
+      audio.src = track.src;
+      if (trackNameEl) {
+        trackNameEl.textContent = track.name;
+        trackNameEl.setAttribute('title', track.name);
+      }
+    }
+
+    // Load initial track (dorado) without autoplay (respects browser autoplay policy)
+    loadTrack(0);
+
+    // Audio Play/Pause Button
+    if (audioToggleBtn) {
+      audioToggleBtn.addEventListener('click', () => {
+        if (!isPlaying) {
+          audio.play().then(() => {
+            isPlaying = true;
+            audioToggleBtn.classList.add('playing');
+          }).catch((err) => {
+            console.warn('Audio play request blocked or failed:', err);
+          });
+        } else {
+          audio.pause();
+          isPlaying = false;
+          audioToggleBtn.classList.remove('playing');
+        }
+      });
+    }
+
+    // Skip Button: advances to next track and loops at end
+    if (audioSkipBtn) {
+      audioSkipBtn.addEventListener('click', () => {
+        audioSkipBtn.classList.add('pulse');
+        setTimeout(() => audioSkipBtn.classList.remove('pulse'), 250);
+
+        loadTrack(playlistIndex + 1);
+        if (isPlaying) {
+          audio.play().catch(() => {});
+        }
+      });
+    }
+
+    // Auto-advance to next track on ended (loops playlist)
+    audio.addEventListener('ended', () => {
+      loadTrack(playlistIndex + 1);
+      audio.play().catch(() => {});
+    });
+
+    audio.addEventListener('play', () => {
+      isPlaying = true;
+      if (audioToggleBtn) audioToggleBtn.classList.add('playing');
+    });
+
+    audio.addEventListener('pause', () => {
+      isPlaying = false;
+      if (audioToggleBtn) audioToggleBtn.classList.remove('playing');
+    });
+
+    audio.addEventListener('volumechange', () => {
+      localStorage.setItem('coodz_audio_volume', audio.volume.toString());
+    });
+  }
+
+  // ==========================================================================
+  // 6. SCROLL PROGRESS BAR (ACCENT GRADIENT AT VERY TOP)
+  // ==========================================================================
+  function initScrollProgress() {
+    const scrollContainer = document.getElementById('scroll-container');
+    const progressBar = document.getElementById('scroll-progress-bar');
+    if (!scrollContainer || !progressBar) return;
+
+    function updateProgress() {
+      const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+      const progress = maxScroll > 0 ? Math.min(1, Math.max(0, scrollContainer.scrollTop / maxScroll)) : 0;
+      progressBar.style.transform = `scaleX(${progress})`;
+    }
+
+    scrollContainer.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  // ==========================================================================
+  // 7. KEYBOARD NAVIGATION (ARROWS / PAGEUP / PAGEDOWN MOVE SECTIONS)
+  // ==========================================================================
+  function initKeyboardNav() {
+    const sectionIds = ['home', 'chi_sono', 'esperienze', 'contatti'];
+    let isNavigating = false;
+
+    window.addEventListener('keydown', (e) => {
+      // Do not intercept if user is interacting with an input or editable element
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        return;
+      }
+
+      let delta = 0;
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        delta = 1;
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        delta = -1;
+      } else if (e.key === 'Home') {
+        delta = -999;
+      } else if (e.key === 'End') {
+        delta = 999;
+      }
+
+      if (delta !== 0) {
+        e.preventDefault();
+        if (isNavigating) return;
+
+        const currentIndex = sectionIds.indexOf(activeSectionId);
+        let targetIndex = 0;
+
+        if (delta === 999) {
+          targetIndex = sectionIds.length - 1;
+        } else if (delta === -999) {
+          targetIndex = 0;
+        } else {
+          const cur = currentIndex >= 0 ? currentIndex : 0;
+          targetIndex = Math.min(sectionIds.length - 1, Math.max(0, cur + delta));
+        }
+
+        if (targetIndex !== currentIndex) {
+          const targetSec = document.getElementById(sectionIds[targetIndex]);
+          if (targetSec) {
+            isNavigating = true;
+            targetSec.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+              isNavigating = false;
+            }, 650);
+          }
+        }
+      }
+    });
+  }
+
+  // ==========================================================================
   // INITIALIZATION ON DOMContentLoaded
   // ==========================================================================
   document.addEventListener('DOMContentLoaded', () => {
@@ -681,6 +830,9 @@
     initAvatar();
     initStars();
     initNavigation();
+    initAudio();
+    initScrollProgress();
+    initKeyboardNav();
     initSectionObserver();
   });
 
