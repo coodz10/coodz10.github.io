@@ -106,6 +106,8 @@
       expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
       expRedisStatus: '[ Stato: Attivo ]',
+      expElysianRole: 'SS Verified',
+      expElysianStatus: '[ Stato: Attivo ]',
       expSyndicateRole: 'Support Team',
       expSyndicateStatus: '[ Stato: Attivo ]',
       expMetaRole: 'Helper ★★★★☆',
@@ -151,6 +153,8 @@
       expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
       expRedisStatus: '[ Status: Active ]',
+      expElysianRole: 'SS Verified',
+      expElysianStatus: '[ Status: Active ]',
       expSyndicateRole: 'Support Team',
       expSyndicateStatus: '[ Status: Active ]',
       expMetaRole: 'Helper ★★★★☆',
@@ -179,8 +183,8 @@
   const EXPERIENCE_DETAILS = {
     redismc: {
       index: '01',
-      title: 'Redis',
-      category: 'ds',
+      title: 'RedisMC',
+      category: 'minecraft',
       role: { it: 'Helper', en: 'Helper' },
       stars: '',
       status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
@@ -195,24 +199,8 @@
         { url: 'https://imgur.com/a/6r60dbY' }
       ]
     },
-    syndicate: {
-      index: '02',
-      title: 'ScreenShare Syndicate',
-      category: 'ds',
-      role: { it: 'Support Team', en: 'Support Team' },
-      stars: '',
-      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
-      period: { it: '[ Periodo: Novembre 2026 - ]', en: '[ Period: November 2026 - ]' },
-      inProgress: true,
-      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
-      noticeText: {
-        it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
-        en: 'Details and review for this experience are currently work in progress.'
-      },
-      proofs: []
-    },
     metamc: {
-      index: '01',
+      index: '02',
       title: 'MetaMc',
       category: 'minecraft',
       role: { it: 'Helper', en: 'Helper' },
@@ -256,7 +244,7 @@
       ]
     },
     pixymc: {
-      index: '02',
+      index: '03',
       title: 'PixyMC',
       category: 'minecraft',
       role: { it: 'Owner [ SS Manager ]', en: 'Owner [ SS Manager ]' },
@@ -295,6 +283,40 @@
         { url: 'https://imgur.com/T2BEOhO' },
         { url: 'https://imgur.com/YOaVB2c' }
       ]
+    },
+    elysian: {
+      index: '01',
+      title: 'Elysian Tierlist',
+      category: 'ds',
+      role: { it: 'SS Verified', en: 'SS Verified' },
+      stars: '',
+      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
+      period: { it: '[ Periodo: Ottobre 2026 - ]', en: '[ Period: October 2026 - ]' },
+      inProgress: true,
+      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeText: {
+        it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
+        en: 'Details and review for this experience are currently work in progress.'
+      },
+      proofs: [
+        { url: 'https://imgur.com/a/Ff0pF34' }
+      ]
+    },
+    syndicate: {
+      index: '02',
+      title: 'ScreenShare Syndicate',
+      category: 'ds',
+      role: { it: 'Support Team', en: 'Support Team' },
+      stars: '',
+      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
+      period: { it: '[ Periodo: 2026 - ]', en: '[ Period: 2026 - ]' },
+      inProgress: true,
+      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeText: {
+        it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
+        en: 'Details and review for this experience are currently work in progress.'
+      },
+      proofs: []
     }
   };
 
