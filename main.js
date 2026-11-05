@@ -29,9 +29,9 @@
 
     // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180° to back)
     ROT_OFFSET: 0,             // Rotation offset (0 = face toward camera; Math.PI = back)
-    ROT_ABOUT: -0.65,          // chi_sono: turns 3/4 toward text on the left
-    ROT_EXP: 0.65,             // esperienze: turns 3/4 toward cards on the right
-    ROT_EXP_DETAIL: 0.85,      // esperienze-detail: turns further toward detail panel on right
+    ROT_ABOUT: 0,              // chi_sono: faces forward between the two balanced content columns
+    ROT_EXP: 0.50,             // esperienze: turns toward cards on the right
+    ROT_EXP_DETAIL: 0.65,      // esperienze-detail: turns toward detail panel on right
 
     // Lighting (illuminates dark skin on dark backgrounds)
     GLOBAL_LIGHT: 4.5,         // Global ambient light intensity
@@ -78,10 +78,10 @@
 
     // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
     AVATAR_KEYFRAMES: [
-      { id: 'home',       x: 0,   y: -17, scale: 0.62, scaleMobile: 0.46, yaw: 0.1,   roll: 0 },
-      { id: 'chi_sono',   x: 22,  y: 0,   scale: 0.8,  scaleMobile: 0.65, yaw: -0.65, roll: 0 },
-      { id: 'esperienze', x: -22, y: 0,   scale: 0.8,  scaleMobile: 0.65, yaw: 0.65,  roll: 0 },
-      { id: 'contatti',   x: 0,   y: 2,   scale: 0.7,  scaleMobile: 0.60, yaw: 0.0,   roll: 0 }
+      { id: 'home',       x: 0,   y: -17, scale: 0.62, scaleMobile: 0.46, yaw: 0.1,  roll: 0, xMobile: 0, yMobile: -17 },
+      { id: 'chi_sono',   x: 0,   y: 6,   scale: 0.62, scaleMobile: 0.42, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -14 },
+      { id: 'esperienze', x: -24, y: 6,   scale: 0.66, scaleMobile: 0.42, yaw: 0.50, roll: 0, xMobile: 0, yMobile: -14 },
+      { id: 'contatti',   x: 0,   y: -8,  scale: 0.48, scaleMobile: 0.38, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -14 }
     ],
     FLIGHT_ARC_X: 9,           // Extra arc horizontal offset in vw
     FLIGHT_ARC_Y: 4,           // Extra arc vertical lift in vh
@@ -609,7 +609,7 @@
       if (activeSectionId === 'home') return;
 
       if (activeSectionId === 'chi_sono') {
-        const steps = ['.section-tag', '.section-title', '.about-meta-row', '.about-intro-box', '.about-pillar-card'];
+        const steps = ['.section-head', '.chips-row', '.lead', '.panel'];
         currentReadingIndex = (currentReadingIndex + 1) % steps.length;
         const sel = steps[currentReadingIndex];
         const el = document.querySelector(`#chi_sono ${sel}`);
@@ -621,7 +621,7 @@
         }
       } else if (activeSectionId === 'esperienze' || activeSectionId === 'esperienze-detail') {
         if (activeDetailId) {
-          const steps = ['.detail-title', '.detail-paragraphs', '.detail-pros-cons-grid'];
+          const steps = ['.detail-title', '.detail-paragraphs', '.detail-pros-cons-grid', '.panel'];
           currentReadingIndex = (currentReadingIndex + 1) % steps.length;
           const el = document.querySelector(`#experience-detail-view ${steps[currentReadingIndex]}`);
           if (el) {
@@ -629,11 +629,11 @@
             setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
           }
         } else if (!hoveredCard) {
-          const cards = document.querySelectorAll('#esperienze .card-minimal');
+          const cards = document.querySelectorAll('#esperienze .row-link, #esperienze .card-minimal');
           const count = cards.length + 1;
           currentReadingIndex = (currentReadingIndex + 1) % count;
           if (currentReadingIndex === 0) {
-            const el = document.querySelector('#esperienze .section-title');
+            const el = document.querySelector('#esperienze .section-head, #esperienze .section-title');
             if (el) {
               const r = el.getBoundingClientRect();
               setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
@@ -648,11 +648,11 @@
         }
       } else if (activeSectionId === 'contatti') {
         if (!hoveredContactRow) {
-          const rows = document.querySelectorAll('#contatti .contact-row');
+          const rows = document.querySelectorAll('#contatti .row-link, #contatti .contact-row');
           const count = rows.length + 2;
           currentReadingIndex = (currentReadingIndex + 1) % count;
           if (currentReadingIndex === 0) {
-            const el = document.querySelector('#contatti .contact-cta-title');
+            const el = document.querySelector('#contatti .section-head__title, #contatti .contact-cta-title');
             if (el) {
               const r = el.getBoundingClientRect();
               setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
@@ -2082,14 +2082,16 @@
 
   function resolveKeyframe(kf) {
     const isMob = cachedWindowWidth <= 768;
-    const kfX = (kf.x / 100) * cachedWindowWidth;
-    const kfY = (kf.y / 100) * cachedWindowHeight + (CONFIG.AVATAR_Y_OFFSET || 0);
+    const kfXVal = isMob && kf.xMobile !== undefined ? kf.xMobile : kf.x;
+    const kfYVal = isMob && kf.yMobile !== undefined ? kf.yMobile : kf.y;
+    const kfX = (kfXVal / 100) * cachedWindowWidth;
+    const kfY = (kfYVal / 100) * cachedWindowHeight + (CONFIG.AVATAR_Y_OFFSET || 0);
     const kfScale = isMob ? (kf.scaleMobile || kf.scale * 0.8) : kf.scale;
     return {
       x: kfX,
       y: kfY,
       scale: kfScale,
-      yaw: kf.yaw || 0,
+      yaw: isMob ? 0 : (kf.yaw || 0),
       roll: kf.roll || 0
     };
   }
@@ -2905,7 +2907,7 @@
     if (exp.proofs && exp.proofs.length > 0) {
       proofsBtnHtml = `
         <div class="detail-actions">
-          <button id="detail-proofs-btn" class="detail-proofs-btn mono cursor-pointer" data-exp="${key}">
+          <button id="detail-proofs-btn" class="btn btn--primary mono cursor-pointer" data-exp="${key}">
             ${dict.openProofs || '[ APRI PROVE ]'}
           </button>
         </div>
@@ -2917,18 +2919,18 @@
       prosConsHtml = `
         <div class="detail-pros-cons-grid">
           ${exp.strengths ? `
-            <div class="detail-pro-card">
-              <h5 class="detail-card-title mono accent">${exp.strengthsTitle[currentLang]}</h5>
-              <ul class="detail-list mono">
+            <div class="panel">
+              <div class="panel__header mono"><span class="panel__tag">[ ${exp.strengthsTitle[currentLang].toUpperCase()} ]</span></div>
+              <ul class="panel__body detail-list mono">
                 ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
           ${exp.weaknesses ? `
-            <div class="detail-con-card">
-              <h5 class="detail-card-title mono violet">${exp.weaknessesTitle[currentLang]}</h5>
-              <ul class="detail-list mono">
-                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet violet">▹</span> <span>${item}</span></li>`).join('')}
+            <div class="panel">
+              <div class="panel__header mono"><span class="panel__tag">[ ${exp.weaknessesTitle[currentLang].toUpperCase()} ]</span></div>
+              <ul class="panel__body detail-list mono">
+                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -2940,9 +2942,9 @@
     if (exp.experienceParagraphs) {
       reviewHtml = `
         <div class="detail-review-section">
-          <h4 class="detail-review-title">${exp.experienceTitle[currentLang]}</h4>
+          <h3 class="detail-review-title">${exp.experienceTitle[currentLang]}</h3>
           <div class="detail-paragraphs">
-            ${exp.experienceParagraphs[currentLang].map((p) => `<p>${p}</p>`).join('')}
+            ${exp.experienceParagraphs[currentLang].map((p) => `<p class="lead">${p}</p>`).join('')}
           </div>
         </div>
       `;
@@ -2951,16 +2953,16 @@
     let noticeHtml = '';
     if (exp.inProgress) {
       noticeHtml = `
-        <div class="detail-notice-box">
-          <p class="detail-notice-tag mono accent">${exp.noticeTag[currentLang]}</p>
-          <p class="detail-notice-text mono">${exp.noticeText[currentLang]}</p>
+        <div class="panel detail-notice-panel">
+          <div class="panel__header mono"><span class="chip chip--active">${exp.noticeTag[currentLang]}</span></div>
+          <p class="panel__body">${exp.noticeText[currentLang]}</p>
         </div>
       `;
     }
 
     detailEl.innerHTML = `
       <div class="detail-top-nav">
-        <button id="btn-back-to-experiences" class="detail-back-btn mono cursor-pointer" aria-label="Torna alle esperienze">
+        <button id="btn-back-to-experiences" class="btn btn--secondary mono cursor-pointer" aria-label="Torna alle esperienze">
           ${dict.backToExperiences || '[ ← torna alle esperienze ]'}
         </button>
       </div>
@@ -2969,18 +2971,18 @@
         <div class="detail-header-left">
           <div class="detail-title-row">
             <span class="detail-index mono">${exp.index}</span>
-            <h3 class="detail-title gradient-text">${exp.title}</h3>
+            <h2 class="detail-title">${exp.title}</h2>
           </div>
-          <p class="detail-role mono">${exp.role[currentLang]}</p>
+          <p class="detail-role mono"><span class="chip">${exp.role[currentLang]}</span></p>
         </div>
         <div class="detail-header-right mono">
-          ${exp.stars ? `<span class="detail-stars">${exp.stars}</span>` : ''}
-          <span class="detail-tag ${exp.inProgress ? 'accent' : 'muted'}">${exp.status[currentLang]}</span>
-          <span class="detail-tag accent">${exp.period[currentLang]}</span>
+          ${exp.stars ? `<span class="chip">${exp.stars}</span>` : ''}
+          <span class="chip ${exp.inProgress ? 'chip--active' : ''}">${exp.status[currentLang]}</span>
+          <span class="chip chip--active">${exp.period[currentLang]}</span>
         </div>
       </div>
 
-      <div class="detail-divider"></div>
+      <div class="divider"></div>
 
       <div class="detail-body">
         ${noticeHtml}
@@ -3091,9 +3093,9 @@
     titleEl.textContent = `${dict.proofsTitle || 'Link e Prove'} (${exp.title})`;
 
     linksEl.innerHTML = exp.proofs.map((p) => `
-      <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="proof-link-item mono">
-        <span class="proof-icon">↗</span>
-        <span class="proof-url truncate">${p.url}</span>
+      <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="row-link proof-link-item mono">
+        <span class="row-link__title truncate">${p.url}</span>
+        <span class="row-link__arrow">&rarr;</span>
       </a>
     `).join('');
 
