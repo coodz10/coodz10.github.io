@@ -938,6 +938,12 @@
       }, 850);
     }
 
+    // If arriving via direct deep link (e.g. from servers/*.html or bookmark), skip the opening delay
+    if (window.location.hash && window.location.hash !== '#home') {
+      finishOpening();
+      return;
+    }
+
     // Progress line animation 0 -> 100% over ~2000ms
     let progress = 0;
     progressTimer = setInterval(() => {
@@ -2068,7 +2074,13 @@
 
   function handleRoute() {
     const hash = window.location.hash;
-    if (!hash) return;
+    if (!hash || hash === '' || hash === '#') {
+      if (activeDetailId) {
+        closeExperienceDetail(false);
+      }
+      updateNavIndicator('home');
+      return;
+    }
 
     // Check deep links like #esperienze/pixymc
     if (hash.startsWith('#esperienze/')) {
@@ -2088,7 +2100,7 @@
     const secId = hash.replace('#', '');
     const targetSec = document.getElementById(secId);
     if (targetSec) {
-      if (activeDetailId && secId !== 'esperienze') {
+      if (activeDetailId) {
         closeExperienceDetail(false);
       }
       targetSec.scrollIntoView({ behavior: 'smooth' });
