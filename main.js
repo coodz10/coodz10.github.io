@@ -106,6 +106,8 @@
       expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
       expRedisStatus: '[ Stato: Attivo ]',
+      expSyndicateRole: 'Support Team',
+      expSyndicateStatus: '[ Stato: Attivo ]',
       expMetaRole: 'Helper ★★★★☆',
       expMetaStatus: '[ Stato: Dimesso ]',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
@@ -149,6 +151,8 @@
       expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
       expRedisStatus: '[ Status: Active ]',
+      expSyndicateRole: 'Support Team',
+      expSyndicateStatus: '[ Status: Active ]',
       expMetaRole: 'Helper ★★★★☆',
       expMetaStatus: '[ Status: Resign ]',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
@@ -190,6 +194,22 @@
       proofs: [
         { url: 'https://imgur.com/a/6r60dbY' }
       ]
+    },
+    syndicate: {
+      index: '02',
+      title: 'ScreenShare Syndicate',
+      category: 'ds',
+      role: { it: 'Support Team', en: 'Support Team' },
+      stars: '',
+      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
+      period: { it: '[ Periodo: Novembre 2026 - ]', en: '[ Period: November 2026 - ]' },
+      inProgress: true,
+      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeText: {
+        it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
+        en: 'Details and review for this experience are currently work in progress.'
+      },
+      proofs: []
     },
     metamc: {
       index: '01',
