@@ -792,105 +792,109 @@ html, body {
 }
 
 /* ==========================================================================
-   SECTION 2: CHI_SONO (ABOUT ME) - 3-Column Grid with Avatar in Center
+   SECTION 2: CHI_SONO (ABOUT ME) - Balanced Layout (Left Block, Avatar on Right)
    ========================================================================== */
 .section-about {
+  justify-content: flex-start;
+}
+
+.about-block {
+  max-width: 620px;
+  width: 100%;
+  position: relative;
+}
+
+.about-meta-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  position: relative;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.78rem;
 }
 
-.about-grid {
-  display: grid;
-  grid-template-columns: 1fr minmax(26vw, 30vw) 1fr;
-  align-items: center;
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 4vw;
-  box-sizing: border-box;
-  position: relative;
-  z-index: 3;
+.about-meta-tag {
+  color: var(--muted);
+  background: rgba(11, 10, 26, 0.6);
+  border: 1px solid rgba(124, 108, 240, 0.25);
+  padding: 0.35rem 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.about-col-left {
+.about-meta-tag.accent {
+  border-color: rgba(94, 168, 255, 0.4);
+  color: var(--accent-blue);
+}
+
+.about-content-wrap {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  max-height: calc(100vh - 120px);
+  gap: 0.85rem;
+  max-height: calc(100vh - 15rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 168, 255, 0.25) transparent;
+  padding-right: 0.45rem;
 }
 
-.about-col-left .section-title {
-  margin-bottom: 1rem;
+.about-intro-box {
+  background: rgba(11, 10, 26, 0.55);
+  border: 1px solid rgba(94, 168, 255, 0.28);
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 0 25px rgba(94, 168, 255, 0.04);
 }
 
-.about-col-left .about-text {
-  font-size: clamp(0.78rem, 0.92vw, 0.88rem);
+.about-intro-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d1d5f0;
+  margin: 0;
+}
+
+.about-pillars-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.about-pillar-card {
+  background: rgba(11, 10, 26, 0.45);
+  border: 1px solid rgba(124, 108, 240, 0.22);
+  padding: 1.15rem 1.35rem;
+  transition: all 250ms var(--ease-smooth);
+}
+
+.about-pillar-card:hover {
+  border-color: rgba(94, 168, 255, 0.5);
+  background: rgba(11, 10, 26, 0.7);
+  transform: translateX(4px);
+}
+
+.pillar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+.pillar-num {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.pillar-tag {
+  color: #e8eaff;
+  font-weight: 600;
+}
+
+.pillar-desc {
+  font-size: 0.86rem;
   line-height: 1.6;
   color: var(--muted);
-  max-width: min(520px, 100%);
-  margin-bottom: 0;
-  max-height: calc(100vh - 220px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(94, 168, 255, 0.3) transparent;
-  padding-right: 0.5rem;
-}
-
-.about-col-left .about-text p {
-  margin: 0 0 0.65rem 0;
-}
-
-.about-col-left .about-text p:last-child {
-  margin-bottom: 0;
-}
-
-.about-col-center {
-  pointer-events: none;
-  min-height: 200px;
-  width: 100%;
-}
-
-.about-col-right {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.about-col-right .info-card {
-  width: 100%;
-  max-width: 380px;
-}
-
-/* Stagger reveal of left and right blocks in chi_sono */
-.snap-section.section-active .about-col-left {
-  transition-delay: 0ms;
-}
-.snap-section.section-active .about-col-right {
-  transition-delay: 150ms;
-}
-
-.about-text {
-  font-size: clamp(1rem, 1.4vw, 1.2rem);
-  line-height: 1.75;
-  color: var(--muted);
-  margin-bottom: 2rem;
-}
-
-/* Small Mono Info Card */
-.info-card {
-  background: rgba(10, 11, 36, 0.5);
-  border: var(--border-thin);
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  font-size: 0.8rem;
-  max-width: 380px;
-  backdrop-filter: blur(8px);
+  margin: 0;
 }
 
 .info-row {
@@ -1593,30 +1597,12 @@ html, body {
     padding: 1rem 1.25rem;
   }
 
-  .about-grid {
-    display: flex;
-    flex-direction: column;
-    padding: 0 1.25rem;
-    gap: 1.25rem;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .about-col-left .about-text {
+  .about-block {
     max-width: 100%;
   }
 
-  .about-col-center {
-    display: none;
-  }
-
-  .about-col-right {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .about-col-right .info-card {
-    max-width: 100%;
+  .about-content-wrap {
+    max-height: calc(100vh - 14rem);
   }
 
   .avatar-haze {

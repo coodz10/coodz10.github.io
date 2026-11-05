@@ -58,10 +58,10 @@
 
     // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
     AVATAR_KEYFRAMES: [
-      { id: 'home',       x: 'anchor', y: 'anchor', scale: 'anchor', yaw: 0.15, roll: 0 },
-      { id: 'chi_sono',   x: 0,        y: 0,        scale: 1.0,      yaw: 0.0,  roll: 0 },
-      { id: 'esperienze', x: -22,      y: 0,        scale: 0.8,      yaw: 0.65, roll: 0 },
-      { id: 'contatti',   x: 0,        y: 2,        scale: 0.7,      yaw: 0.0,  roll: 0 }
+      { id: 'home',       x: 'anchor', y: 'anchor', scale: 'anchor', yaw: 0.15,  roll: 0 },
+      { id: 'chi_sono',   x: 22,       y: 0,        scale: 0.8,      yaw: -0.65, roll: 0 },
+      { id: 'esperienze', x: -22,      y: 0,        scale: 0.8,      yaw: 0.65,  roll: 0 },
+      { id: 'contatti',   x: 0,        y: 2,        scale: 0.7,      yaw: 0.0,   roll: 0 }
     ],
     FLIGHT_ARC_X: 9,           // Extra arc horizontal offset in vw
     FLIGHT_ARC_Y: 4,           // Extra arc vertical lift in vh
@@ -91,12 +91,18 @@
       scrollHint: '[ SCROLL ]',
       aboutTag: 'LOG_ENTRY_00 // CHI_SONO',
       aboutTitle: 'Chi Sono',
-      aboutText: `<p>Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.</p><p>Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.</p><p>Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.</p><p>Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.</p>`,
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'RUOLO:',
       aboutRoleVal: 'SysAdmin // Security',
       aboutStatusLabel: 'STATO:',
       aboutStatusVal: '[ OPERATIVO ]',
+      aboutIntro: "Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.",
+      aboutPillarTitle1: '[ SOFTWARE & SICUREZZA ]',
+      aboutPillarDesc1: "Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.",
+      aboutPillarTitle2: '[ INTELLIGENZA ARTIFICIALE ]',
+      aboutPillarDesc2: "Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.",
+      aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
+      aboutPillarDesc3: "Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.",
       expTag: 'LOG_ENTRY_01 // ESPERIENZE',
       expTitle: 'Esperienze',
       expTabAll: '[ TUTTO ]',
@@ -138,12 +144,18 @@
       scrollHint: '[ SCROLL ]',
       aboutTag: 'LOG_ENTRY_00 // ABOUT_ME',
       aboutTitle: 'About Me',
-      aboutText: `<p>My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.</p><p>On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.</p><p>In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.</p><p>On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.</p>`,
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'ROLE:',
       aboutRoleVal: 'SysAdmin // Security',
       aboutStatusLabel: 'STATUS:',
       aboutStatusVal: '[ OPERATIONAL ]',
+      aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
+      aboutPillarTitle1: '[ SOFTWARE & SECURITY ]',
+      aboutPillarDesc1: "On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.",
+      aboutPillarTitle2: '[ ARTIFICIAL INTELLIGENCE ]',
+      aboutPillarDesc2: "In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.",
+      aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
+      aboutPillarDesc3: "On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.",
       expTag: 'LOG_ENTRY_01 // EXPERIENCES',
       expTitle: 'Experiences',
       expTabAll: '[ ALL ]',
@@ -509,23 +521,14 @@
       if (activeSectionId === 'home') return;
 
       if (activeSectionId === 'chi_sono') {
-        const steps = ['.section-tag', '.section-title', '.about-text', '.about-text', '.info-card'];
+        const steps = ['.section-tag', '.section-title', '.about-meta-row', '.about-intro-box', '.about-pillar-card'];
         currentReadingIndex = (currentReadingIndex + 1) % steps.length;
         const sel = steps[currentReadingIndex];
         const el = document.querySelector(`#chi_sono ${sel}`);
         if (el) {
           const r = el.getBoundingClientRect();
-          let targetX = r.left + r.width * 0.5;
-          let targetY = r.top + r.height * 0.5;
-          if (sel === '.about-text') {
-            if (currentReadingIndex === 2) {
-              targetX = r.left + r.width * 0.25;
-              targetY = r.top + r.height * 0.3;
-            } else {
-              targetX = r.left + r.width * 0.75;
-              targetY = r.top + r.height * 0.7;
-            }
-          }
+          const targetX = r.left + r.width * 0.5;
+          const targetY = r.top + r.height * 0.5;
           setDesiredLookTarget(targetX, targetY, 0.8);
         }
       } else if (activeSectionId === 'esperienze' || activeSectionId === 'esperienze-detail') {
