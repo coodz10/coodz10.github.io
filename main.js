@@ -61,17 +61,19 @@
 
     // Intro Sequence Timing (all durations in seconds)
     INTRO: {
-      GATE_FADE_DUR: 0.5,
-      FLY_IN_DUR: 1.3,
-      LETTER_BUILD_DUR: 0.38,
-      BLOCK_INTERVAL: 0.014,
-      BLOCK_DISSOLVE_DUR: 0.20,
-      GLYPH_FADE_DUR: 0.30,
-      HOME_GLIDE_DUR: 1.0,
-      TOP_BAR_STAGGER: 0.09,
+      GATE_FADE_DUR: 0.4,
+      FLY_IN_DUR: 1.0,
+      WRITE_START: 1.4,
+      WRITE_END: 5.0,
+      SETTLE_END: 5.9,
+      TOPBAR_TIME: 5.9,
+      SUBTITLE_TIME: 6.4,
+      BOTTOM_TIME: 6.9,
+      TOTAL_TIME: 7.2,
+      PEN_MASK_WIDTH: 0.22,
+      REPEAT_SPEED: 0.4,
       AUDIO_FADE_DUR: 3.0,
-      SUBTITLE_DECRYPT_DUR: 0.8,
-      REPEAT_SPEED: 0.4
+      SUBTITLE_DECRYPT_DUR: 0.8
     },
 
     // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
@@ -456,6 +458,13 @@
       rightArm: { x: -1.5, y: 0, z: 0.15 },
       leftLeg: { x: -0.25, y: 0, z: -0.04 },
       rightLeg: { x: -0.25, y: 0, z: 0.04 }
+    },
+    write: {
+      body: { x: 0.25, y: 0.08, z: 0 },
+      leftArm: { x: 0.45, y: 0.1, z: -0.25 },
+      rightArm: { x: -0.95, y: -0.2, z: 0.15 },
+      leftLeg: { x: -0.22, y: 0, z: -0.04 },
+      rightLeg: { x: -0.16, y: 0, z: 0.04 }
     },
     place: {
       body: { x: 0.15, y: 0.08, z: 0 },
@@ -885,6 +894,16 @@
         }
       }
 
+      // 3b. Write pose micro-motion (circular hand pulses + gentle leg flutter)
+      let writeCircleX = 0;
+      let writeCircleY = 0;
+      let writeFlutter = 0;
+      if (this.currentPoseName === 'write' && !prefersReducedMotion) {
+        writeCircleX = Math.sin(nowSec * 16.0) * 0.08;
+        writeCircleY = Math.cos(nowSec * 16.0) * 0.08;
+        writeFlutter = 0.10 * Math.sin(nowSec * 12.0);
+      }
+
       // 4. Lerp with fly pose
       const bodyRotX = (b.body.x * (1 - w) + fly.body.x * w);
       const leftArmRotX = (b.leftArm.x * (1 - w) + fly.leftArm.x * w);
@@ -904,15 +923,15 @@
       skin.leftArm.rotation.y = b.leftArm.y;
       skin.leftArm.rotation.z = leftArmRotZ + armLDriftZ;
 
-      skin.rightArm.rotation.x = rightArmRotX;
-      skin.rightArm.rotation.y = b.rightArm.y;
+      skin.rightArm.rotation.x = rightArmRotX + writeCircleX;
+      skin.rightArm.rotation.y = b.rightArm.y + writeCircleY;
       skin.rightArm.rotation.z = rightArmRotZ + armRDriftZ + waveOscZ;
 
-      skin.leftLeg.rotation.x = leftLegRotX + legLDriftX + legSway;
+      skin.leftLeg.rotation.x = leftLegRotX + legLDriftX + legSway + writeFlutter;
       skin.leftLeg.rotation.y = b.leftLeg.y;
       skin.leftLeg.rotation.z = b.leftLeg.z;
 
-      skin.rightLeg.rotation.x = rightLegRotX + legRDriftX - legSway;
+      skin.rightLeg.rotation.x = rightLegRotX + legRDriftX - legSway - writeFlutter;
       skin.rightLeg.rotation.y = b.rightLeg.y;
       skin.rightLeg.rotation.z = b.rightLeg.z;
 
@@ -1057,18 +1076,47 @@
   }
 
   // ==========================================================================
-  // 1. GATE & INTRO SEQUENCE (Avatar builds title coodz_10 out of Minecraft blocks)
+  // 1. GATE & INTRO SEQUENCE (INTRO V2: Avatar writes the name 'coodz_10')
   // ==========================================================================
   let isIntroActive = false;
   let introCancelRequested = false;
   let introRafId = null;
+
+  // Normalized stroke waypoints per letter (ink box 0..1)
+  const CHAR_STROKES = {
+    c: [
+      [ [0.88, 0.25], [0.65, 0.08], [0.35, 0.12], [0.14, 0.35], [0.14, 0.65], [0.35, 0.88], [0.65, 0.92], [0.88, 0.75] ]
+    ],
+    o: [
+      [ [0.50, 0.08], [0.20, 0.20], [0.10, 0.50], [0.20, 0.80], [0.50, 0.92], [0.80, 0.80], [0.90, 0.50], [0.80, 0.20], [0.50, 0.08] ]
+    ],
+    d: [
+      [ [0.62, 0.50], [0.30, 0.46], [0.12, 0.68], [0.28, 0.92], [0.60, 0.93], [0.80, 0.72] ],
+      [ [0.80, 0.04], [0.80, 0.96] ]
+    ],
+    z: [
+      [ [0.10, 0.12], [0.90, 0.12], [0.10, 0.88], [0.90, 0.88] ]
+    ],
+    '_': [
+      [ [0.00, 0.50], [1.00, 0.50] ]
+    ],
+    '1': [
+      [ [0.10, 0.32], [0.62, 0.04], [0.62, 0.96] ]
+    ],
+    '0': [
+      [ [0.50, 0.08], [0.20, 0.20], [0.10, 0.50], [0.20, 0.80], [0.50, 0.92], [0.80, 0.80], [0.90, 0.50], [0.80, 0.20], [0.50, 0.08] ]
+    ]
+  };
+
+  let debugOverlayGlyphs = false;
+  let debugShowWaypointsMask = false;
 
   function initGateAndIntro() {
     const gateScreen = document.getElementById('gate-screen');
     const gateBtn = document.getElementById('gate-btn');
     const titleEl = document.getElementById('hero-title');
     const spans = titleEl ? Array.from(titleEl.querySelectorAll('.ch')) : [];
-    const blockStage = document.getElementById('block-stage');
+    const introCanvas = document.getElementById('intro-canvas');
     const navBar = document.querySelector('.nav-bar');
     const subtitleWrap = document.querySelector('.hero-subtitle-wrap');
     const bottomActions = document.querySelector('.home-bottom-actions');
@@ -1184,12 +1232,13 @@
       introCancelRequested = true;
       if (introRafId) cancelAnimationFrame(introRafId);
 
-      // Remove CSS intro-pending hide and switch look mode to normal
       document.documentElement.classList.remove('intro-pending');
       headLookMode = 'normal';
       setDesiredLookTarget(mouseX, mouseY, 0.8);
 
-      if (blockStage) blockStage.innerHTML = '';
+      if (introCanvas) {
+        introCanvas.style.display = 'none';
+      }
       if (gateScreen) {
         gateScreen.classList.add('faded-out');
         gateScreen.style.display = 'none';
@@ -1201,7 +1250,6 @@
         avatarStage.style.transform = `translate3d(${kfHome.x.toFixed(2)}px, ${kfHome.y.toFixed(2)}px, 0) scale(${kfHome.scale.toFixed(3)}) rotate(0rad)`;
       }
 
-      // Transition to float pose with 1.2s blend and start float fade
       if (floatAnimation) {
         floatAnimation.transitionTo('float', 1.2);
       }
@@ -1236,11 +1284,6 @@
         scrollHint.classList.add('intro-revealed');
         scrollHint.style.opacity = '1';
         scrollHint.style.pointerEvents = 'auto';
-      }
-      const heroLightSpill = document.getElementById('hero-light-spill');
-      if (heroLightSpill) {
-        heroLightSpill.classList.add('intro-revealed');
-        heroLightSpill.style.opacity = '1';
       }
 
       document.documentElement.classList.remove('intro-locked');
@@ -1278,7 +1321,7 @@
       if (gateTriggered) return;
       gateTriggered = true;
 
-      // 1. Synchronously unlock audio (iOS/Safari strict requirement: no awaits before audio.play())
+      // Synchronously unlock audio at gate interaction
       if (audio) {
         if (!audio.src) {
           audio.src = CONFIG.PLAYLIST[0].src;
@@ -1302,7 +1345,7 @@
         }
       }
 
-      // 2. Start Intro Animation
+      // Start Intro Animation
       headLookMode = 'intro';
       startIntroSequence();
     }
@@ -1318,6 +1361,19 @@
         onGateTrigger();
       }
     });
+
+    function runFallbackWipe() {
+      spans.forEach((sp, idx) => {
+        setTimeout(() => {
+          sp.classList.add('intro-revealed');
+          sp.style.transition = 'opacity 0.3s ease';
+          sp.style.opacity = '1';
+        }, idx * (2500 / Math.max(1, spans.length)));
+      });
+      setTimeout(() => {
+        finishIntroInstant();
+      }, 2800);
+    }
 
     function startIntroSequence() {
       isIntroActive = true;
@@ -1361,376 +1417,645 @@
         }
       }, 100);
 
-      // Measure character span rects and setup blocks
-      const charTexts = ['c', 'o', 'o', 'd', 'z', '_', '1', '0'];
-      const spanMetrics = spans.map((span, idx) => {
-        const rect = span.getBoundingClientRect();
-        return {
-          char: charTexts[idx] || span.textContent.trim(),
-          span: span,
-          rect: rect,
-          centerX: rect.left + rect.width * 0.5,
-          centerY: rect.top + rect.height * 0.5
-        };
-      });
+      // Wait for fonts to be ready before reading text metrics
+      const fontsReady = (document.fonts && document.fonts.ready)
+        ? Promise.race([document.fonts.ready, new Promise((res) => setTimeout(res, 1200))])
+        : Promise.resolve();
 
-      const titleRect = titleEl ? titleEl.getBoundingClientRect() : { left: 0, width: window.innerWidth };
-
-      // Bitmaps for 8 characters
-      const BITMAPS = {
-        c: { w: 5, h: 5, rows: ['01110', '10000', '10000', '10000', '01110'] },
-        o: { w: 5, h: 5, rows: ['01110', '10001', '10001', '10001', '01110'] },
-        d: { w: 5, h: 7, rows: ['00001', '00001', '01111', '10001', '10001', '10001', '01111'] },
-        z: { w: 5, h: 5, rows: ['11111', '00010', '00100', '01000', '11111'] },
-        '_': { w: 5, h: 2, rows: ['11111', '11111'] },
-        '1': { w: 5, h: 7, rows: ['00100', '01100', '00100', '00100', '00100', '00100', '01110'] },
-        '0': { w: 5, h: 7, rows: ['01110', '10001', '10011', '10101', '11001', '10001', '01110'] }
-      };
-
-      function getBlockColor(blockX) {
-        const ratio = Math.max(0, Math.min(1, (blockX - titleRect.left) / Math.max(1, titleRect.width)));
-        let r, g, b;
-        if (ratio < 0.5) {
-          const t = ratio / 0.5;
-          r = 94 + (139 - 94) * t;
-          g = 168 + (108 - 168) * t;
-          b = 255;
-        } else {
-          const t = (ratio - 0.5) / 0.5;
-          r = 139 + (196 - 139) * t;
-          g = 108 + (181 - 108) * t;
-          b = 255;
-        }
-        const jitter = 1 + (Math.random() - 0.5) * 0.16;
-        return `rgb(${Math.min(255, Math.max(0, Math.round(r * jitter)))}, ${Math.min(255, Math.max(0, Math.round(g * jitter)))}, ${Math.min(255, Math.max(0, Math.round(b * jitter)))})`;
-      }
-
-      // Pre-compute block coordinates for each letter
-      const letterBlockData = spanMetrics.map((sm) => {
-        const bm = BITMAPS[sm.char] || BITMAPS['o'];
-        const blockSize = Math.max(3, Math.floor(sm.rect.width / bm.w));
-        const gridW = bm.w * blockSize;
-        const gridH = bm.h * blockSize;
-        const gridLeft = sm.rect.left + (sm.rect.width - gridW) * 0.5;
-        let gridTop = sm.rect.top + (sm.rect.height - gridH) * 0.5;
-        if (sm.char === '_') {
-          gridTop = sm.rect.bottom - gridH - (sm.rect.height * 0.05);
-        } else if (bm.h === 5) {
-          gridTop = sm.rect.bottom - gridH - (sm.rect.height * 0.14);
-        }
-
-        const blocks = [];
-        for (let row = 0; row < bm.h; row++) {
-          for (let col = 0; col < bm.w; col++) {
-            if (bm.rows[row][col] === '1') {
-              const bx = gridLeft + col * blockSize;
-              const by = gridTop + row * blockSize;
-              blocks.push({
-                x: bx,
-                y: by,
-                size: blockSize - 1,
-                color: getBlockColor(bx + blockSize * 0.5)
-              });
-            }
-          }
-        }
-        return {
-          ...sm,
-          blocks: blocks,
-          blockSize: blockSize,
-          gridLeft: gridLeft,
-          gridTop: gridTop,
-          gridW: gridW,
-          gridH: gridH,
-          built: false
-        };
-      });
-
-      if (avatarStage) {
-        avatarStage.classList.add('stage-ready');
-        avatarStage.style.opacity = '1';
-      }
-      if (floatAnimation) {
-        floatAnimation.transitionTo('fly', 0.2);
-      }
-
-      const T_GATE = CONFIG.INTRO.GATE_FADE_DUR;
-      const T_FLY_IN = T_GATE + CONFIG.INTRO.FLY_IN_DUR;
-      const T_BUILD_START = T_FLY_IN;
-      const T_BUILD_END = T_BUILD_START + (8 * CONFIG.INTRO.LETTER_BUILD_DUR);
-      const T_HOME_GLIDE = T_BUILD_END + CONFIG.INTRO.HOME_GLIDE_DUR;
-      const T_TOPBAR = T_HOME_GLIDE;
-      const T_SUBTITLE = T_TOPBAR + 0.5;
-      const T_TOTAL = T_SUBTITLE + CONFIG.INTRO.SUBTITLE_DECRYPT_DUR;
-
-      const timeScale = isSlowActive ? (1 / slowMultiplier) : (isRepeatSession ? (1 / CONFIG.INTRO.REPEAT_SPEED) : 1.0);
-      let startPerfTime = performance.now();
-      let lastTime = startPerfTime;
-      let virtualTime = 0;
-
-      let topBarRevealed = false;
-      let subtitleRevealed = false;
-      let homePoseSet = false;
-      let handoverLookSet = false;
-      let currentBuildingLetter = -1;
-
-      function introTick(now) {
+      fontsReady.then(() => {
         if (!isIntroActive || introCancelRequested) return;
 
-        const dtSec = Math.min(0.1, (now - lastTime) / 1000);
-        lastTime = now;
-        virtualTime += dtSec * timeScale;
-
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const halfW = vw * 0.5;
-        const halfH = vh * 0.5;
-
-        const homeKf = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[0]);
-
-        // Phase 1: Gate fade
-        if (virtualTime < T_GATE) {
-          if (avatarStage) avatarStage.style.opacity = '0';
-        }
-        // Phase 2: Fly-in from far away to above letter 0
-        else if (virtualTime >= T_GATE && virtualTime < T_FLY_IN) {
-          const u = (virtualTime - T_GATE) / (T_FLY_IN - T_GATE);
-          const t = smoothstep(u);
-
-          if (avatarStage) avatarStage.style.opacity = '1';
-
-          const firstL = letterBlockData[0];
-          const targetX = firstL.centerX - halfW;
-          const targetY = (firstL.rect.top - vh * 0.16) - halfH;
-
-          const startX = 0;
-          const startY = -vh * 0.44;
-          const startScale = 0.08;
-
-          const curX = startX + (targetX - startX) * t;
-          const curY = startY + (targetY - startY) * t;
-          const curScale = startScale + (homeKf.scale - startScale) * t;
-          const curRoll = -0.10 * Math.sin(Math.PI * t);
-
-          if (avatarStage) {
-            avatarStage.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+        try {
+          if (!introCanvas || spans.length < 8) {
+            runFallbackWipe();
+            return;
           }
 
-          if (floatAnimation && floatAnimation.currentPoseName !== 'fly') {
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+          introCanvas.width = vw * dpr;
+          introCanvas.height = vh * dpr;
+          introCanvas.style.width = vw + 'px';
+          introCanvas.style.height = vh + 'px';
+          introCanvas.style.display = 'block';
+          introCanvas.style.opacity = '1';
+
+          const introCtx = introCanvas.getContext('2d');
+          if (!introCtx) {
+            runFallbackWipe();
+            return;
+          }
+          introCtx.scale(dpr, dpr);
+
+          const offGlyphs = document.createElement('canvas');
+          offGlyphs.width = vw * dpr;
+          offGlyphs.height = vh * dpr;
+          const offGlyphsCtx = offGlyphs.getContext('2d');
+          offGlyphsCtx.scale(dpr, dpr);
+
+          const offMask = document.createElement('canvas');
+          offMask.width = vw * dpr;
+          offMask.height = vh * dpr;
+          const offMaskCtx = offMask.getContext('2d');
+          offMaskCtx.scale(dpr, dpr);
+
+          // Get computed typography
+          const titleStyle = window.getComputedStyle(titleEl);
+          const fontFamily = titleStyle.fontFamily || "'Space Grotesk', sans-serif";
+          const fontWeight = titleStyle.fontWeight || '800';
+          const fontStyle = titleStyle.fontStyle || 'normal';
+          const computedFontSize = parseFloat(titleStyle.fontSize) || 96;
+
+          offGlyphsCtx.font = `${fontStyle} ${fontWeight} ${computedFontSize}px ${fontFamily}`;
+          offGlyphsCtx.textAlign = 'left';
+          offGlyphsCtx.textBaseline = 'alphabetic';
+
+          const titleRect = titleEl.getBoundingClientRect();
+          const grad = offGlyphsCtx.createLinearGradient(titleRect.left, 0, titleRect.right, 0);
+          grad.addColorStop(0, '#5ea8ff');
+          grad.addColorStop(0.5, '#8b6cff');
+          grad.addColorStop(1, '#c4b5ff');
+          offGlyphsCtx.fillStyle = grad;
+
+          const charTexts = ['c', 'o', 'o', 'd', 'z', '_', '1', '0'];
+          const letterData = spans.map((span, idx) => {
+            const ch = charTexts[idx] || span.textContent.trim();
+            const rect = span.getBoundingClientRect();
+            const metrics = offGlyphsCtx.measureText(ch);
+
+            const fontAscent = (metrics.fontBoundingBoxAscent !== undefined) ? metrics.fontBoundingBoxAscent : (metrics.actualBoundingBoxAscent || computedFontSize * 0.78);
+            const fontDescent = (metrics.fontBoundingBoxDescent !== undefined) ? metrics.fontBoundingBoxDescent : (metrics.actualBoundingBoxDescent || computedFontSize * 0.22);
+
+            const baselineY = rect.top + (rect.height - (fontAscent + fontDescent)) * 0.5 + fontAscent;
+            const charX = rect.left;
+
+            // Draw glyph once to offscreen glyph canvas
+            offGlyphsCtx.fillText(ch, charX, baselineY);
+
+            // Compute ink box
+            const actLeft = metrics.actualBoundingBoxLeft !== undefined ? metrics.actualBoundingBoxLeft : 0;
+            const actRight = metrics.actualBoundingBoxRight !== undefined ? metrics.actualBoundingBoxRight : rect.width;
+            const actAscent = metrics.actualBoundingBoxAscent !== undefined ? metrics.actualBoundingBoxAscent : fontAscent;
+            const actDescent = metrics.actualBoundingBoxDescent !== undefined ? metrics.actualBoundingBoxDescent : fontDescent;
+
+            const inkLeft = charX - actLeft;
+            const inkRight = charX + actRight;
+            const inkTop = baselineY - actAscent;
+            const inkBottom = baselineY + actDescent;
+            const inkWidth = Math.max(1, inkRight - inkLeft);
+            const inkHeight = Math.max(1, inkBottom - inkTop);
+
+            // Build strokes with precalculated segment distances
+            const rawPolys = CHAR_STROKES[ch] || CHAR_STROKES['o'];
+            const strokes = rawPolys.map((poly) => {
+              const points = poly.map((pt) => ({
+                x: inkLeft + pt[0] * inkWidth,
+                y: inkTop + pt[1] * inkHeight
+              }));
+              const dists = [0];
+              let totalLen = 0;
+              for (let k = 0; k < points.length - 1; k++) {
+                const d = Math.hypot(points[k + 1].x - points[k].x, points[k + 1].y - points[k].y);
+                totalLen += d;
+                dists.push(totalLen);
+              }
+              return { points, dists, totalLen };
+            });
+
+            return {
+              char: ch,
+              span: span,
+              rect: rect,
+              baselineY: baselineY,
+              charX: charX,
+              inkLeft: inkLeft,
+              inkTop: inkTop,
+              inkWidth: inkWidth,
+              inkHeight: inkHeight,
+              strokes: strokes,
+              completed: false
+            };
+          });
+
+          // Helper to get point and path along a stroke at progress u (0..1)
+          function getStrokePathAt(stroke, u) {
+            const pts = stroke.points;
+            if (pts.length <= 1) return { pen: pts[0] || { x: 0, y: 0 }, drawn: pts };
+            const targetDist = Math.max(0, Math.min(1, u)) * stroke.totalLen;
+            const drawn = [pts[0]];
+            let pen = pts[0];
+
+            for (let i = 0; i < pts.length - 1; i++) {
+              const d0 = stroke.dists[i];
+              const d1 = stroke.dists[i + 1];
+              if (targetDist >= d1) {
+                drawn.push(pts[i + 1]);
+                pen = pts[i + 1];
+              } else {
+                const segLen = Math.max(0.0001, d1 - d0);
+                const s = (targetDist - d0) / segLen;
+                pen = {
+                  x: pts[i].x + (pts[i + 1].x - pts[i].x) * s,
+                  y: pts[i].y + (pts[i + 1].y - pts[i].y) * s
+                };
+                drawn.push(pen);
+                break;
+              }
+            }
+            return { pen, drawn };
+          }
+
+          const maskLineWidth = CONFIG.INTRO.PEN_MASK_WIDTH * computedFontSize;
+          const penRadius = Math.max(4, 0.07 * computedFontSize);
+
+          if (avatarStage) {
+            avatarStage.classList.add('stage-ready');
+            avatarStage.style.opacity = '1';
+          }
+          if (floatAnimation) {
             floatAnimation.transitionTo('fly', 0.2);
           }
 
-          setDesiredLookTarget(firstL.centerX, firstL.centerY, 0.2);
-        }
-        // Phase 3: Building 8 letters
-        else if (virtualTime >= T_BUILD_START && virtualTime < T_BUILD_END) {
-          const buildElapsed = virtualTime - T_BUILD_START;
-          const letterIndex = Math.min(7, Math.floor(buildElapsed / CONFIG.INTRO.LETTER_BUILD_DUR));
-          const letterProgress = (buildElapsed % CONFIG.INTRO.LETTER_BUILD_DUR) / CONFIG.INTRO.LETTER_BUILD_DUR;
+          const timeScale = isSlowActive ? (1 / slowMultiplier) : (isRepeatSession ? (1 / CONFIG.INTRO.REPEAT_SPEED) : 1.0);
+          let lastTime = performance.now();
+          let virtualTime = 0;
 
-          const curL = letterBlockData[letterIndex];
-          const prevL = letterIndex > 0 ? letterBlockData[letterIndex - 1] : letterBlockData[0];
+          const T_GATE = CONFIG.INTRO.GATE_FADE_DUR;
+          const T_FLY_IN = T_GATE + CONFIG.INTRO.FLY_IN_DUR;
+          const T_WRITE_START = CONFIG.INTRO.WRITE_START;
+          const T_WRITE_END = CONFIG.INTRO.WRITE_END;
+          const T_SETTLE_END = CONFIG.INTRO.SETTLE_END;
+          const T_TOPBAR = CONFIG.INTRO.TOPBAR_TIME;
+          const T_SUBTITLE = CONFIG.INTRO.SUBTITLE_TIME;
+          const T_BOTTOM = CONFIG.INTRO.BOTTOM_TIME;
+          const T_TOTAL = CONFIG.INTRO.TOTAL_TIME;
 
-          const fromX = prevL.centerX - halfW;
-          const toX = curL.centerX - halfW;
-          const moveT = smoothstep(Math.min(1, letterProgress * 2.5));
-          const curX = fromX + (toX - fromX) * moveT;
+          const cStart = letterData[0].strokes[0].points[0];
 
-          const hoverBaseY = (curL.rect.top - vh * 0.14) - halfH;
-          const curY = hoverBaseY + Math.sin(virtualTime * 8) * 4;
-          const curScale = homeKf.scale;
-          const curRoll = 0.06 * Math.sin(Math.PI * moveT) * (toX >= fromX ? 1 : -1);
+          let curAvatarX = 0;
+          let curAvatarY = -vh * 0.45;
+          let topBarRevealed = false;
+          let subtitleRevealed = false;
+          let bottomRevealed = false;
+          let homePoseSet = false;
+          let handoverLookSet = false;
 
-          if (avatarStage) {
-            avatarStage.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
-          }
+          const cometTrail = [];
+          const MAX_TRAIL_PTS = 14;
+          const sparkles = [];
 
-          if (floatAnimation) {
-            if (letterProgress < 0.35 && floatAnimation.currentPoseName !== 'place') {
-              floatAnimation.transitionTo('place', 0.15);
-            } else if (letterProgress >= 0.35 && floatAnimation.currentPoseName !== 'fly') {
-              floatAnimation.transitionTo('fly', 0.25);
+          function introTick(now) {
+            if (!isIntroActive || introCancelRequested) return;
+
+            const dtSec = Math.min(0.1, (now - lastTime) / 1000);
+            lastTime = now;
+            virtualTime += dtSec * timeScale;
+
+            const curVw = window.innerWidth;
+            const curVh = window.innerHeight;
+            const halfW = curVw * 0.5;
+            const halfH = curVh * 0.5;
+            const homeKf = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[0]);
+
+            let activePenX = cStart.x;
+            let activePenY = cStart.y;
+            let isPenWriting = false;
+
+            // Phase 1: Gate fade out
+            if (virtualTime < T_GATE) {
+              if (avatarStage) avatarStage.style.opacity = '0';
             }
-          }
+            // Phase 2: Fly-in from far away to above 'c' start
+            else if (virtualTime >= T_GATE && virtualTime < T_FLY_IN) {
+              if (avatarStage) avatarStage.style.opacity = '1';
 
-          if (letterIndex !== currentBuildingLetter) {
-            currentBuildingLetter = letterIndex;
-            setDesiredLookTarget(curL.centerX, curL.centerY, 0.12);
-          }
+              const u = (virtualTime - T_GATE) / (T_FLY_IN - T_GATE);
+              const t = smoothstep(u);
 
-          if (!curL.built) {
-            curL.built = true;
-            const letterEls = [];
+              const targetX = (cStart.x - (isMobile ? 3 : 4) * (curVw / 100)) - halfW;
+              const targetY = (cStart.y - (isMobile ? 19 : 26) * (curVh / 100)) - halfH;
 
-            curL.blocks.forEach((b, bIdx) => {
-              const el = document.createElement('div');
-              el.className = 'mc-block';
-              el.style.left = `${b.x}px`;
-              el.style.top = `${b.y}px`;
-              el.style.width = `${b.size}px`;
-              el.style.height = `${b.size}px`;
-              el.style.backgroundColor = b.color;
-              el.style.transform = 'scale(0)';
-              el.style.opacity = '0';
-              if (blockStage) blockStage.appendChild(el);
-              letterEls.push(el);
+              const startX = 0;
+              const startY = -curVh * 0.45;
+              const startScale = 0.10;
 
-              const delay = bIdx * (CONFIG.INTRO.BLOCK_INTERVAL * 1000) / timeScale;
-              setTimeout(() => {
-                if (!isIntroActive) return;
-                el.style.transition = `transform ${0.18 / timeScale}s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.08s ease`;
-                el.style.transform = 'scale(1)';
-                el.style.opacity = '1';
-              }, delay);
-            });
+              curAvatarX = startX + (targetX - startX) * t;
+              curAvatarY = startY + (targetY - startY) * t;
+              const curScale = startScale + (homeKf.scale - startScale) * t;
+              const curRoll = -0.08 * Math.sin(Math.PI * t);
 
-            // Debris particles falling from hands
-            for (let d = 0; d < 3; d++) {
-              const part = document.createElement('div');
-              part.className = 'mc-particle';
-              const px = (halfW + curX) + (Math.random() - 0.5) * 24;
-              const py = (halfH + curY) + 20 + Math.random() * 10;
-              const pSize = Math.max(3, curL.blockSize * 0.55);
-              part.style.left = `${px}px`;
-              part.style.top = `${py}px`;
-              part.style.width = `${pSize}px`;
-              part.style.height = `${pSize}px`;
-              part.style.backgroundColor = curL.blocks[0] ? curL.blocks[0].color : '#5ea8ff';
-              part.style.transition = `transform ${0.45 / timeScale}s ease-in, opacity ${0.45 / timeScale}s ease`;
-              if (blockStage) blockStage.appendChild(part);
+              if (avatarStage) {
+                avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+              }
 
-              setTimeout(() => {
-                part.style.transform = `translate3d(${(Math.random() - 0.5) * 25}px, ${35 + Math.random() * 20}px, 0) scale(0.3)`;
-                part.style.opacity = '0';
-                setTimeout(() => part.remove(), 500 / timeScale);
-              }, 40 / timeScale);
+              if (floatAnimation && floatAnimation.currentPoseName !== 'fly') {
+                floatAnimation.transitionTo('fly', 0.2);
+              }
+
+              setDesiredLookTarget(cStart.x, cStart.y, 0.15);
+              activePenX = cStart.x;
+              activePenY = cStart.y;
             }
+            // Phase 3: Avatar writes all 8 letters
+            else if (virtualTime >= T_WRITE_START && virtualTime < T_WRITE_END) {
+              if (avatarStage) avatarStage.style.opacity = '1';
 
-            const dissolveTime = (CONFIG.INTRO.LETTER_BUILD_DUR * 1000) / timeScale;
-            setTimeout(() => {
-              if (!isIntroActive) return;
-              letterEls.forEach((el) => {
-                el.style.transition = `transform ${0.2 / timeScale}s ease-in, opacity ${0.2 / timeScale}s ease`;
-                el.style.transform = 'scale(0)';
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 250 / timeScale);
+              if (floatAnimation && floatAnimation.currentPoseName !== 'write') {
+                floatAnimation.transitionTo('write', 0.25);
+              }
+
+              const writeElapsed = virtualTime - T_WRITE_START;
+              const letterDuration = (T_WRITE_END - T_WRITE_START) / 8; // 0.45s per letter
+              const letterIdx = Math.min(7, Math.floor(writeElapsed / letterDuration));
+              const letterTime = writeElapsed % letterDuration;
+
+              // Ensure all previous letters have their full mask cell stamped
+              for (let k = 0; k < letterIdx; k++) {
+                if (!letterData[k].completed) {
+                  letterData[k].completed = true;
+                  offMaskCtx.save();
+                  offMaskCtx.fillStyle = '#ffffff';
+                  offMaskCtx.fillRect(letterData[k].rect.left - 2, letterData[k].rect.top - 2, letterData[k].rect.width + 4, letterData[k].rect.height + 4);
+                  offMaskCtx.restore();
+                }
+              }
+
+              const curL = letterData[letterIdx];
+              const nextL = letterIdx < 7 ? letterData[letterIdx + 1] : null;
+
+              if (curL.char === 'd') {
+                // Multi-stroke 'd': stroke 1 (bowl 0..0.20s), internal air hop (0.20..0.26s), stroke 2 (stem 0.26..0.39s), hop to 'z' (0.39..0.45s)
+                const s1 = curL.strokes[0];
+                const s2 = curL.strokes[1];
+
+                if (letterTime < 0.20) {
+                  // Stroke 1: bowl
+                  isPenWriting = true;
+                  const uStroke = letterTime / 0.20;
+                  const { pen, drawn } = getStrokePathAt(s1, uStroke);
+                  activePenX = pen.x;
+                  activePenY = pen.y;
+
+                  offMaskCtx.save();
+                  offMaskCtx.beginPath();
+                  offMaskCtx.rect(curL.rect.left - 2, curL.rect.top - 2, curL.rect.width + 4, curL.rect.height + 4);
+                  offMaskCtx.clip();
+                  offMaskCtx.beginPath();
+                  offMaskCtx.lineWidth = maskLineWidth;
+                  offMaskCtx.lineCap = 'round';
+                  offMaskCtx.lineJoin = 'round';
+                  offMaskCtx.strokeStyle = '#ffffff';
+                  offMaskCtx.moveTo(drawn[0].x, drawn[0].y);
+                  for (let i = 1; i < drawn.length; i++) offMaskCtx.lineTo(drawn[i].x, drawn[i].y);
+                  offMaskCtx.stroke();
+                  offMaskCtx.restore();
+                } else if (letterTime >= 0.20 && letterTime < 0.26) {
+                  // Internal air hop from bowl end to stem top
+                  isPenWriting = false;
+                  const hopU = (letterTime - 0.20) / 0.06;
+                  const fromP = s1.points[s1.points.length - 1];
+                  const toP = s2.points[0];
+                  const arc = curVh * 0.04;
+                  activePenX = fromP.x + (toP.x - fromP.x) * hopU;
+                  activePenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
+                } else if (letterTime >= 0.26 && letterTime < 0.39) {
+                  // Stroke 2: stem
+                  isPenWriting = true;
+                  const uStroke = (letterTime - 0.26) / 0.13;
+                  const { pen, drawn } = getStrokePathAt(s2, uStroke);
+                  activePenX = pen.x;
+                  activePenY = pen.y;
+
+                  offMaskCtx.save();
+                  offMaskCtx.beginPath();
+                  offMaskCtx.rect(curL.rect.left - 2, curL.rect.top - 2, curL.rect.width + 4, curL.rect.height + 4);
+                  offMaskCtx.clip();
+                  offMaskCtx.beginPath();
+                  offMaskCtx.lineWidth = maskLineWidth;
+                  offMaskCtx.lineCap = 'round';
+                  offMaskCtx.lineJoin = 'round';
+                  offMaskCtx.strokeStyle = '#ffffff';
+                  offMaskCtx.moveTo(drawn[0].x, drawn[0].y);
+                  for (let i = 1; i < drawn.length; i++) offMaskCtx.lineTo(drawn[i].x, drawn[i].y);
+                  offMaskCtx.stroke();
+                  offMaskCtx.restore();
+                } else {
+                  // Air hop to next letter 'z'
+                  isPenWriting = false;
+                  if (!curL.completed) {
+                    curL.completed = true;
+                    offMaskCtx.save();
+                    offMaskCtx.fillStyle = '#ffffff';
+                    offMaskCtx.fillRect(curL.rect.left - 2, curL.rect.top - 2, curL.rect.width + 4, curL.rect.height + 4);
+                    offMaskCtx.restore();
+                  }
+                  const hopU = (letterTime - 0.39) / 0.06;
+                  const fromP = s2.points[s2.points.length - 1];
+                  const toP = nextL ? nextL.strokes[0].points[0] : fromP;
+                  const arc = curVh * 0.04;
+                  activePenX = fromP.x + (toP.x - fromP.x) * hopU;
+                  activePenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
+                }
+              } else {
+                // Single-stroke letters: write 0..0.37s, then air hop 0.37..0.45s
+                const stroke = curL.strokes[0];
+                const writeLimit = letterIdx === 7 ? 0.45 : 0.37;
+
+                if (letterTime < writeLimit) {
+                  isPenWriting = true;
+                  const uStroke = letterTime / writeLimit;
+                  const { pen, drawn } = getStrokePathAt(stroke, uStroke);
+                  activePenX = pen.x;
+                  activePenY = pen.y;
+
+                  offMaskCtx.save();
+                  offMaskCtx.beginPath();
+                  offMaskCtx.rect(curL.rect.left - 2, curL.rect.top - 2, curL.rect.width + 4, curL.rect.height + 4);
+                  offMaskCtx.clip();
+                  offMaskCtx.beginPath();
+                  offMaskCtx.lineWidth = maskLineWidth;
+                  offMaskCtx.lineCap = 'round';
+                  offMaskCtx.lineJoin = 'round';
+                  offMaskCtx.strokeStyle = '#ffffff';
+                  offMaskCtx.moveTo(drawn[0].x, drawn[0].y);
+                  for (let i = 1; i < drawn.length; i++) offMaskCtx.lineTo(drawn[i].x, drawn[i].y);
+                  offMaskCtx.stroke();
+                  offMaskCtx.restore();
+                } else {
+                  // Air hop to next letter
+                  isPenWriting = false;
+                  if (!curL.completed) {
+                    curL.completed = true;
+                    offMaskCtx.save();
+                    offMaskCtx.fillStyle = '#ffffff';
+                    offMaskCtx.fillRect(curL.rect.left - 2, curL.rect.top - 2, curL.rect.width + 4, curL.rect.height + 4);
+                    offMaskCtx.restore();
+                  }
+                  const hopU = (letterTime - writeLimit) / 0.08;
+                  const fromP = stroke.points[stroke.points.length - 1];
+                  const toP = nextL ? nextL.strokes[0].points[0] : fromP;
+                  const arc = curVh * 0.04;
+                  activePenX = fromP.x + (toP.x - fromP.x) * hopU;
+                  activePenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
+                }
+              }
+
+              // Avatar follows pen with smooth lag (~0.1 lerp)
+              const targetX = (activePenX - (isMobile ? 3 : 4) * (curVw / 100)) - halfW;
+              const targetY = (activePenY - (isMobile ? 19 : 26) * (curVh / 100)) - halfH;
+
+              const lerpSpeed = Math.min(1, dtSec * 10.0);
+              curAvatarX += (targetX - curAvatarX) * lerpSpeed;
+              curAvatarY += (targetY - curAvatarY) * lerpSpeed;
+
+              const curRoll = 0.04 * Math.sin(virtualTime * 4.0);
+              if (avatarStage) {
+                avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+              }
+
+              setDesiredLookTarget(activePenX, activePenY, 0.08);
+            }
+            // Phase 4: Settle. Avatar glides to CONFIG.HOME_AVATAR, title shimmers
+            else if (virtualTime >= T_WRITE_END && virtualTime < T_SETTLE_END) {
+              // Ensure all cells are fully filled
+              for (let k = 0; k < 8; k++) {
+                if (!letterData[k].completed) {
+                  letterData[k].completed = true;
+                  offMaskCtx.save();
+                  offMaskCtx.fillStyle = '#ffffff';
+                  offMaskCtx.fillRect(letterData[k].rect.left - 2, letterData[k].rect.top - 2, letterData[k].rect.width + 4, letterData[k].rect.height + 4);
+                  offMaskCtx.restore();
+                }
+              }
+
+              const u = (virtualTime - T_WRITE_END) / (T_SETTLE_END - T_WRITE_END);
+              const t = smoothstep(u);
+
+              const lastL = letterData[7];
+              const fromX = (lastL.strokes[0].points[lastL.strokes[0].points.length - 1].x - (isMobile ? 3 : 4) * (curVw / 100)) - halfW;
+              const fromY = (lastL.strokes[0].points[lastL.strokes[0].points.length - 1].y - (isMobile ? 19 : 26) * (curVh / 100)) - halfH;
+
+              const toX = homeKf.x;
+              const toY = homeKf.y;
+
+              curAvatarX = fromX + (toX - fromX) * t;
+              curAvatarY = fromY + (toY - fromY) * t;
+              const curRoll = 0.04 * Math.sin(Math.PI * t) * (toX >= fromX ? 1 : -1);
+
+              if (avatarStage) {
+                avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+              }
+
+              if (!handoverLookSet) {
+                handoverLookSet = true;
+                setDesiredLookTarget(halfW, halfH, 0.8);
+              }
+
+              if (!homePoseSet && u > 0.1) {
+                homePoseSet = true;
+                if (floatAnimation) {
+                  floatAnimation.transitionTo('float', 0.9);
+                }
+                floatFadeStartTime = performance.now() / 1000;
+                if (titleEl) {
+                  titleEl.classList.add('shimmer-active');
+                }
+              }
+            }
+            // Phase 5: Reveal Top Bar & Fade Audio
+            else if (virtualTime >= T_SETTLE_END && virtualTime < T_SUBTITLE) {
+              if (avatarStage) {
+                avatarStage.style.transform = `translate3d(${homeKf.x.toFixed(2)}px, ${homeKf.y.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(0rad)`;
+              }
+
+              if (!topBarRevealed && virtualTime >= T_TOPBAR) {
+                topBarRevealed = true;
+                if (navBar) {
+                  navBar.classList.add('intro-revealed');
+                  navBar.style.opacity = '1';
+                  navBar.style.pointerEvents = 'auto';
+                  navBar.style.transition = 'opacity 0.4s ease';
+                }
+                if (audio && !audio.muted) {
+                  fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, (CONFIG.INTRO.AUDIO_FADE_DUR * 1000) / timeScale);
+                }
+                setTimeout(() => {
+                  if (audio && (audio.paused || audio.volume < 0.05) && localStorage.getItem('coodz_muted') !== 'true') {
+                    audioNeedsRetry = true;
+                    attachAudioRetryListener();
+                  }
+                }, 1500 / timeScale);
+              }
+            }
+            // Phase 6: Subtitle decrypt & Phase 7: Bottom buttons reveal
+            else if (virtualTime >= T_SUBTITLE && virtualTime < T_TOTAL) {
+              if (avatarStage) {
+                avatarStage.style.transform = `translate3d(${homeKf.x.toFixed(2)}px, ${homeKf.y.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(0rad)`;
+              }
+
+              if (!subtitleRevealed) {
+                subtitleRevealed = true;
+                if (subtitleWrap) {
+                  subtitleWrap.classList.add('intro-revealed');
+                  subtitleWrap.style.opacity = '1';
+                  subtitleWrap.style.pointerEvents = 'auto';
+                  subtitleWrap.style.transition = 'opacity 0.4s ease';
+                  const subTextEl = subtitleWrap.querySelector('.hero-subtitle');
+                  if (subTextEl) {
+                    decryptTitle(subTextEl, 'MINECRAFT SCREENSHARER', (CONFIG.INTRO.SUBTITLE_DECRYPT_DUR * 1000) / timeScale);
+                  }
+                }
+              }
+
+              if (!bottomRevealed && virtualTime >= T_BOTTOM) {
+                bottomRevealed = true;
+                if (bottomActions) {
+                  bottomActions.classList.add('intro-revealed');
+                  bottomActions.style.opacity = '1';
+                  bottomActions.style.pointerEvents = 'auto';
+                  bottomActions.style.transition = 'opacity 0.6s ease';
+                }
+                const scrollHint = document.querySelector('.scroll-hint-wrap');
+                if (scrollHint) {
+                  scrollHint.classList.add('intro-revealed');
+                  scrollHint.style.opacity = '1';
+                  scrollHint.style.pointerEvents = 'auto';
+                }
+              }
+            }
+            // Phase 8: 7.2s Handover & Crossfade to DOM glyphs (250ms)
+            else if (virtualTime >= T_TOTAL) {
+              spans.forEach((sp) => {
+                sp.classList.add('intro-revealed');
+                sp.style.opacity = '1';
               });
-              curL.span.classList.add('intro-revealed');
-              curL.span.style.transition = `opacity ${0.3 / timeScale}s ease`;
-              curL.span.style.opacity = '1';
-            }, dissolveTime);
-          }
-        }
-        // Phase 4: Glide to CONFIG.HOME_AVATAR
-        else if (virtualTime >= T_BUILD_END && virtualTime < T_HOME_GLIDE) {
-          const u = (virtualTime - T_BUILD_END) / (T_HOME_GLIDE - T_BUILD_END);
-          const t = smoothstep(u);
 
-          const lastL = letterBlockData[7];
-          const fromX = lastL.centerX - halfW;
-          const fromY = (lastL.rect.top - vh * 0.14) - halfH;
-
-          const toX = homeKf.x;
-          const toY = homeKf.y;
-
-          const curX = fromX + (toX - fromX) * t;
-          const curY = fromY + (toY - fromY) * t;
-          const curScale = homeKf.scale;
-          const curRoll = 0.05 * Math.sin(Math.PI * t) * (toX >= fromX ? 1 : -1);
-
-          if (avatarStage) {
-            avatarStage.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
-          }
-
-          if (!handoverLookSet) {
-            handoverLookSet = true;
-            setDesiredLookTarget(halfW, halfH, 0.8);
-          }
-
-          if (!homePoseSet && u > 0.3) {
-            homePoseSet = true;
-            if (floatAnimation) {
-              floatAnimation.transitionTo('float', 1.2);
-            }
-            floatFadeStartTime = performance.now() / 1000;
-            if (titleEl) {
-              titleEl.classList.add('shimmer-active');
-            }
-          }
-        }
-        // Phase 5: Reveal Top Bar with stagger and fade audio in
-        else if (virtualTime >= T_HOME_GLIDE && virtualTime < T_SUBTITLE) {
-          if (avatarStage) {
-            avatarStage.style.transform = `translate3d(${homeKf.x.toFixed(2)}px, ${homeKf.y.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(0rad)`;
-          }
-
-          if (!topBarRevealed) {
-            topBarRevealed = true;
-            if (navBar) {
-              navBar.classList.add('intro-revealed');
-              navBar.style.opacity = '1';
-              navBar.style.pointerEvents = 'auto';
-              navBar.style.transition = 'opacity 0.4s ease';
-            }
-            if (audio && !audio.muted) {
-              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, (CONFIG.INTRO.AUDIO_FADE_DUR * 1000) / timeScale);
-            }
-            setTimeout(() => {
-              if (audio && (audio.paused || audio.volume < 0.05) && localStorage.getItem('coodz_muted') !== 'true') {
-                audioNeedsRetry = true;
-                attachAudioRetryListener();
+              if (introCanvas) {
+                introCanvas.style.opacity = '0';
+                setTimeout(() => {
+                  if (introCanvas) introCanvas.style.display = 'none';
+                }, 260);
               }
-            }, 1500 / timeScale);
-          }
-        }
-        // Phase 6: Subtitle decrypt and bottom actions fade
-        else if (virtualTime >= T_SUBTITLE && virtualTime < T_TOTAL) {
-          if (avatarStage) {
-            avatarStage.style.transform = `translate3d(${homeKf.x.toFixed(2)}px, ${homeKf.y.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(0rad)`;
-          }
 
-          if (!subtitleRevealed) {
-            subtitleRevealed = true;
-            const heroLightSpill = document.getElementById('hero-light-spill');
-            if (heroLightSpill) {
-              heroLightSpill.classList.add('intro-revealed');
-              heroLightSpill.style.opacity = '1';
+              finishIntroInstant();
+              removeSkipListeners();
+              return;
             }
-            if (subtitleWrap) {
-              subtitleWrap.classList.add('intro-revealed');
-              subtitleWrap.style.opacity = '1';
-              subtitleWrap.style.pointerEvents = 'auto';
-              subtitleWrap.style.transition = 'opacity 0.4s ease';
-              const subTextEl = subtitleWrap.querySelector('.hero-subtitle');
-              if (subTextEl) {
-                decryptTitle(subTextEl, 'MINECRAFT SCREENSHARER', (CONFIG.INTRO.SUBTITLE_DECRYPT_DUR * 1000) / timeScale);
+
+            // Compositing on #intro-canvas
+            introCtx.save();
+            introCtx.setTransform(1, 0, 0, 1, 0, 0);
+            introCtx.clearRect(0, 0, introCanvas.width, introCanvas.height);
+
+            // Draw glyphs masked by offMask
+            introCtx.drawImage(offGlyphs, 0, 0);
+            introCtx.globalCompositeOperation = 'destination-in';
+            introCtx.drawImage(offMask, 0, 0);
+            introCtx.globalCompositeOperation = 'source-over';
+            introCtx.restore();
+
+            // Render pen point, comet trail & sparkles during writing
+            if (virtualTime >= T_WRITE_START && virtualTime < T_WRITE_END) {
+              cometTrail.push({ x: activePenX, y: activePenY, time: virtualTime });
+              if (cometTrail.length > MAX_TRAIL_PTS) {
+                cometTrail.shift();
+              }
+
+              // Comet trail
+              if (cometTrail.length > 1) {
+                for (let k = 1; k < cometTrail.length; k++) {
+                  const p1 = cometTrail[k - 1];
+                  const p2 = cometTrail[k];
+                  const progress = k / cometTrail.length;
+                  const alpha = progress * 0.7;
+                  const width = Math.max(1.5, penRadius * 0.7 * progress);
+                  introCtx.strokeStyle = `rgba(196, 181, 255, ${alpha.toFixed(3)})`;
+                  introCtx.lineWidth = width;
+                  introCtx.lineCap = 'round';
+                  introCtx.beginPath();
+                  introCtx.moveTo(p1.x, p1.y);
+                  introCtx.lineTo(p2.x, p2.y);
+                  introCtx.stroke();
+                }
+              }
+
+              // Glowing pen point
+              const glowRadius = penRadius * 3.5;
+              const glow = introCtx.createRadialGradient(activePenX, activePenY, 1, activePenX, activePenY, glowRadius);
+              glow.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+              glow.addColorStop(0.3, 'rgba(196, 181, 255, 0.85)');
+              glow.addColorStop(0.7, 'rgba(139, 108, 255, 0.35)');
+              glow.addColorStop(1, 'rgba(139, 108, 255, 0)');
+              introCtx.fillStyle = glow;
+              introCtx.beginPath();
+              introCtx.arc(activePenX, activePenY, glowRadius, 0, Math.PI * 2);
+              introCtx.fill();
+
+              // Bright core dot
+              introCtx.fillStyle = '#ffffff';
+              introCtx.beginPath();
+              introCtx.arc(activePenX, activePenY, Math.max(2, penRadius * 0.45), 0, Math.PI * 2);
+              introCtx.fill();
+
+              // Sparkles when pen writes
+              if (isPenWriting && Math.random() < 0.6) {
+                sparkles.push({
+                  x: activePenX + (Math.random() - 0.5) * penRadius * 1.5,
+                  y: activePenY + (Math.random() - 0.5) * penRadius * 1.5,
+                  vx: (Math.random() - 0.5) * 45,
+                  vy: (Math.random() - 0.5) * 45 - 15,
+                  life: 1.0,
+                  decay: 1.8 + Math.random() * 1.2,
+                  size: Math.max(1.5, penRadius * (0.3 + Math.random() * 0.3))
+                });
               }
             }
-            if (bottomActions) {
-              bottomActions.classList.add('intro-revealed');
-              bottomActions.style.opacity = '1';
-              bottomActions.style.pointerEvents = 'auto';
-              bottomActions.style.transition = 'opacity 0.6s ease';
+
+            // Update & render sparkles
+            for (let i = sparkles.length - 1; i >= 0; i--) {
+              const sp = sparkles[i];
+              sp.x += sp.vx * dtSec;
+              sp.y += sp.vy * dtSec;
+              sp.life -= sp.decay * dtSec;
+              if (sp.life <= 0) {
+                sparkles.splice(i, 1);
+              } else {
+                introCtx.fillStyle = `rgba(225, 215, 255, ${(sp.life * 0.85).toFixed(3)})`;
+                introCtx.fillRect(sp.x - sp.size * 0.5, sp.y - sp.size * 0.5, sp.size, sp.size);
+              }
             }
-            const scrollHint = document.querySelector('.scroll-hint-wrap');
-            if (scrollHint) {
-              scrollHint.classList.add('intro-revealed');
-              scrollHint.style.opacity = '1';
-              scrollHint.style.pointerEvents = 'auto';
+
+            // Debug overlays if enabled
+            if (debugShowWaypointsMask) {
+              letterData.forEach((ld) => {
+                introCtx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+                introCtx.lineWidth = 1;
+                introCtx.strokeRect(ld.inkLeft, ld.inkTop, ld.inkWidth, ld.inkHeight);
+                ld.strokes.forEach((st) => {
+                  st.points.forEach((pt) => {
+                    introCtx.fillStyle = '#00ff88';
+                    introCtx.beginPath();
+                    introCtx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+                    introCtx.fill();
+                  });
+                });
+              });
             }
+
+            introRafId = requestAnimationFrame(introTick);
           }
-        }
-        // Complete intro
-        else if (virtualTime >= T_TOTAL) {
-          finishIntroInstant();
-          removeSkipListeners();
-          return;
-        }
 
-        introRafId = requestAnimationFrame(introTick);
-      }
-
-      introRafId = requestAnimationFrame(introTick);
+          introRafId = requestAnimationFrame(introTick);
+        } catch (err) {
+          console.warn('[Intro V2] Initialization error, falling back to wipe:', err);
+          runFallbackWipe();
+        }
+      }).catch((err) => {
+        console.warn('[Intro V2] Font load error, falling back to wipe:', err);
+        runFallbackWipe();
+      });
     }
   }
 
@@ -3578,8 +3903,8 @@
         </div>
 
         <div class="debug-toggles-row">
-          <button id="toggle-hold-title" class="debug-toggle-btn cursor-pointer">[ HOLD: ${CONFIG.HOLD_TITLE ? 'BOTTOM' : 'ABOVE'} ]</button>
-          <button id="toggle-hold-anchor" class="debug-toggle-btn cursor-pointer">[ ANCHOR: ${CONFIG.HOLD_ANCHOR} ]</button>
+          <button id="toggle-overlay-glyphs" class="debug-toggle-btn cursor-pointer">[ OVERLAY DOM GLYPHS: OFF ]</button>
+          <button id="toggle-show-waypoints" class="debug-toggle-btn cursor-pointer">[ SHOW WAYPOINTS: OFF ]</button>
         </div>
 
         <label class="debug-row">
@@ -3587,6 +3912,7 @@
           <select id="debug-pose-select" class="debug-select cursor-pointer">
             <option value="auto">[ AUTO / SECTION ]</option>
             <option value="float">float</option>
+            <option value="write">write</option>
             <option value="neutral">neutral</option>
             <option value="open">open</option>
             <option value="reach">reach</option>
@@ -3652,8 +3978,8 @@
 
     const toggleYaw = panel.querySelector('#toggle-yaw');
     const togglePitch = panel.querySelector('#toggle-pitch');
-    const toggleHoldTitle = panel.querySelector('#toggle-hold-title');
-    const toggleHoldAnchor = panel.querySelector('#toggle-hold-anchor');
+    const toggleOverlayGlyphs = panel.querySelector('#toggle-overlay-glyphs');
+    const toggleShowWaypoints = panel.querySelector('#toggle-show-waypoints');
     const poseSelect = panel.querySelector('#debug-pose-select');
     const codeOutput = panel.querySelector('#debug-code-output');
     const copyBtn = panel.querySelector('#debug-copy-btn');
@@ -3832,11 +4158,33 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       }
     });
 
-    if (toggleHoldTitle) {
-      toggleHoldTitle.style.display = 'none';
+    if (toggleOverlayGlyphs) {
+      toggleOverlayGlyphs.addEventListener('click', () => {
+        debugOverlayGlyphs = !debugOverlayGlyphs;
+        toggleOverlayGlyphs.textContent = `[ OVERLAY DOM GLYPHS: ${debugOverlayGlyphs ? 'ON' : 'OFF'} ]`;
+        const titleEl = document.getElementById('hero-title');
+        if (titleEl) {
+          const spans = titleEl.querySelectorAll('.ch');
+          spans.forEach((sp) => {
+            if (debugOverlayGlyphs) {
+              sp.style.setProperty('opacity', '0.6', 'important');
+              sp.style.setProperty('color', '#ff0055', 'important');
+            } else {
+              sp.style.removeProperty('color');
+              if (!isIntroActive) {
+                sp.style.opacity = '1';
+              }
+            }
+          });
+        }
+      });
     }
-    if (toggleHoldAnchor) {
-      toggleHoldAnchor.style.display = 'none';
+
+    if (toggleShowWaypoints) {
+      toggleShowWaypoints.addEventListener('click', () => {
+        debugShowWaypointsMask = !debugShowWaypointsMask;
+        toggleShowWaypoints.textContent = `[ SHOW WAYPOINTS: ${debugShowWaypointsMask ? 'ON' : 'OFF'} ]`;
+      });
     }
 
     poseSelect.addEventListener('change', (e) => {

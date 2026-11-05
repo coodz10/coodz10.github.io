@@ -120,30 +120,15 @@ html, body {
   50% { opacity: 0; }
 }
 
-/* MINECRAFT VOXEL BLOCK STAGE */
-.block-stage {
+/* 2D INTRO WRITING CANVAS (Above title, below avatar) */
+.intro-canvas {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
-  z-index: 6;
-  overflow: hidden;
-}
-
-.mc-block {
-  position: absolute;
-  border-radius: 0;
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.28), inset -1px -1px 0 rgba(0, 0, 0, 0.42);
-  transform-origin: center center;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-.mc-particle {
-  position: absolute;
-  border-radius: 0;
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.25), inset -1px -1px 0 rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-  will-change: transform, opacity;
+  z-index: 5;
+  transition: opacity 0.25s ease;
 }
 
 /* Scroll Lock During Intro */
@@ -216,7 +201,7 @@ html, body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
+  z-index: 6;
   display: flex;
   align-items: center;
   justify-content: center;
