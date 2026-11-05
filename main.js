@@ -1040,10 +1040,51 @@
     window.addEventListener('wheel', lockScrollHandler, { passive: false });
     window.addEventListener('touchmove', lockScrollHandler, { passive: false });
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const slowParam = parseFloat(urlParams.get('slow'));
+    const isSlowActive = !isNaN(slowParam) && slowParam >= 1 && slowParam <= 10;
+    const slowMultiplier = isSlowActive ? slowParam : 1;
+    const isIntroSkip = urlParams.get('intro') === 'skip';
+
+    if (isSlowActive) {
+      let slowBadge = document.getElementById('slow-debug-badge');
+      if (!slowBadge) {
+        slowBadge = document.createElement('div');
+        slowBadge.id = 'slow-debug-badge';
+        slowBadge.className = 'slow-debug-badge mono';
+        slowBadge.textContent = `SLOW x${slowMultiplier}`;
+        document.body.appendChild(slowBadge);
+      }
+    }
+
     const isDeepLink = window.location.hash && window.location.hash !== '#home';
     const isRepeatSession = !!sessionStorage.getItem('coodz_intro_seen');
 
-    function finishIntroInstant() {
+    function attachMusicStartOnInteraction() {
+      const events = ['click', 'pointerdown', 'keydown', 'touchstart'];
+      function onFirstUserGesture() {
+        events.forEach((evt) => {
+          window.removeEventListener(evt, onFirstUserGesture, true);
+        });
+        const isMuted = localStorage.getItem('coodz_muted') === 'true';
+        if (!isMuted && audio) {
+          audio.muted = false;
+          audio.volume = 0;
+          const p = audio.play();
+          if (p !== undefined) {
+            p.then(() => {
+              fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 3000);
+            }).catch(() => {});
+          }
+        }
+      }
+      events.forEach((evt) => {
+        window.addEventListener(evt, onFirstUserGesture, { capture: true, once: true });
+      });
+    }
+
+    function finishIntroInstant(options = {}) {
+      const startMusic = options.startMusic !== false;
       isIntroActive = false;
       introCancelRequested = true;
       if (introRafId) cancelAnimationFrame(introRafId);
@@ -1088,7 +1129,7 @@
 
       sessionStorage.setItem('coodz_intro_seen', 'true');
 
-      if (audio && !audio.muted) {
+      if (startMusic && audio && !audio.muted) {
         fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 1200);
       }
 
@@ -1099,8 +1140,11 @@
       }
     }
 
-    if (prefersReducedMotion || isDeepLink) {
-      finishIntroInstant();
+    if (isIntroSkip || isDeepLink || prefersReducedMotion) {
+      finishIntroInstant({ startMusic: false });
+      if (isIntroSkip || isDeepLink) {
+        attachMusicStartOnInteraction();
+      }
       return;
     }
 
@@ -1279,7 +1323,7 @@
       const T_SUBTITLE = T_TOPBAR + 0.5;
       const T_TOTAL = T_SUBTITLE + CONFIG.INTRO.SUBTITLE_DECRYPT_DUR;
 
-      const timeScale = isRepeatSession ? (1 / CONFIG.INTRO.REPEAT_SPEED) : 1.0;
+      const timeScale = isSlowActive ? (1 / slowMultiplier) : (isRepeatSession ? (1 / CONFIG.INTRO.REPEAT_SPEED) : 1.0);
       let startPerfTime = performance.now();
       let lastTime = startPerfTime;
       let virtualTime = 0;
