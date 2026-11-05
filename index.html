@@ -58,14 +58,12 @@
   <!-- MINECRAFT VOXEL BLOCK STAGE (For title building during intro) -->
   <div id="block-stage" class="block-stage" aria-hidden="true"></div>
 
-  <!-- 3. BEHIND THE AVATAR: RADIAL GLOW & CANVAS STARS -->
-  <div id="ambient-glow" class="ambient-glow"></div>
+  <!-- 3. BEHIND THE AVATAR: CANVAS STARS -->
   <div class="vignette-overlay" aria-hidden="true"></div>
   <canvas id="stars-canvas" class="stars-canvas"></canvas>
 
   <!-- 2. AVATAR: FIXED FULL-SCREEN CONTAINER #avatar-stage -->
   <div id="avatar-stage" class="avatar-stage state-home">
-    <div id="avatar-haze" class="avatar-haze" aria-hidden="true"></div>
     <div id="avatar-float" class="avatar-float">
       <canvas id="avatar-canvas" class="avatar-canvas"></canvas>
       <img id="avatar-fallback" src="assets/skin.png" alt="coodz_10 Minecraft avatar" class="avatar-fallback" style="display: none;">
@@ -92,12 +90,14 @@
     <div class="nav-right">
       <button id="lang-toggle-btn" class="nav-btn" aria-label="Cambia Lingua">[ EN ]</button>
 
-      <button id="mute-btn" class="nav-btn mute-btn" aria-label="Mute / Unmute" title="Audio">
-        <span class="eq-icon">
+      <button id="mute-btn" class="nav-btn audio-toggle-btn" aria-label="Disattiva Musica" title="Musica">
+        <span class="eq-icon" aria-hidden="true">
           <span class="eq-bar"></span>
           <span class="eq-bar"></span>
           <span class="eq-bar"></span>
         </span>
+        <span class="audio-label-desktop">[ MUSICA ON ]</span>
+        <span class="audio-label-mobile">[ ON ]</span>
       </button>
 
       <button id="audio-skip-btn" class="nav-btn skip-btn mono" aria-label="Brano successivo" data-i18n="audioSkip">[ ⏭ ]</button>
@@ -123,13 +123,10 @@
          SECTION 1: HOME
          ====================================================================== -->
     <section id="home" class="snap-section section-home">
-      <!-- Soft Light Spill UP toward Avatar -->
-      <div id="hero-light-spill" class="hero-light-spill" aria-hidden="true"></div>
-
-      <!-- Title coodz_10 centered around 56vh -->
+      <!-- Title coodz_10 centered around 71vh -->
       <h1 id="hero-title" class="hero-title" aria-label="coodz_10"><span class="ch">c</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">z</span><span class="ch">_</span><span class="ch">1</span><span class="ch">0</span></h1>
 
-      <!-- Subtitle centered around ~67vh -->
+      <!-- Subtitle centered around ~81vh -->
       <div class="hero-subtitle-wrap mono">
         <span class="sub-line sub-line-left" aria-hidden="true"></span>
         <span class="hero-subtitle">MINECRAFT SCREENSHARER</span>

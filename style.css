@@ -189,13 +189,7 @@ html, body {
    3. AMBIENT GLOW & STARS CANVAS (BEHIND AVATAR)
    ========================================================================== */
 .ambient-glow {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(circle 650px at 50% 45%, rgba(94, 168, 255, 0.14) 0%, rgba(139, 108, 255, 0.09) 45%, rgba(196, 181, 255, 0.02) 70%, transparent 100%);
-  animation: pulseAmbient 9s ease-in-out infinite alternate;
-  will-change: transform, opacity;
+  display: none !important;
 }
 
 .vignette-overlay {
@@ -204,11 +198,6 @@ html, body {
   pointer-events: none;
   z-index: 0;
   background: radial-gradient(circle at 50% 50%, transparent 58%, rgba(2, 2, 6, 0.78) 100%);
-}
-
-@keyframes pulseAmbient {
-  0% { transform: scale(0.92); opacity: 0.65; }
-  100% { transform: scale(1.08); opacity: 1; }
 }
 
 .stars-canvas {
@@ -241,19 +230,9 @@ html, body {
   opacity: 1;
 }
 
-/* Soft Wide Haze (Behind dark silhouette, follows stage position) */
+/* Wide Haze removed - dark space only */
 .avatar-haze {
-  position: absolute;
-  width: 110vh; /* radius ~55vh */
-  height: 110vh;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, #1a2250 0%, rgba(26, 34, 80, 0.55) 35%, rgba(26, 34, 80, 0) 70%);
-  opacity: var(--avatar-haze-opacity, 0.35);
+  display: none !important;
 }
 
 /* Floating Inner Container (driven every frame by JS: bob & roll) */
@@ -275,8 +254,7 @@ html, body {
   position: relative;
   z-index: 1;
   filter: contrast(var(--avatar-contrast, 0.92))
-          brightness(var(--avatar-brightness, 1.25))
-          drop-shadow(0 0 6px rgba(120, 160, 255, 0.3));
+          brightness(var(--avatar-brightness, 1.25));
 }
 
 .avatar-fallback {
@@ -285,8 +263,7 @@ html, body {
   object-fit: contain;
   image-rendering: pixelated;
   filter: contrast(var(--avatar-contrast, 0.92))
-          brightness(var(--avatar-brightness, 1.25))
-          drop-shadow(0 0 6px rgba(120, 160, 255, 0.3));
+          brightness(var(--avatar-brightness, 1.25));
 }
 
 /* ==========================================================================
@@ -392,24 +369,48 @@ html, body {
   color: var(--text);
 }
 
-.mute-btn {
+.audio-toggle-btn, .mute-btn {
   background: transparent;
-  border: none;
-  color: var(--muted);
+  border: 1px solid rgba(124, 131, 168, 0.35);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  padding: 0.35rem 0.5rem;
+  padding: 0 0.65rem;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s ease;
+  gap: 0.5rem;
+  border-radius: 0;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
 }
 
-.mute-btn:hover {
-  color: var(--text);
+.audio-toggle-btn:hover, .mute-btn:hover {
+  color: #fff;
+  border-color: var(--accent-blue);
+  background: rgba(94, 168, 255, 0.08);
 }
 
-.mute-btn.playing {
+.audio-toggle-btn:focus-visible, .mute-btn:focus-visible {
+  outline: 1px dashed var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.audio-toggle-btn.playing, .mute-btn.playing {
   color: var(--accent-blue);
+  border-color: rgba(94, 168, 255, 0.6);
+}
+
+.audio-label-desktop {
+  display: inline;
+}
+
+.audio-label-mobile {
+  display: none;
 }
 
 .eq-icon {
@@ -417,7 +418,8 @@ html, body {
   align-items: flex-end;
   gap: 2px;
   width: 10px;
-  height: 10px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .eq-bar {
@@ -430,15 +432,15 @@ html, body {
   will-change: transform;
 }
 
-.mute-btn.playing .eq-bar:nth-child(1) {
+.audio-toggle-btn.playing .eq-bar:nth-child(1), .mute-btn.playing .eq-bar:nth-child(1) {
   animation: eqJump 0.75s ease-in-out infinite alternate;
 }
 
-.mute-btn.playing .eq-bar:nth-child(2) {
+.audio-toggle-btn.playing .eq-bar:nth-child(2), .mute-btn.playing .eq-bar:nth-child(2) {
   animation: eqJump 0.55s ease-in-out infinite alternate 0.15s;
 }
 
-.mute-btn.playing .eq-bar:nth-child(3) {
+.audio-toggle-btn.playing .eq-bar:nth-child(3), .mute-btn.playing .eq-bar:nth-child(3) {
   animation: eqJump 0.95s ease-in-out infinite alternate 0.35s;
 }
 
@@ -447,25 +449,29 @@ html, body {
   100% { transform: scaleY(1); }
 }
 
-/* Skip Track Button [ ⏭ ] (Icon-only cyberpunk bracket button, no text/labels) */
+/* Skip Track Button [ ⏭ ] (Matching height/style, sharp bracket button, no text/labels) */
 .skip-btn {
   background: transparent;
-  border: none;
-  color: var(--muted);
+  border: 1px solid rgba(124, 131, 168, 0.35);
+  color: var(--text);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   letter-spacing: 0.05em;
   cursor: pointer;
-  padding: 0.35rem 0.45rem;
+  padding: 0 0.6rem;
+  min-height: 36px;
+  border-radius: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
   user-select: none;
 }
 
 .skip-btn:hover {
-  color: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
+  background: rgba(94, 168, 255, 0.08);
 }
 
 .skip-btn:focus-visible {
@@ -604,31 +610,21 @@ html, body {
   overflow: hidden;
 }
 
-/* Soft Light Spill Going UP from Title Top Edge toward Avatar (~30vh) */
+/* Soft Light Spill removed - clean dark space */
 .hero-light-spill {
-  position: absolute;
-  top: calc(56vh - 28vh);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(85vw, 680px);
-  height: 30vh;
-  pointer-events: none;
-  z-index: 1;
-  background: linear-gradient(0deg, rgba(139, 108, 255, 0.16) 0%, transparent 100%);
-  filter: blur(16px);
-  transition: opacity 0.5s ease;
+  display: none !important;
 }
 
-/* Centered "coodz_10" Title around 56vh, ~80vw wide desktop / 90vw mobile, single line */
+/* Centered "coodz_10" Title around 71vh, ~68vw wide desktop / 88vw mobile, single line */
 .hero-title {
   position: absolute;
-  top: 56vh;
+  top: 71vh;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80vw;
-  max-width: 90vw;
+  width: 68vw;
+  max-width: 75vw;
   font-family: var(--font-title);
-  font-size: clamp(3.2rem, 11vw, 10.5rem);
+  font-size: clamp(2.8rem, 8.5vw, 8.5rem);
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1;
@@ -671,10 +667,10 @@ html, body {
   will-change: transform, opacity;
 }
 
-/* Subtitle Under Title (~67vh) */
+/* Subtitle Under Title (~81vh) */
 .hero-subtitle-wrap {
   position: absolute;
-  top: 67vh;
+  top: 81vh;
   left: 50%;
   transform: translate(-50%, -50%);
   display: inline-flex;
@@ -708,16 +704,20 @@ html, body {
   background: linear-gradient(90deg, rgba(124, 131, 168, 0.45), transparent);
 }
 
-/* Bottom Center Actions (~86vh) */
+/* Bottom Center Actions (~92vh desktop, ~90vh mobile) */
 .home-bottom-actions {
   position: absolute;
-  top: 86vh;
+  top: 92vh;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.15rem;
+  gap: 0.65rem;
+  z-index: 5;
+  pointer-events: auto;
+  transition: opacity 0.4s ease;
+}
   z-index: 5;
   pointer-events: auto;
   transition: opacity 0.4s ease;
@@ -1695,11 +1695,14 @@ html, body {
   }
 
   .hero-title {
-    font-size: clamp(2.4rem, 16vw, 5.2rem);
+    top: 71vh;
+    width: 88vw;
     max-width: 92vw;
+    font-size: clamp(2.2rem, 12vw, 4.8rem);
   }
 
   .hero-subtitle-wrap {
+    top: 81vh;
     gap: 0.65rem;
   }
 
@@ -1713,14 +1716,28 @@ html, body {
   }
 
   .hero-light-spill {
-    height: 28vh;
-    width: 95vw;
+    display: none !important;
   }
 
   .home-bottom-actions {
-    bottom: 1.5rem;
-    gap: 0.85rem;
+    top: 90vh;
+    bottom: auto;
+    gap: 0.5rem;
     width: 100%;
+  }
+
+  .audio-toggle-btn, .mute-btn, .skip-btn {
+    min-height: 44px;
+    padding: 0 0.55rem;
+    font-size: 0.74rem;
+  }
+
+  .audio-label-desktop {
+    display: none;
+  }
+
+  .audio-label-mobile {
+    display: inline;
   }
 
   .home-buttons-row {

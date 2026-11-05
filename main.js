@@ -50,12 +50,12 @@
     HEAD_YAW_SIGN: 1,          // Mouse right -> face turns to viewer's right
     HEAD_PITCH_SIGN: 1,        // Mouse above -> face looks up
 
-    // Home Avatar Final Placement (~24.5vh from top, head ~13.4vh >= 11vh from top, feet ~35.6vh, title at 56vh)
+    // Home Avatar Final Placement (46vh tall desktop scale ~0.62, mobile ~34vh scale ~0.46, head >= 10vh from top)
     HOME_AVATAR: {
       x: 0,
-      y: -23,
-      scale: 0.30,
-      scaleMobile: 0.26,
+      y: -17,
+      scale: 0.62,
+      scaleMobile: 0.46,
       yaw: 0.1
     },
 
@@ -76,7 +76,7 @@
 
     // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
     AVATAR_KEYFRAMES: [
-      { id: 'home',       x: 0,   y: -23, scale: 0.30, scaleMobile: 0.26, yaw: 0.1,   roll: 0 },
+      { id: 'home',       x: 0,   y: -17, scale: 0.62, scaleMobile: 0.46, yaw: 0.1,   roll: 0 },
       { id: 'chi_sono',   x: 22,  y: 0,   scale: 0.8,  scaleMobile: 0.65, yaw: -0.65, roll: 0 },
       { id: 'esperienze', x: -22, y: 0,   scale: 0.8,  scaleMobile: 0.65, yaw: 0.65,  roll: 0 },
       { id: 'contatti',   x: 0,   y: 2,   scale: 0.7,  scaleMobile: 0.60, yaw: 0.0,   roll: 0 }
@@ -88,9 +88,10 @@
     FLIGHT_VELOCITY_REF: 0.85, // Velocity reference for flight pose blend (sections/sec)
     WARP_STRENGTH: 28,         // Warp star streak length multiplier
 
-    // Audio & Playlist
-    AUDIO_VOLUME: 0.4,
-    DEFAULT_VOLUME: 0.4,
+    // Audio & Playlist (Web Audio routing with dynamics compressor + master gain)
+    AUDIO_VOLUME: 0.9,
+    AUDIO_GAIN: 1.4,
+    DEFAULT_VOLUME: 0.9,
     PLAYLIST: [
       { name: 'dorado', src: 'music/dorado.mp3' },
       { name: '30C', src: 'music/30C.mp3' },
@@ -103,6 +104,12 @@
     it: {
       gateText: 'ENTRA',
       audioSkip: '[ ⏭ ]',
+      musicOn: '[ MUSICA ON ]',
+      musicOff: '[ MUSICA OFF ]',
+      musicOnShort: '[ ON ]',
+      musicOffShort: '[ OFF ]',
+      musicAriaMute: 'Disattiva Musica',
+      musicAriaUnmute: 'Attiva Musica',
       navHome: '[ home ]',
       navAbout: '[ chi_sono ]',
       navExp: '[ esperienze ]',
@@ -158,6 +165,12 @@
     en: {
       gateText: 'ENTER',
       audioSkip: '[ ⏭ ]',
+      musicOn: '[ MUSIC ON ]',
+      musicOff: '[ MUSIC OFF ]',
+      musicOnShort: '[ ON ]',
+      musicOffShort: '[ OFF ]',
+      musicAriaMute: 'Mute Music',
+      musicAriaUnmute: 'Unmute Music',
       navHome: '[ home ]',
       navAbout: '[ about_me ]',
       navExp: '[ experiences ]',
@@ -397,6 +410,21 @@
   let audioNeedsRetry = false;
   let audioRetryAttached = false;
 
+  // Quality Tier detection ('high', 'med', 'low')
+  let qualityTier = 'high';
+  const urlQuality = new URLSearchParams(window.location.search).get('quality');
+  if (urlQuality === 'low' || urlQuality === 'med' || urlQuality === 'high') {
+    qualityTier = urlQuality;
+  } else {
+    const hw = navigator.hardwareConcurrency || 4;
+    const dm = navigator.deviceMemory || 4;
+    if (hw <= 2 || dm < 3 || (window.innerWidth <= 480 && (window.devicePixelRatio || 1) < 2)) {
+      qualityTier = 'low';
+    } else if (hw <= 4 || dm < 4 || window.innerWidth <= 768) {
+      qualityTier = 'med';
+    }
+  }
+
   // ==========================================================================
   // ZERO-GRAVITY POSES & CUBIC EASING ENGINE
   // ==========================================================================
@@ -414,6 +442,13 @@
       rightArm: { x: 0.12, y: -0.1, z: 0.32 },
       leftLeg: { x: 0.08, y: 0, z: -0.06 },
       rightLeg: { x: -0.04, y: 0, z: 0.06 }
+    },
+    tilt: {
+      body: { x: 0.05, y: 0.1, z: 0.12 },
+      leftArm: { x: 0.06, y: 0, z: -0.22 },
+      rightArm: { x: 0.14, y: 0, z: 0.28 },
+      leftLeg: { x: -0.06, y: 0, z: -0.08 },
+      rightLeg: { x: 0.08, y: 0, z: 0.08 }
     },
     fly: {
       body: { x: 0.35, y: 0, z: 0 },
@@ -734,8 +769,19 @@
         return;
       }
 
-      if (fDisplay < 0.15) {
-        this.transitionTo('float');
+      if (this.currentSection === 'home' || fDisplay < 0.15) {
+        // Idle gestures in home every 5-8s: rest, open, reach, tilt, neutral; wave only rarely (~8%)
+        const rareWave = Math.random() < 0.08;
+        if (rareWave) {
+          this.triggerWave(2.0);
+          return;
+        }
+        const homePool = ['float', 'rest', 'open', 'reach', 'tilt', 'neutral'];
+        const available = homePool.filter((p) => p !== this.currentPoseName);
+        const next = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : 'float';
+        this.transitionTo(next, 1.4);
+        this.holdDuration = Math.random() * 3 + 5; // 5-8 seconds
+        this.holdStartTime = performance.now() / 1000;
         return;
       }
 
@@ -776,7 +822,7 @@
           this.isBlending = false;
           this.holdStartTime = nowSec;
           if (!this.isOneShotWave) {
-            this.holdDuration = Math.random() * 4 + 6;
+            this.holdDuration = (this.currentSection === 'home' || fDisplay < 0.15) ? (Math.random() * 3 + 5) : (Math.random() * 4 + 6);
           }
         }
       } else {
@@ -792,14 +838,9 @@
         }
       }
 
-      // In home section (fDisplay < 0.15): stay in 'float' pose (unless forced or playing intro gesture)
-      if (fDisplay < 0.15) {
-        if (this.currentPoseName !== 'float' && !this.forcedPose && !isIntroActive) {
-          this.transitionTo('float', 0.6);
-        }
-      } else {
-        // When leaving home: transition out of 'float'
-        if (this.currentPoseName === 'float' && !this.isBlending) {
+      // Leaving home: transition out of 'float' or 'tilt'
+      if (fDisplay >= 0.15) {
+        if ((this.currentPoseName === 'float' || this.currentPoseName === 'tilt') && !this.isBlending) {
           this.transitionTo('neutral', 1.0);
         }
       }
@@ -815,7 +856,7 @@
         legFlutter = 0.08 * Math.sin(nowSec * 14.0) * w;
       }
 
-      // 3. Secondary Limb Drift & Alternating Sway
+      // 3. Secondary Limb Drift & Alternating Sway (about 2x amplitude in home)
       let armLDriftZ = 0;
       let armRDriftZ = 0;
       let legLDriftX = 0;
@@ -826,18 +867,18 @@
       let legSway = 0;
 
       if (!prefersReducedMotion) {
-        if (this.currentPoseName === 'float' && currentHomeFloatAmp > 0.001) {
-          legSway = 0.14 * Math.sin(nowSec * 1.8) * currentHomeFloatAmp; // slow alternating sway
+        if (currentHomeFloatAmp > 0.001) {
+          legSway = 0.22 * Math.sin(nowSec * 1.8) * currentHomeFloatAmp; // slow alternating sway
         }
 
         const driftWeight = 1 - w * 0.7; // drift calms down during high-speed flight
-        const armFactor = (fDisplay < 0.35) ? currentHomeFloatAmp : 1;
-        armLDriftZ = 0.08 * Math.sin(nowSec * 1.1 + 0.5) * driftWeight * armFactor;
-        armRDriftZ = -0.08 * Math.sin(nowSec * 1.3 + 2.0) * driftWeight * armFactor;
-        legLDriftX = 0.06 * Math.sin(nowSec * 0.9 + 1.2) * driftWeight * armFactor;
-        legRDriftX = -0.06 * Math.sin(nowSec * 1.05 + 3.4) * driftWeight * armFactor;
-        bodyNoiseX = 0.02 * Math.sin(nowSec * 0.8 + 0.2) * driftWeight * armFactor;
-        bodyNoiseZ = 0.015 * Math.sin(nowSec * 0.7 + 1.5) * driftWeight * armFactor;
+        const armFactor = (fDisplay < 0.35) ? (currentHomeFloatAmp * 2.0) : 1;
+        armLDriftZ = 0.16 * Math.sin(nowSec * 1.1 + 0.5) * driftWeight * armFactor;
+        armRDriftZ = -0.16 * Math.sin(nowSec * 1.3 + 2.0) * driftWeight * armFactor;
+        legLDriftX = 0.12 * Math.sin(nowSec * 0.9 + 1.2) * driftWeight * armFactor;
+        legRDriftX = -0.12 * Math.sin(nowSec * 1.05 + 3.4) * driftWeight * armFactor;
+        bodyNoiseX = 0.04 * Math.sin(nowSec * 0.8 + 0.2) * driftWeight * armFactor;
+        bodyNoiseZ = 0.03 * Math.sin(nowSec * 0.7 + 1.5) * driftWeight * armFactor;
 
         if (this.currentPoseName === 'wave' || this.isOneShotWave) {
           waveOscZ = Math.sin(nowSec * 7.0) * 0.35 * (1 - w);
@@ -1249,6 +1290,9 @@
         if (playPromise !== undefined) {
           playPromise.then(() => {
             audioLastError = null;
+            if (!isMuted) {
+              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1500);
+            }
           }).catch((err) => {
             audioLastError = err ? (err.message || String(err)) : 'gate play rejected';
             console.warn('[Audio] play rejected at gate:', err);
@@ -1814,17 +1858,17 @@
     const homeWeight = (fDisplay < 0.35) ? Math.max(0, 1 - (fDisplay / 0.35)) : 0;
     currentHomeFloatAmp = prefersReducedMotion ? 0 : (floatDriverAmplitude * homeWeight * (1 - flightW));
 
-    // 6. Home float bob and slow roll tilt
+    // 6. Home float bob and slow roll tilt (+-2vh period 5.5s, sway +-2.2deg)
     const avatarFloatEl = document.getElementById('avatar-float');
     if (!prefersReducedMotion && avatarFloatEl) {
       if (currentHomeFloatAmp > 0.001) {
-        const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * currentHomeFloatAmp;
-        const rollDeg = 1.2 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * currentHomeFloatAmp;
+        const bobPx = (cachedWindowHeight * 0.02) * Math.sin(nowSec * (2 * Math.PI / 5.5)) * currentHomeFloatAmp;
+        const rollDeg = 2.2 * Math.sin(nowSec * (2 * Math.PI / 7.5)) * currentHomeFloatAmp;
         avatarFloatEl.style.transformOrigin = '50% 50%';
         avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
       } else if (fDisplay >= 0.35) {
         const nonHomeWeight = Math.min(1, (fDisplay - 0.35) / 0.2);
-        const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * nonHomeWeight * (1 - flightW);
+        const bobPx = (cachedWindowHeight * 0.015) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * nonHomeWeight * (1 - flightW);
         const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * nonHomeWeight * (1 - flightW);
         avatarFloatEl.style.transformOrigin = '50% 50%';
         avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
@@ -1833,7 +1877,7 @@
       }
     }
 
-    // 7. Title & Actions scrub
+    // 7. Title float & letter wave + scrub
     const heroTitle = document.getElementById('hero-title');
     if (heroTitle) {
       if (fDisplay <= 0.6) {
@@ -1841,7 +1885,29 @@
         const s = 1 + 0.18 * p;
         const op = Math.max(0, 1 - p);
         const bl = (6 * p).toFixed(1);
-        heroTitle.style.transform = `translate(-50%, -50%) scale(${s.toFixed(3)})`;
+
+        let bobTitlePx = 0;
+        let rotTitleDeg = 0;
+        if (!prefersReducedMotion && fDisplay < 0.35 && !isIntroActive) {
+          const titleAmp = Math.max(0, 1 - (fDisplay / 0.35)) * (1 - flightW);
+          const titleBobVh = 1.1 * Math.sin(nowSec * (2 * Math.PI / 6.5)) * titleAmp;
+          rotTitleDeg = 0.5 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * titleAmp;
+          bobTitlePx = (titleBobVh * cachedWindowHeight) / 100;
+
+          if (qualityTier !== 'low') {
+            const chSpans = heroTitle.querySelectorAll('.ch');
+            for (let i = 0; i < chSpans.length; i++) {
+              const chYVh = Math.sin((2 * Math.PI * nowSec / 5.0) + (i * 0.55)) * 0.5 * titleAmp;
+              const chYPx = (chYVh * cachedWindowHeight) / 100;
+              chSpans[i].style.transform = `translate3d(0, ${chYPx.toFixed(2)}px, 0)`;
+            }
+          }
+        } else {
+          const chSpans = heroTitle.querySelectorAll('.ch');
+          chSpans.forEach((ch) => { ch.style.transform = ''; });
+        }
+
+        heroTitle.style.transform = `translate(-50%, -50%) translate3d(0, ${bobTitlePx.toFixed(2)}px, 0) rotate(${rotTitleDeg.toFixed(2)}deg) scale(${s.toFixed(3)})`;
         heroTitle.style.opacity = op.toFixed(3);
         heroTitle.style.filter = `blur(${bl}px)`;
         heroTitle.style.pointerEvents = op < 0.1 ? 'none' : 'auto';
@@ -2043,12 +2109,14 @@
           let yawDrift = 0;
           if (!prefersReducedMotion && flightW < 0.2) {
             if (currentHomeFloatAmp > 0.001) {
-              yawDrift = 0.10 * Math.sin(nowSec * (2 * Math.PI / 11.0)) * currentHomeFloatAmp;
+              yawDrift = 0.18 * Math.sin(nowSec * (2 * Math.PI / 8.0)) * currentHomeFloatAmp;
             } else if (fDisplay >= 0.35) {
               yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
             }
           }
-          const finalTargetRotY = targetPlayerRotY + CONFIG.ROT_OFFSET + yawDrift;
+          avatarSpinCurrent += (avatarSpinTarget - avatarSpinCurrent) * 0.09;
+          const baseYaw = (homeReactionActive && activeSectionId === 'home' && fDisplay < 0.35) ? homeReactionYaw : targetPlayerRotY;
+          const finalTargetRotY = baseYaw + CONFIG.ROT_OFFSET + yawDrift + avatarSpinCurrent;
           skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
         }
 
@@ -2093,18 +2161,43 @@
   }
 
   // ==========================================================================
-  // CLICK / TAP INTERACTION (Single Small Wave, No Jumps, No Spins)
+  // CLICK / TAP INTERACTION & HOME REACTIONS (Wave + 360 Spin, Hover Pointing)
   // ==========================================================================
+  let avatarSpinCurrent = 0;
+  let avatarSpinTarget = 0;
+  let homeReactionActive = false;
+  let homeReactionYaw = 0;
+
   function initAvatarInteraction() {
     function handleInteraction(clientX, clientY, target) {
       if (target && target.closest('button, a, input, select, textarea, [role="button"], #opening-screen, .opening-screen, .avatar-debug-panel, #proofs-modal, .proofs-modal')) {
         return;
       }
       if (!skinViewer || !floatAnimation) return;
-      if (currentAvatarState === 'home') return;
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
+
+      // In home section: clicking/tapping avatar triggers wave + small 360 spin
+      if (activeSectionId === 'home' && fDisplay < 0.35) {
+        const kfHome = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[0]);
+        const centerX = (vw * 0.5) + kfHome.x;
+        const centerY = (vh * 0.5) + kfHome.y;
+        const boxWidth = isMobile ? vw * 0.6 : vh * 0.42;
+        const boxHeight = isMobile ? vh * 0.45 : vh * 0.55;
+
+        const dx = Math.abs(clientX - centerX);
+        const dy = Math.abs(clientY - centerY);
+
+        if (dx <= boxWidth / 2 && dy <= boxHeight / 2) {
+          floatAnimation.triggerWave(2.2);
+          avatarSpinTarget += Math.PI * 2;
+          return;
+        }
+      }
+
+      if (currentAvatarState === 'home') return;
+
       let shiftX = 0;
       let shiftY = CONFIG.AVATAR_Y_OFFSET;
 
@@ -2133,6 +2226,54 @@
     document.addEventListener('click', (e) => {
       handleInteraction(e.clientX, e.clientY, e.target);
     });
+
+    // Hover Reactions in Home (Only for non-touch devices)
+    if (!isTouchDevice) {
+      const btnAbout = document.querySelector('a[href="#chi_sono"]');
+      const btnExp = document.querySelector('a[href="#esperienze"]');
+      const heroTitle = document.getElementById('hero-title');
+
+      function onButtonHover(btnEl, isEntering) {
+        if (activeSectionId !== 'home' || fDisplay >= 0.35 || isIntroActive) return;
+        if (isEntering) {
+          homeReactionActive = true;
+          const rect = btnEl.getBoundingClientRect();
+          const btnCenterX = rect.left + rect.width * 0.5;
+          const btnCenterY = rect.top + rect.height * 0.5;
+          homeReactionYaw = (btnCenterX < window.innerWidth * 0.5) ? -0.42 : 0.42;
+          setDesiredLookTarget(btnCenterX, btnCenterY, 0.35);
+          if (floatAnimation) {
+            floatAnimation.transitionTo('point', 0.5);
+          }
+        } else {
+          homeReactionActive = false;
+          if (floatAnimation) {
+            floatAnimation.transitionTo('float', 0.8);
+          }
+        }
+      }
+
+      if (btnAbout) {
+        btnAbout.addEventListener('mouseenter', () => onButtonHover(btnAbout, true));
+        btnAbout.addEventListener('mouseleave', () => onButtonHover(btnAbout, false));
+      }
+      if (btnExp) {
+        btnExp.addEventListener('mouseenter', () => onButtonHover(btnExp, true));
+        btnExp.addEventListener('mouseleave', () => onButtonHover(btnExp, false));
+      }
+
+      if (heroTitle) {
+        heroTitle.addEventListener('mouseenter', () => {
+          if (activeSectionId !== 'home' || fDisplay >= 0.35 || isIntroActive) return;
+          const rect = heroTitle.getBoundingClientRect();
+          setDesiredLookTarget(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, 0.35);
+        });
+        heroTitle.addEventListener('mouseleave', () => {
+          if (activeSectionId !== 'home' || fDisplay >= 0.35 || isIntroActive) return;
+          // Normal mouse follow will naturally resume
+        });
+      }
+    }
   }
 
   // ==========================================================================
@@ -2191,25 +2332,66 @@
       return;
     }
 
-    let nextMeteorTime = performance.now() + (Math.random() * 8000 + 7000); // 7-15 seconds
-
-    function spawnMeteor() {
-      const angleDeg = Math.random() * 15 + 30; // 30-45 degrees angle
-      const angleRad = (angleDeg * Math.PI) / 180;
-      const speed = Math.random() * 8 + 10;
-      const len = Math.random() * 70 + 60;
-
-      meteors.push({
-        x: Math.random() * width * 0.9 + width * 0.1,
-        y: Math.random() * (height * 0.4),
-        vx: -Math.cos(angleRad) * speed,
-        vy: Math.sin(angleRad) * speed,
-        len: len,
-        angleRad: angleRad,
-        alpha: 1.0,
-        decay: Math.random() * 0.012 + 0.015
+    // Shooting Star (Meteor) Object Pool (No per-frame allocations)
+    const meteorPoolSize = qualityTier === 'low' ? 6 : (isMobile ? 8 : 16);
+    const meteorPool = [];
+    for (let i = 0; i < meteorPoolSize; i++) {
+      meteorPool.push({
+        active: false,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0,
+        len: 0,
+        angleRad: 0,
+        alpha: 0,
+        decay: 0,
+        lineWidth: 1.5,
+        isBig: false
       });
     }
+
+    function spawnMeteorFromPool(isBig = false) {
+      let m = null;
+      for (let i = 0; i < meteorPool.length; i++) {
+        if (!meteorPool[i].active) {
+          m = meteorPool[i];
+          break;
+        }
+      }
+      if (!m) return;
+
+      const angleDeg = Math.random() * 25 + 25; // 25-50 degrees
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const speed = isBig ? (Math.random() * 6 + 18) : (Math.random() * 10 + 12);
+      const len = isBig ? (Math.random() * 60 + 200) : (Math.random() * 140 + 80); // 80-220px
+
+      let startX, startY;
+      if (Math.random() < 0.6) {
+        // Start from top edge
+        startX = Math.random() * (width * 1.1);
+        startY = -30;
+      } else {
+        // Start from right edge
+        startX = width + 30;
+        startY = Math.random() * (height * 0.5);
+      }
+
+      m.active = true;
+      m.x = startX;
+      m.y = startY;
+      m.vx = -Math.cos(angleRad) * speed;
+      m.vy = Math.sin(angleRad) * speed;
+      m.len = len;
+      m.angleRad = angleRad;
+      m.alpha = 1.0;
+      m.decay = isBig ? 0.009 : (Math.random() * 0.012 + 0.012);
+      m.lineWidth = isBig ? 2.5 : (Math.random() * 0.8 + 1.2);
+      m.isBig = isBig;
+    }
+
+    let nextMeteorTime = performance.now() + (isMobile ? 1800 : 900);
+    let nextBigMeteorTime = performance.now() + 12000; // Big brighter one every ~12s
 
     let startTime = performance.now();
 
@@ -2274,20 +2456,33 @@
           }
         }
 
-        // 2. Spawn and render shooting stars (meteors)
+        // 2. Spawn and render shooting stars (meteors) via object pool
         if (now >= nextMeteorTime) {
-          spawnMeteor();
-          nextMeteorTime = now + (Math.random() * 8000 + 7000); // 7-15s
+          spawnMeteorFromPool(false);
+          // Desktop: sometimes two at once (25% chance)
+          if (!isMobile && Math.random() < 0.25) {
+            spawnMeteorFromPool(false);
+          }
+          const minInt = isMobile ? 1500 : 800;
+          const maxInt = isMobile ? 3500 : 2200;
+          nextMeteorTime = now + (Math.random() * (maxInt - minInt) + minInt);
         }
 
-        for (let i = meteors.length - 1; i >= 0; i--) {
-          const m = meteors[i];
+        if (now >= nextBigMeteorTime) {
+          spawnMeteorFromPool(true);
+          nextBigMeteorTime = now + (Math.random() * 3000 + 11000); // about every 12s
+        }
+
+        for (let i = 0; i < meteorPool.length; i++) {
+          const m = meteorPool[i];
+          if (!m.active) continue;
+
           m.x += m.vx;
           m.y += m.vy;
           m.alpha -= m.decay;
 
-          if (m.alpha <= 0 || m.y > height + 100 || m.x < -100) {
-            meteors.splice(i, 1);
+          if (m.alpha <= 0 || m.y > height + 200 || m.x < -200) {
+            m.active = false;
             continue;
           }
 
@@ -2295,20 +2490,27 @@
           const tailY = m.y - Math.sin(m.angleRad) * m.len;
 
           const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-          grad.addColorStop(0, `rgba(94, 168, 255, ${m.alpha})`);
-          grad.addColorStop(0.35, `rgba(139, 108, 255, ${(m.alpha * 0.6).toFixed(2)})`);
-          grad.addColorStop(1, 'rgba(94, 168, 255, 0)');
+          if (m.isBig) {
+            grad.addColorStop(0, `rgba(255, 255, 255, ${m.alpha})`);
+            grad.addColorStop(0.2, `rgba(94, 168, 255, ${(m.alpha * 0.9).toFixed(2)})`);
+            grad.addColorStop(0.6, `rgba(139, 108, 255, ${(m.alpha * 0.5).toFixed(2)})`);
+            grad.addColorStop(1, 'rgba(139, 108, 255, 0)');
+          } else {
+            grad.addColorStop(0, `rgba(94, 168, 255, ${m.alpha})`);
+            grad.addColorStop(0.35, `rgba(139, 108, 255, ${(m.alpha * 0.6).toFixed(2)})`);
+            grad.addColorStop(1, 'rgba(94, 168, 255, 0)');
+          }
 
           ctx.strokeStyle = grad;
-          ctx.lineWidth = 1.8;
+          ctx.lineWidth = m.lineWidth;
           ctx.beginPath();
           ctx.moveTo(m.x, m.y);
           ctx.lineTo(tailX, tailY);
           ctx.stroke();
 
           ctx.beginPath();
-          ctx.arc(m.x, m.y, 1.2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(232, 234, 255, ${m.alpha})`;
+          ctx.arc(m.x, m.y, m.isBig ? 2.5 : 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = m.isBig ? `rgba(255, 255, 255, ${m.alpha})` : `rgba(232, 234, 255, ${m.alpha})`;
           ctx.fill();
         }
 
@@ -2761,6 +2963,10 @@
       skipBtn.setAttribute('aria-label', lang === 'it' ? 'Brano successivo' : 'Next track');
     }
 
+    if (window.__coUpdateAudioUI) {
+      window.__coUpdateAudioUI();
+    }
+
     // If an experience detail is open, immediately re-render it with new language
     if (activeDetailId) {
       renderExperienceDetail(activeDetailId);
@@ -2885,24 +3091,87 @@
   }
 
   // ==========================================================================
-  // 6. AUDIO CONTROLS & SEAMLESS BACKGROUND PLAYLIST
+  // 6. AUDIO CONTROLS & WEB AUDIO DYNAMICS COMPRESSOR PIPELINE
   // ==========================================================================
+  let webAudioCtx = null;
+  let webAudioSource = null;
+  let webAudioCompressor = null;
+  let webAudioMasterGain = null;
+  let webAudioReady = false;
+
+  function initWebAudioGraph(audioEl) {
+    if (webAudioReady && webAudioMasterGain) return true;
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return false;
+      if (!webAudioCtx) {
+        webAudioCtx = new AudioCtxClass();
+      }
+      if (webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(() => {});
+      }
+      if (!webAudioSource && audioEl) {
+        webAudioSource = webAudioCtx.createMediaElementSource(audioEl);
+        webAudioCompressor = webAudioCtx.createDynamicsCompressor();
+        webAudioCompressor.threshold.setValueAtTime(-18, webAudioCtx.currentTime);
+        webAudioCompressor.ratio.setValueAtTime(3, webAudioCtx.currentTime);
+        webAudioCompressor.attack.setValueAtTime(0.01, webAudioCtx.currentTime);
+        webAudioCompressor.release.setValueAtTime(0.25, webAudioCtx.currentTime);
+
+        webAudioMasterGain = webAudioCtx.createGain();
+        const isMuted = audioEl.muted || localStorage.getItem('coodz_muted') === 'true';
+        webAudioMasterGain.gain.setValueAtTime(isMuted ? 0 : 0, webAudioCtx.currentTime);
+
+        webAudioSource.connect(webAudioCompressor);
+        webAudioCompressor.connect(webAudioMasterGain);
+        webAudioMasterGain.connect(webAudioCtx.destination);
+        audioEl.volume = 1.0; // Audio element volume at 1.0 so GainNode manages master volume
+        webAudioReady = true;
+      }
+      return true;
+    } catch (err) {
+      console.warn('[Web Audio] Graph initialization failed, fallback to element.volume:', err);
+      webAudioReady = false;
+      return false;
+    }
+  }
+
   function fadeAudioVolume(audio, targetVol, duration = 1000, onComplete) {
     if (!audio) return;
-    const startVol = audio.volume;
-    const startTime = performance.now();
-
-    function step(now) {
-      const elapsed = now - startTime;
-      const p = Math.min(1, elapsed / Math.max(10, duration));
-      audio.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * p));
-      if (p < 1) {
-        requestAnimationFrame(step);
-      } else {
-        if (onComplete) onComplete();
+    const isGraphOk = initWebAudioGraph(audio);
+    if (isGraphOk && webAudioMasterGain && webAudioCtx) {
+      if (webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(() => {});
       }
+      const targetGain = targetVol * (CONFIG.AUDIO_GAIN || 1.4);
+      const currTime = webAudioCtx.currentTime;
+      const durSec = Math.max(0.05, duration / 1000);
+      webAudioMasterGain.gain.cancelScheduledValues(currTime);
+      webAudioMasterGain.gain.setValueAtTime(webAudioMasterGain.gain.value, currTime);
+      webAudioMasterGain.gain.linearRampToValueAtTime(targetGain, currTime + durSec);
+
+      if (targetVol > 0) {
+        audio.muted = false;
+      }
+      if (onComplete) {
+        setTimeout(onComplete, duration);
+      }
+    } else {
+      const startVol = audio.volume;
+      const startTime = performance.now();
+      function step(now) {
+        const elapsed = now - startTime;
+        const p = Math.min(1, elapsed / Math.max(10, duration));
+        audio.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * p));
+        if (p < 1) {
+          requestAnimationFrame(step);
+        } else {
+          if (targetVol <= 0) audio.muted = true;
+          if (onComplete) onComplete();
+        }
+      }
+      requestAnimationFrame(step);
     }
-    requestAnimationFrame(step);
   }
 
   function initAudio() {
@@ -2926,24 +3195,58 @@
     audio.loop = false;
     audio.muted = isMuted;
 
+    // Restore saved audio state from sessionStorage if available
+    try {
+      const savedStateStr = sessionStorage.getItem('coodz_audio_state');
+      if (savedStateStr) {
+        const saved = JSON.parse(savedStateStr);
+        if (typeof saved.trackIndex === 'number') {
+          loadTrack(saved.trackIndex);
+        }
+        if (typeof saved.currentTime === 'number' && saved.currentTime > 0) {
+          audio.currentTime = saved.currentTime;
+        }
+        if (saved.muted) {
+          audio.muted = true;
+          localStorage.setItem('coodz_muted', 'true');
+        }
+      }
+    } catch (e) {}
+
     function updateMuteBtnState() {
       if (!muteBtn) return;
-      if (audio.muted || audio.paused || audio.volume < 0.01) {
-        muteBtn.classList.remove('playing');
-        muteBtn.setAttribute('aria-label', 'Attiva Audio');
-      } else {
+      const isMutedNow = audio.muted || localStorage.getItem('coodz_muted') === 'true';
+      const isPlaying = !audio.paused && !isMutedNow && (webAudioMasterGain ? webAudioMasterGain.gain.value > 0.01 : audio.volume > 0.01);
+      const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
+
+      const desktopLabel = muteBtn.querySelector('.audio-label-desktop');
+      const mobileLabel = muteBtn.querySelector('.audio-label-mobile');
+
+      if (isPlaying) {
         muteBtn.classList.add('playing');
-        muteBtn.setAttribute('aria-label', 'Disattiva Audio');
+        muteBtn.setAttribute('aria-label', dict.musicAriaMute || 'Disattiva Musica');
+        if (desktopLabel) desktopLabel.textContent = dict.musicOn || '[ MUSICA ON ]';
+        if (mobileLabel) mobileLabel.textContent = dict.musicOnShort || '[ ON ]';
+      } else {
+        muteBtn.classList.remove('playing');
+        muteBtn.setAttribute('aria-label', dict.musicAriaUnmute || 'Attiva Musica');
+        if (desktopLabel) desktopLabel.textContent = dict.musicOff || '[ MUSICA OFF ]';
+        if (mobileLabel) mobileLabel.textContent = dict.musicOffShort || '[ OFF ]';
       }
     }
+
+    // Expose for language changes
+    window.__coUpdateAudioUI = updateMuteBtnState;
 
     if (muteBtn) {
       muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (audio.muted || audio.volume < 0.05) {
+        initWebAudioGraph(audio);
+        const isMutedNow = audio.muted || localStorage.getItem('coodz_muted') === 'true';
+        if (isMutedNow || (webAudioMasterGain && webAudioMasterGain.gain.value < 0.05) || audio.volume < 0.05) {
           audio.muted = false;
-          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 500);
           localStorage.setItem('coodz_muted', 'false');
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 500);
           if (audio.paused) {
             const p = audio.play();
             if (p !== undefined) {
@@ -2957,6 +3260,8 @@
         } else {
           fadeAudioVolume(audio, 0, 400, () => {
             audio.muted = true;
+            localStorage.setItem('coodz_muted', 'true');
+            updateMuteBtnState();
           });
           localStorage.setItem('coodz_muted', 'true');
         }
@@ -2966,12 +3271,12 @@
 
     function skipNextTrack() {
       if (!audio) return;
+      initWebAudioGraph(audio);
       const nextIdx = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
       const isCurrentlyMuted = audio.muted || localStorage.getItem('coodz_muted') === 'true';
-      const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted && audio.volume > 0.01;
+      const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted && (webAudioMasterGain ? webAudioMasterGain.gain.value > 0.01 : audio.volume > 0.01);
 
       if (isCurrentlyPlaying) {
-        // Quick 0.3s transition: 0.15s fade-out, 0.15s fade-in
         fadeAudioVolume(audio, 0, 150, () => {
           loadTrack(nextIdx);
           const p = audio.play();
@@ -3026,33 +3331,57 @@
     audio.addEventListener('pause', updateMuteBtnState);
     audio.addEventListener('volumechange', updateMuteBtnState);
 
-    // Tab visibility change: fade out 0.4s and pause; resume on visible
-    let wasPlayingBeforeHidden = false;
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        wasPlayingBeforeHidden = !audio.paused && !audio.muted;
-        if (wasPlayingBeforeHidden) {
-          fadeAudioVolume(audio, 0, 400, () => {
-            audio.pause();
-          });
-        }
-      } else {
-        if (wasPlayingBeforeHidden && localStorage.getItem('coodz_muted') !== 'true') {
-          audio.muted = false;
-          audio.play().then(() => {
-            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 400);
+    // Never stop by itself: do NOT pause on tab hidden; resume on visible/pageshow/focus if browser paused it
+    function tryResumeAudioPlayback() {
+      if (!audio) return;
+      const isMutedNow = localStorage.getItem('coodz_muted') === 'true';
+      if (isMutedNow) return;
+      if (webAudioCtx && webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(() => {});
+      }
+      if (audio.paused) {
+        const p = audio.play();
+        if (p !== undefined) {
+          p.then(() => {
             audioLastError = null;
+            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 400);
           }).catch((err) => {
             audioLastError = err ? (err.message || String(err)) : 'resume error';
           });
         }
       }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        tryResumeAudioPlayback();
+      }
     });
+    window.addEventListener('pageshow', tryResumeAudioPlayback);
+    window.addEventListener('focus', tryResumeAudioPlayback);
+
+    // Safety net: save audio state in sessionStorage every second
+    setInterval(() => {
+      if (!audio) return;
+      try {
+        const isCurrentlyMuted = audio.muted || localStorage.getItem('coodz_muted') === 'true';
+        const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted;
+        const state = {
+          trackIndex: playlistIndex,
+          currentTime: Math.floor(audio.currentTime || 0),
+          muted: isCurrentlyMuted,
+          playing: isCurrentlyPlaying
+        };
+        sessionStorage.setItem('coodz_audio_state', JSON.stringify(state));
+      } catch (e) {}
+    }, 1000);
 
     // Debug readout accessor
     window.__coAudioDebug = {
       getAudio: () => audio,
-      getTrackIndex: () => playlistIndex
+      getTrackIndex: () => playlistIndex,
+      isWebAudioReady: () => webAudioReady,
+      getMasterGain: () => (webAudioMasterGain ? webAudioMasterGain.gain.value : null)
     };
 
     updateMuteBtnState();
@@ -3207,12 +3536,12 @@
           <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
         </label>
         <label class="debug-row">
-          <span>Home Scale: <b id="val-home-scale">${CONFIG.HOME_AVATAR_SCALE.toFixed(2)}</b></span>
-          <input type="range" id="slider-home-scale" min="0.2" max="0.7" step="0.02" value="${CONFIG.HOME_AVATAR_SCALE}">
+          <span>Home Scale: <b id="val-home-scale">${CONFIG.HOME_AVATAR.scale.toFixed(2)}</b></span>
+          <input type="range" id="slider-home-scale" min="0.2" max="0.85" step="0.02" value="${CONFIG.HOME_AVATAR.scale}">
         </label>
         <label class="debug-row">
-          <span>Spill Opacity: <b id="val-spill">${CONFIG.SPILL_OPACITY.toFixed(2)}</b></span>
-          <input type="range" id="slider-spill" min="0" max="0.6" step="0.02" value="${CONFIG.SPILL_OPACITY}">
+          <span>Home Y: <b id="val-home-y">${CONFIG.HOME_AVATAR.y}vh</b></span>
+          <input type="range" id="slider-home-y" min="-35" max="0" step="1" value="${CONFIG.HOME_AVATAR.y}">
         </label>
         <label class="debug-row">
           <span>Flight Arc X: <b id="val-arc-x">${CONFIG.FLIGHT_ARC_X.toFixed(1)}vw</b></span>
@@ -3293,7 +3622,7 @@
     const sliderGLight = panel.querySelector('#slider-glight');
     const sliderCLight = panel.querySelector('#slider-clight');
     const sliderHomeScale = panel.querySelector('#slider-home-scale');
-    const sliderSpill = panel.querySelector('#slider-spill');
+    const sliderHomeY = panel.querySelector('#slider-home-y');
     const sliderArcX = panel.querySelector('#slider-arc-x');
     const sliderArcY = panel.querySelector('#slider-arc-y');
     const sliderSwoop = panel.querySelector('#slider-swoop');
@@ -3313,7 +3642,7 @@
     const valGLight = panel.querySelector('#val-glight');
     const valCLight = panel.querySelector('#val-clight');
     const valHomeScale = panel.querySelector('#val-home-scale');
-    const valSpill = panel.querySelector('#val-spill');
+    const valHomeY = panel.querySelector('#val-home-y');
     const valArcX = panel.querySelector('#val-arc-x');
     const valArcY = panel.querySelector('#val-arc-y');
     const valSwoop = panel.querySelector('#val-swoop');
@@ -3336,17 +3665,15 @@ AVATAR_Y_OFFSET: ${CONFIG.AVATAR_Y_OFFSET},
 ROT_OFFSET: ${(CONFIG.ROT_OFFSET / Math.PI).toFixed(2)} * Math.PI, // ${(CONFIG.ROT_OFFSET).toFixed(3)} rad
 FLOAT_BOB: ${CONFIG.FLOAT_BOB.toFixed(1)},
 POSE_BLEND: ${CONFIG.POSE_BLEND.toFixed(1)},
-HAZE_OPACITY: ${CONFIG.HAZE_OPACITY.toFixed(2)},
 AVATAR_CONTRAST: ${CONFIG.AVATAR_CONTRAST.toFixed(2)},
 AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)},
 HEAD_YAW_SIGN: ${CONFIG.HEAD_YAW_SIGN},
 HEAD_PITCH_SIGN: ${CONFIG.HEAD_PITCH_SIGN},
 GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
 CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)},
-HOLD_ANCHOR: '${CONFIG.HOLD_ANCHOR}',
-HOLD_TITLE: ${CONFIG.HOLD_TITLE},
-HOME_AVATAR_SCALE: ${CONFIG.HOME_AVATAR_SCALE.toFixed(2)},
-SPILL_OPACITY: ${CONFIG.SPILL_OPACITY.toFixed(2)},
+HOME_AVATAR: { x: ${CONFIG.HOME_AVATAR.x}, y: ${CONFIG.HOME_AVATAR.y}, scale: ${CONFIG.HOME_AVATAR.scale.toFixed(2)}, yaw: ${CONFIG.HOME_AVATAR.yaw} },
+AUDIO_VOLUME: ${CONFIG.AUDIO_VOLUME},
+AUDIO_GAIN: ${CONFIG.AUDIO_GAIN},
 FLIGHT_ARC_X: ${CONFIG.FLIGHT_ARC_X.toFixed(1)},
 FLIGHT_ARC_Y: ${CONFIG.FLIGHT_ARC_Y.toFixed(1)},
 FLIGHT_SWOOP: ${CONFIG.FLIGHT_SWOOP.toFixed(2)},
@@ -3445,12 +3772,15 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
 
     sliderHomeScale.addEventListener('input', (e) => {
       CONFIG.HOME_AVATAR.scale = parseFloat(e.target.value);
+      CONFIG.AVATAR_KEYFRAMES[0].scale = CONFIG.HOME_AVATAR.scale;
       valHomeScale.textContent = CONFIG.HOME_AVATAR.scale.toFixed(2);
       updateConfigReadout();
     });
 
-    sliderSpill.addEventListener('input', (e) => {
-      valSpill.textContent = parseFloat(e.target.value).toFixed(2);
+    sliderHomeY.addEventListener('input', (e) => {
+      CONFIG.HOME_AVATAR.y = parseFloat(e.target.value);
+      CONFIG.AVATAR_KEYFRAMES[0].y = CONFIG.HOME_AVATAR.y;
+      valHomeY.textContent = CONFIG.HOME_AVATAR.y + 'vh';
       updateConfigReadout();
     });
 
@@ -3549,7 +3879,10 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       const audio = document.getElementById('bg-audio');
       if (audio) {
         if (valAudioState) valAudioState.textContent = audio.paused ? 'PAUSED' : 'PLAYING';
-        if (valAudioVol) valAudioVol.textContent = audio.volume.toFixed(2);
+        if (valAudioVol) {
+          const gain = window.__coAudioDebug && window.__coAudioDebug.getMasterGain ? window.__coAudioDebug.getMasterGain() : null;
+          valAudioVol.textContent = (gain !== null) ? `${gain.toFixed(2)} (WebAudio)` : audio.volume.toFixed(2);
+        }
         if (valAudioMuted) valAudioMuted.textContent = String(audio.muted);
       }
       if (window.__coAudioDebug && valAudioTrack) {
