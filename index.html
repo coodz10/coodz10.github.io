@@ -33,16 +33,15 @@
   <!-- Top Scroll Progress Bar -->
   <div id="scroll-progress-bar" class="scroll-progress-bar"></div>
 
-  <!-- 1. OPENING SEQUENCE SCREEN (~2s, Skippable by click) -->
-  <div id="opening-screen" class="opening-screen" role="dialog" aria-label="Transmission Link Screen">
-    <div class="opening-content">
-      <div id="opening-terminal" class="opening-terminal mono">&gt; establishing link...</div>
-      <div class="opening-progress-track">
-        <div id="opening-progress-bar" class="opening-progress-bar"></div>
-      </div>
-      <div class="opening-skip-hint mono">[ CLICK TO BYPASS ]</div>
-    </div>
+  <!-- GATE SCREEN (Click / Tap / Enter to unlock audio & start intro) -->
+  <div id="gate-screen" class="gate-screen" role="dialog" aria-label="Access Gate">
+    <button id="gate-btn" class="gate-btn mono" aria-label="Entra nel sito">
+      <span class="gate-bracket">[ </span><span id="gate-text" data-i18n="gateText">ENTRA</span><span class="gate-bracket"> ]</span><span class="gate-cursor" aria-hidden="true">_</span>
+    </button>
   </div>
+
+  <!-- MINECRAFT VOXEL BLOCK STAGE (For title building during intro) -->
+  <div id="block-stage" class="block-stage" aria-hidden="true"></div>
 
   <!-- 3. BEHIND THE AVATAR: RADIAL GLOW & CANVAS STARS -->
   <div id="ambient-glow" class="ambient-glow"></div>
@@ -78,18 +77,13 @@
     <div class="nav-right">
       <button id="lang-toggle-btn" class="nav-btn" aria-label="Cambia Lingua">[ EN ]</button>
 
-      <div class="audio-controls">
-        <button id="audio-toggle-btn" class="nav-btn audio-btn" aria-label="Attiva/Disattiva Audio">
-          <span class="eq-icon">
-            <span class="eq-bar"></span>
-            <span class="eq-bar"></span>
-            <span class="eq-bar"></span>
-          </span>
-          <span class="audio-text" data-i18n="audioLabel">AUDIO</span>
-        </button>
-        <span id="current-track-name" class="track-name mono" aria-live="polite">dorado</span>
-        <button id="audio-skip-btn" class="nav-btn audio-skip-btn" aria-label="Salta Brano" title="Salta Brano">[ ⏭ ]</button>
-      </div>
+      <button id="mute-btn" class="nav-btn mute-btn" aria-label="Mute / Unmute" title="Audio">
+        <span class="eq-icon">
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+        </span>
+      </button>
 
       <button id="menu-toggle-btn" class="nav-btn mobile-only menu-btn" aria-label="Menu">[ ☰ ]</button>
     </div>
@@ -112,17 +106,17 @@
          SECTION 1: HOME
          ====================================================================== -->
     <section id="home" class="snap-section section-home">
-      <!-- Title Sway Group (Swings gently as pendulum with avatar) -->
-      <div id="hero-sway-group" class="hero-sway-group">
-        <h1 id="hero-title" class="hero-title" aria-label="coodz_10"><span class="ch">c</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">z</span><span class="ch ch-underscore">_</span><span class="ch">1</span><span class="ch">0</span></h1>
+      <!-- Soft Light Spill UP toward Avatar -->
+      <div id="hero-light-spill" class="hero-light-spill" aria-hidden="true"></div>
 
-        <div class="hero-subtitle-wrap mono">
-          <span class="sub-line sub-line-left" aria-hidden="true"></span>
-          <span class="hero-subtitle">MINECRAFT SCREENSHARER</span>
-          <span class="sub-line sub-line-right" aria-hidden="true"></span>
-        </div>
+      <!-- Title coodz_10 centered around 56vh -->
+      <h1 id="hero-title" class="hero-title" aria-label="coodz_10"><span class="ch">c</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">z</span><span class="ch">_</span><span class="ch">1</span><span class="ch">0</span></h1>
 
-        <div id="hero-light-spill" class="hero-light-spill" aria-hidden="true"></div>
+      <!-- Subtitle centered around ~67vh -->
+      <div class="hero-subtitle-wrap mono">
+        <span class="sub-line sub-line-left" aria-hidden="true"></span>
+        <span class="hero-subtitle">MINECRAFT SCREENSHARER</span>
+        <span class="sub-line sub-line-right" aria-hidden="true"></span>
       </div>
 
       <!-- Bottom Actions: Bracket buttons and scroll line -->

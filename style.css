@@ -66,73 +66,93 @@ html, body {
 }
 
 /* ==========================================================================
-   1. OPENING SEQUENCE SCREEN (~2s, Skippable)
+   1. GATE SCREEN & MINECRAFT VOXEL BLOCK STAGE
    ========================================================================== */
-.opening-screen {
+.gate-screen {
   position: fixed;
   inset: 0;
-  background-color: #05060f;
+  background-color: var(--bg);
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.8s var(--ease-smooth), visibility 0.8s var(--ease-smooth);
+  transition: opacity 0.5s var(--ease-smooth), visibility 0.5s var(--ease-smooth);
+  cursor: pointer;
 }
 
-.opening-screen.faded-out {
+.gate-screen.faded-out {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-.opening-content {
-  display: flex;
-  flex-direction: column;
+.gate-btn {
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  padding: 0.75rem 1.25rem;
+  transition: color 0.25s ease;
+  display: inline-flex;
   align-items: center;
-  gap: 1.25rem;
-  width: 90%;
-  max-width: 320px;
-  text-align: center;
+  justify-content: center;
+  user-select: none;
 }
 
-.opening-terminal {
-  font-size: 0.85rem;
-  color: var(--text);
-  letter-spacing: 0.1em;
-  min-height: 1.5rem;
-  white-space: pre-wrap;
+.gate-btn:hover {
+  color: var(--accent-blue);
 }
 
-.opening-progress-track {
-  width: 100%;
-  height: 2px;
-  background: rgba(124, 131, 168, 0.2);
-  position: relative;
+.gate-cursor {
+  display: inline-block;
+  color: var(--accent-blue);
+  margin-left: 2px;
+  animation: gateBlink 1s step-end infinite;
+}
+
+@keyframes gateBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* MINECRAFT VOXEL BLOCK STAGE */
+.block-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
   overflow: hidden;
 }
 
-.opening-progress-bar {
-  height: 100%;
-  width: 0%;
-  background: var(--accent-gradient-h);
-  transform-origin: left;
-  transition: width 0.1s linear;
+.mc-block {
+  position: absolute;
+  border-radius: 0;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.28), inset -1px -1px 0 rgba(0, 0, 0, 0.42);
+  transform-origin: center center;
+  pointer-events: none;
+  will-change: transform, opacity;
 }
 
-.opening-skip-hint {
-  font-size: 0.65rem;
-  color: var(--muted);
-  letter-spacing: 0.15em;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
+.mc-particle {
+  position: absolute;
+  border-radius: 0;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.25), inset -1px -1px 0 rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  will-change: transform, opacity;
 }
 
-.opening-screen:hover .opening-skip-hint {
-  opacity: 1;
-  color: var(--accent-blue);
+/* Scroll Lock During Intro */
+.intro-locked,
+.intro-locked body,
+.intro-locked .scroll-container {
+  overflow: hidden !important;
+  touch-action: none !important;
+  user-select: none;
 }
 
 /* ==========================================================================
@@ -342,21 +362,23 @@ html, body {
   color: var(--text);
 }
 
-.audio-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  border-left: var(--border-thin);
-  padding-left: 0.85rem;
-}
-
-.audio-btn {
+.mute-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  justify-content: center;
+  transition: color 0.2s ease;
 }
 
-.audio-btn.playing {
+.mute-btn:hover {
+  color: var(--text);
+}
+
+.mute-btn.playing {
   color: var(--accent-blue);
 }
 
@@ -373,48 +395,26 @@ html, body {
   height: 100%;
   background: currentColor;
   transform-origin: bottom;
-  transform: scaleY(0.3);
+  transform: scaleY(0.25);
   transition: transform 0.2s ease;
   will-change: transform;
 }
 
-.audio-btn.playing .eq-bar:nth-child(1) {
+.mute-btn.playing .eq-bar:nth-child(1) {
   animation: eqJump 0.75s ease-in-out infinite alternate;
 }
 
-.audio-btn.playing .eq-bar:nth-child(2) {
+.mute-btn.playing .eq-bar:nth-child(2) {
   animation: eqJump 0.55s ease-in-out infinite alternate 0.15s;
 }
 
-.audio-btn.playing .eq-bar:nth-child(3) {
+.mute-btn.playing .eq-bar:nth-child(3) {
   animation: eqJump 0.95s ease-in-out infinite alternate 0.35s;
 }
 
 @keyframes eqJump {
   0% { transform: scaleY(0.25); }
   100% { transform: scaleY(1); }
-}
-
-.audio-skip-btn.pulse {
-  color: var(--accent-blue);
-}
-
-.track-name {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--muted);
-  letter-spacing: 0.05em;
-  max-width: 80px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  user-select: none;
-  transition: color 0.2s ease, opacity 0.2s ease;
-  line-height: 1;
-}
-
-.audio-btn.playing ~ .track-name {
-  color: var(--accent-lilac);
 }
 
 .menu-btn {
@@ -536,7 +536,7 @@ html, body {
 }
 
 /* ==========================================================================
-   SECTION 1: HOME (GIANT TITLE AT ~40VH, SMALL AVATAR HOLDING BANNER, PENDULUM SWAY)
+   SECTION 1: HOME (ROBUST FINAL STATE: PURE VH/VW/CLAMP, NO ANCHOR MEASURING)
    ========================================================================== */
 .section-home {
   display: flex;
@@ -548,70 +548,85 @@ html, body {
   overflow: hidden;
 }
 
-/* Title Sway Group (Driven every frame by JS pendulum sway: angle theta + bob) */
-.hero-sway-group {
+/* Soft Light Spill Going UP from Title Top Edge toward Avatar (~30vh) */
+.hero-light-spill {
   position: absolute;
-  top: 40vh;
+  top: calc(56vh - 28vh);
   left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 96vw;
-  pointer-events: auto;
-  z-index: 4;
-  will-change: transform, opacity, filter;
+  transform: translateX(-50%);
+  width: min(85vw, 680px);
+  height: 30vh;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(0deg, rgba(139, 108, 255, 0.16) 0%, transparent 100%);
+  filter: blur(16px);
+  transition: opacity 0.5s ease;
 }
 
-/* Giant "coodz_10" Title with Slow Shimmer, No Glow, No Shadow */
+/* Centered "coodz_10" Title around 56vh, ~80vw wide desktop / 90vw mobile, single line */
 .hero-title {
+  position: absolute;
+  top: 56vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  max-width: 90vw;
   font-family: var(--font-title);
-  font-size: clamp(3.2rem, 15vw, 12rem);
+  font-size: clamp(3.2rem, 11vw, 10.5rem);
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1;
   text-align: center;
   white-space: nowrap;
   color: #c4b5ff;
-  background: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 28%, #c4b5ff 50%, #8b6cff 72%, #5ea8ff 100%);
+  background: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 50%, #c4b5ff 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: titleShimmer 14s linear infinite;
   text-shadow: none !important;
   box-shadow: none !important;
   cursor: default;
   user-select: none;
   margin: 0;
   padding: 0;
+  z-index: 4;
+  will-change: transform, opacity, filter;
+  transition: opacity 0.4s ease;
 }
 
-@keyframes titleShimmer {
+.hero-title.shimmer-active {
+  animation: titleShimmerOnce 1.8s ease-in-out 1;
+}
+
+@keyframes titleShimmerOnce {
   0% { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
 }
 
 .hero-title .ch {
-  display: inline;
+  display: inline-block;
   background: inherit;
   background-size: inherit;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  transition: opacity 0.3s ease;
+  will-change: transform, opacity;
 }
 
-/* Subtitle under title with fading thin lines */
+/* Subtitle Under Title (~67vh) */
 .hero-subtitle-wrap {
+  position: absolute;
+  top: 67vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 1.15rem;
-  margin-top: 0.95rem;
-  position: relative;
-  z-index: 1;
+  z-index: 4;
+  transition: opacity 0.4s ease;
 }
 
 .hero-subtitle {
@@ -637,32 +652,30 @@ html, body {
   background: linear-gradient(90deg, rgba(124, 131, 168, 0.45), transparent);
 }
 
-/* Soft Light Spill Under Title Baseline (Lights the dark avatar silhouette from above) */
-.hero-light-spill {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(85vw, 680px);
-  height: 38vh;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(ellipse 65% 100% at 50% 0%, rgba(139, 108, 255, var(--spill-opacity, 0.18)) 0%, rgba(94, 168, 255, calc(var(--spill-opacity, 0.18) * 0.45)) 40%, transparent 80%);
-  filter: blur(14px);
-}
-
-/* Bottom Center Actions (Primary outlined bracket + Secondary underline bracket + Scroll Line) */
+/* Bottom Center Actions (~86vh) */
 .home-bottom-actions {
   position: absolute;
-  bottom: 2.25rem;
+  top: 86vh;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.15rem;
   z-index: 5;
   pointer-events: auto;
+  transition: opacity 0.4s ease;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    width: 90vw;
+    font-size: clamp(2.4rem, 13vw, 5.2rem);
+  }
+  .hero-subtitle {
+    letter-spacing: 0.3em;
+    font-size: 0.72rem;
+  }
 }
 
 .home-buttons-row {

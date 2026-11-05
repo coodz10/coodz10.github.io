@@ -50,18 +50,36 @@
     HEAD_YAW_SIGN: 1,          // Mouse right -> face turns to viewer's right
     HEAD_PITCH_SIGN: 1,        // Mouse above -> face looks up
 
-    // Home Banner Anchor & Holding Dynamics (Swaying Pendulum Flight)
-    HOLD_ANCHOR: 'underscore', // 'underscore' (center of _) or 'center' (center of title)
-    HOLD_TITLE: true,          // true: hands touch bottom of title; false: floats above
-    HOME_AVATAR_SCALE: 0.38,   // Avatar scale in home state (~28vh tall)
-    SPILL_OPACITY: 0.18,       // Soft light spill opacity under title
+    // Home Avatar Final Placement (~24.5vh from top, head ~13.4vh >= 11vh from top, feet ~35.6vh, title at 56vh)
+    HOME_AVATAR: {
+      x: 0,
+      y: -23,
+      scale: 0.30,
+      scaleMobile: 0.26,
+      yaw: 0.1
+    },
+
+    // Intro Sequence Timing (all durations in seconds)
+    INTRO: {
+      GATE_FADE_DUR: 0.5,
+      FLY_IN_DUR: 1.3,
+      LETTER_BUILD_DUR: 0.38,
+      BLOCK_INTERVAL: 0.014,
+      BLOCK_DISSOLVE_DUR: 0.20,
+      GLYPH_FADE_DUR: 0.30,
+      HOME_GLIDE_DUR: 1.0,
+      TOP_BAR_STAGGER: 0.09,
+      AUDIO_FADE_DUR: 3.0,
+      SUBTITLE_DECRYPT_DUR: 0.8,
+      REPEAT_SPEED: 0.4
+    },
 
     // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
     AVATAR_KEYFRAMES: [
-      { id: 'home',       x: 'anchor', y: 'anchor', scale: 'anchor', yaw: 0.15,  roll: 0 },
-      { id: 'chi_sono',   x: 22,       y: 0,        scale: 0.8,      yaw: -0.65, roll: 0 },
-      { id: 'esperienze', x: -22,      y: 0,        scale: 0.8,      yaw: 0.65,  roll: 0 },
-      { id: 'contatti',   x: 0,        y: 2,        scale: 0.7,      yaw: 0.0,   roll: 0 }
+      { id: 'home',       x: 0,   y: -23, scale: 0.30, scaleMobile: 0.26, yaw: 0.1,   roll: 0 },
+      { id: 'chi_sono',   x: 22,  y: 0,   scale: 0.8,  scaleMobile: 0.65, yaw: -0.65, roll: 0 },
+      { id: 'esperienze', x: -22, y: 0,   scale: 0.8,  scaleMobile: 0.65, yaw: 0.65,  roll: 0 },
+      { id: 'contatti',   x: 0,   y: 2,   scale: 0.7,  scaleMobile: 0.60, yaw: 0.0,   roll: 0 }
     ],
     FLIGHT_ARC_X: 9,           // Extra arc horizontal offset in vw
     FLIGHT_ARC_Y: 4,           // Extra arc vertical lift in vh
@@ -82,6 +100,7 @@
   // Translations object for data-i18n attributes
   const TRANSLATIONS = {
     it: {
+      gateText: 'ENTRA',
       navHome: '[ home ]',
       navAbout: '[ chi_sono ]',
       navExp: '[ esperienze ]',
@@ -135,6 +154,7 @@
       bgWordContact: 'CONTATTI'
     },
     en: {
+      gateText: 'ENTER',
       navHome: '[ home ]',
       navAbout: '[ about_me ]',
       navExp: '[ experiences ]',
@@ -356,9 +376,6 @@
   let cachedSectionHeight = window.innerHeight;
   let cachedWindowWidth = window.innerWidth;
   let cachedWindowHeight = window.innerHeight;
-  let cachedAnchorAxPx = 0;
-  let cachedAnchorAyPx = 0;
-  let cachedAnchorScale = 0.38;
   let lastComputedStageX = 0;
   let lastComputedStageY = 0;
   let tryStartAudioGlobal = null;
@@ -373,6 +390,27 @@
       rightArm: { x: 0.08, y: 0, z: 0.18 },
       leftLeg: { x: -0.05, y: 0, z: -0.04 },
       rightLeg: { x: 0.05, y: 0, z: 0.04 }
+    },
+    float: {
+      body: { x: 0.04, y: 0, z: 0 },
+      leftArm: { x: 0.12, y: 0.1, z: -0.32 },
+      rightArm: { x: 0.12, y: -0.1, z: 0.32 },
+      leftLeg: { x: 0.08, y: 0, z: -0.06 },
+      rightLeg: { x: -0.04, y: 0, z: 0.06 }
+    },
+    fly: {
+      body: { x: 0.35, y: 0, z: 0 },
+      leftArm: { x: -1.5, y: 0, z: -0.15 },
+      rightArm: { x: -1.5, y: 0, z: 0.15 },
+      leftLeg: { x: -0.25, y: 0, z: -0.04 },
+      rightLeg: { x: -0.25, y: 0, z: 0.04 }
+    },
+    place: {
+      body: { x: 0.15, y: 0.08, z: 0 },
+      leftArm: { x: -0.3, y: 0, z: -0.2 },
+      rightArm: { x: -0.85, y: -0.2, z: 0.05 },
+      leftLeg: { x: -0.12, y: 0, z: -0.04 },
+      rightLeg: { x: 0.10, y: 0, z: 0.04 }
     },
     open: {
       body: { x: -0.02, y: 0, z: 0 },
@@ -408,20 +446,6 @@
       rightArm: { x: -2.8, y: 0.2, z: -0.35 },
       leftLeg: { x: -0.03, y: 0, z: -0.02 },
       rightLeg: { x: 0.03, y: 0, z: 0.02 }
-    },
-    hold: {
-      body: { x: -0.02, y: 0, z: 0 },
-      leftArm: { x: -2.9, y: 0.05, z: -0.12 },
-      rightArm: { x: -2.9, y: -0.05, z: 0.12 },
-      leftLeg: { x: 0.05, y: 0, z: -0.06 },
-      rightLeg: { x: -0.05, y: 0, z: 0.06 }
-    },
-    fly: {
-      body: { x: 0.35, y: 0, z: 0 },
-      leftArm: { x: -1.5, y: 0, z: -0.15 },
-      rightArm: { x: -1.5, y: 0, z: 0.15 },
-      leftLeg: { x: -0.25, y: 0, z: -0.04 },
-      rightLeg: { x: -0.25, y: 0, z: 0.04 }
     }
   };
 
@@ -595,10 +619,10 @@
   class FloatAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
     constructor() {
       super();
-      this.currentPoseName = 'hold';
-      this.sourceRotations = this.clonePose(POSES.hold);
-      this.targetRotations = this.clonePose(POSES.hold);
-      this.blendedRotations = this.clonePose(POSES.hold);
+      this.currentPoseName = 'float';
+      this.sourceRotations = this.clonePose(POSES.float);
+      this.targetRotations = this.clonePose(POSES.float);
+      this.blendedRotations = this.clonePose(POSES.float);
 
       this.blendStartTime = performance.now() / 1000;
       this.blendDuration = CONFIG.POSE_BLEND;
@@ -657,7 +681,7 @@
       this.isOneShotWave = false;
 
       if (sectionId === 'home') {
-        this.transitionTo('hold', 1.8);
+        this.transitionTo('float', 1.8);
         return;
       } else if (sectionId === 'chi_sono') {
         this.transitionTo('rest');
@@ -691,7 +715,7 @@
       }
 
       if (fDisplay < 0.15) {
-        this.transitionTo('hold');
+        this.transitionTo('float');
         return;
       }
 
@@ -748,14 +772,14 @@
         }
       }
 
-      // In home section (fDisplay < 0.15): ALWAYS stay in 'hold' pose holding the banner!
+      // In home section (fDisplay < 0.15): stay in 'float' pose (unless forced or playing intro gesture)
       if (fDisplay < 0.15) {
-        if (this.currentPoseName !== 'hold' && !this.forcedPose) {
-          this.transitionTo('hold', 0.6);
+        if (this.currentPoseName !== 'float' && !this.forcedPose && this.currentPoseName !== 'place' && this.currentPoseName !== 'fly') {
+          this.transitionTo('float', 0.6);
         }
       } else {
-        // When leaving home: transition out of 'hold'
-        if (this.currentPoseName === 'hold' && !this.isBlending) {
+        // When leaving home: transition out of 'float'
+        if (this.currentPoseName === 'float' && !this.isBlending) {
           this.transitionTo('neutral', 1.0);
         }
       }
@@ -771,7 +795,7 @@
         legFlutter = 0.08 * Math.sin(nowSec * 14.0) * w;
       }
 
-      // 3. Secondary Limb Drift & Noise (Weightless float feel)
+      // 3. Secondary Limb Drift & Alternating Sway
       let armLDriftZ = 0;
       let armRDriftZ = 0;
       let legLDriftX = 0;
@@ -780,15 +804,11 @@
       let bodyNoiseZ = 0;
       let waveOscZ = 0;
       let legSway = 0;
-      let armTremorL = 0;
-      let armTremorR = 0;
 
       if (!prefersReducedMotion) {
-        if (this.currentPoseName === 'hold' && fDisplay < 0.1) {
-          const homeInf = Math.max(0, 1 - fDisplay / 0.1);
-          legSway = 0.12 * Math.sin(nowSec * (2 * Math.PI / 5.0)) * homeInf;
-          armTremorL = (Math.random() - 0.5) * 0.03 * homeInf;
-          armTremorR = (Math.random() - 0.5) * 0.03 * homeInf;
+        if (this.currentPoseName === 'float' && fDisplay < 0.15) {
+          const homeInf = Math.max(0, 1 - fDisplay / 0.15);
+          legSway = 0.14 * Math.sin(nowSec * 1.8) * homeInf; // slow alternating sway
         }
 
         const driftWeight = 1 - w * 0.7; // drift calms down during high-speed flight
@@ -819,11 +839,11 @@
         skin.body.rotation.z = b.body.z + bodyNoiseZ;
       }
 
-      skin.leftArm.rotation.x = leftArmRotX + armTremorL;
+      skin.leftArm.rotation.x = leftArmRotX;
       skin.leftArm.rotation.y = b.leftArm.y;
       skin.leftArm.rotation.z = leftArmRotZ + armLDriftZ;
 
-      skin.rightArm.rotation.x = rightArmRotX + armTremorR;
+      skin.rightArm.rotation.x = rightArmRotX;
       skin.rightArm.rotation.y = b.rightArm.y;
       skin.rightArm.rotation.z = rightArmRotZ + armRDriftZ + waveOscZ;
 
@@ -868,9 +888,8 @@
         clampedYaw = Math.max(-0.25, Math.min(0.25, targetHeadYaw));
         clampedPitch = Math.max(-0.15, Math.min(0.15, rawPitch));
       } else if (fDisplay < 0.2) {
-        const lookUpBias = -0.18; // tilt head up towards title
         clampedYaw = Math.max(-0.45, Math.min(0.45, targetHeadYaw));
-        clampedPitch = Math.max(-0.25, Math.min(0.25, rawPitch)) + lookUpBias;
+        clampedPitch = Math.max(-0.35, Math.min(0.35, rawPitch));
       } else {
         clampedYaw = Math.max(-0.8, Math.min(0.8, targetHeadYaw));
         clampedPitch = Math.max(-0.4, Math.min(0.4, rawPitch));
@@ -886,104 +905,10 @@
   }
 
   // ==========================================================================
-  // 1. OPENING SEQUENCE (~2s, Skippable by Click or Keypress)
-  // ==========================================================================
-  function initOpeningSequence() {
-    const openingScreen = document.getElementById('opening-screen');
-    const terminalEl = document.getElementById('opening-terminal');
-    const progressBar = document.getElementById('opening-progress-bar');
-    const avatarStage = document.getElementById('avatar-stage');
-    const heroTitle = document.getElementById('hero-title');
-
-    if (!openingScreen) return;
-
-    let isDone = false;
-    let progressTimer = null;
-    let typeTimeout1 = null;
-    let typeTimeout2 = null;
-
-    function finishOpening() {
-      if (isDone) return;
-      isDone = true;
-
-      if (progressTimer) clearInterval(progressTimer);
-      if (typeTimeout1) clearTimeout(typeTimeout1);
-      if (typeTimeout2) clearTimeout(typeTimeout2);
-
-      if (progressBar) progressBar.style.width = '100%';
-      if (terminalEl) terminalEl.textContent = '> signal locked';
-
-      openingScreen.classList.add('faded-out');
-      if (avatarStage) avatarStage.classList.add('stage-ready');
-
-      // Decrypt Title "coodz_10"
-      if (heroTitle) {
-        decryptTitle(heroTitle, 'coodz_10', 1200);
-      }
-
-      // Start audio immediately if not yet playing
-      if (tryStartAudioGlobal) {
-        tryStartAudioGlobal();
-      }
-
-      // Re-anchor home avatar to banner
-      updateHomeAvatarAnchor();
-
-      // Handle deep links on page arrival (e.g. #esperienze/pixymc or #esperienze)
-      if (window.location.hash && window.location.hash !== '#home') {
-        setTimeout(handleRoute, 150);
-      } else {
-        updateNavIndicator('home');
-      }
-
-      setTimeout(() => {
-        openingScreen.style.display = 'none';
-      }, 850);
-    }
-
-    // If arriving via direct deep link (e.g. from servers/*.html or bookmark), skip the opening delay
-    if (window.location.hash && window.location.hash !== '#home') {
-      finishOpening();
-      return;
-    }
-
-    // Progress line animation 0 -> 100% over ~2000ms
-    let progress = 0;
-    progressTimer = setInterval(() => {
-      progress += 2;
-      if (progressBar) progressBar.style.width = progress + '%';
-      if (progress >= 100) {
-        clearInterval(progressTimer);
-        setTimeout(finishOpening, 200);
-      }
-    }, 40);
-
-    // Monospace lines typing sequence
-    typeTimeout1 = setTimeout(() => {
-      if (!isDone && terminalEl) {
-        terminalEl.textContent = '> establishing link... [OK]';
-      }
-    }, 850);
-
-    typeTimeout2 = setTimeout(() => {
-      if (!isDone && terminalEl) {
-        terminalEl.textContent = '> signal locked';
-      }
-    }, 1500);
-
-    // Skippable by clicking anywhere or pressing Escape / Space
-    openingScreen.addEventListener('click', finishOpening);
-    window.addEventListener('keydown', (e) => {
-      if (!isDone && (e.key === 'Escape' || e.key === ' ')) {
-        finishOpening();
-      }
-    }, { once: true });
-  }
-
-  // ==========================================================================
-  // TITLE DECRYPT EFFECT (Random glyphs resolving left to right per span)
+  // TITLE & SUBTITLE DECRYPT EFFECT (Random glyphs resolving left to right)
   // ==========================================================================
   function decryptTitle(el, targetText, duration) {
+    if (!el) return;
     const chars = '01!<>-_/[]{}*#+=';
     const len = targetText.length;
     const startTime = performance.now();
@@ -991,7 +916,7 @@
 
     function update(now) {
       const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / duration);
+      const progress = Math.min(1, elapsed / Math.max(1, duration));
       const lockedCount = Math.floor(progress * len);
 
       if (spans.length === len) {
@@ -1028,7 +953,6 @@
         } else {
           el.textContent = targetText;
         }
-        updateHomeAvatarAnchor();
       }
     }
 
@@ -1036,7 +960,566 @@
   }
 
   // ==========================================================================
-  // HOME BANNER & AVATAR HANDS ANCHOR CALCULATION
+  // TITLE HOVER RE-SCRAMBLE (Scrambles glyphs on hover)
+  // ==========================================================================
+  function initTitleHoverScramble() {
+    const titleEl = document.getElementById('hero-title');
+    if (!titleEl) return;
+
+    const chars = '01!<>-_/[]{}*#+=';
+    const spans = titleEl.querySelectorAll('.ch');
+
+    spans.forEach((span) => {
+      const originalText = span.textContent;
+      let scrambleTimer = null;
+      let frame = 0;
+
+      span.addEventListener('mouseenter', () => {
+        if (isIntroActive) return;
+        clearInterval(scrambleTimer);
+        frame = 0;
+
+        scrambleTimer = setInterval(() => {
+          frame++;
+          if (frame < 5) {
+            span.textContent = chars[Math.floor(Math.random() * chars.length)];
+          } else {
+            clearInterval(scrambleTimer);
+            span.textContent = originalText;
+          }
+        }, 40);
+      });
+    });
+  }
+
+  // ==========================================================================
+  // 1. GATE & INTRO SEQUENCE (Avatar builds title coodz_10 out of Minecraft blocks)
+  // ==========================================================================
+  let isIntroActive = false;
+  let introCancelRequested = false;
+  let introRafId = null;
+
+  function initGateAndIntro() {
+    const gateScreen = document.getElementById('gate-screen');
+    const gateBtn = document.getElementById('gate-btn');
+    const titleEl = document.getElementById('hero-title');
+    const spans = titleEl ? Array.from(titleEl.querySelectorAll('.ch')) : [];
+    const blockStage = document.getElementById('block-stage');
+    const navBar = document.querySelector('.nav-bar');
+    const subtitleWrap = document.querySelector('.hero-subtitle-wrap');
+    const bottomActions = document.querySelector('.home-bottom-actions');
+    const avatarStage = document.getElementById('avatar-stage');
+    const audio = document.getElementById('bg-audio');
+
+    // Initial state: hide top bar, title spans, subtitle, bottom actions
+    if (navBar) {
+      navBar.style.opacity = '0';
+      navBar.style.pointerEvents = 'none';
+    }
+    if (subtitleWrap) {
+      subtitleWrap.style.opacity = '0';
+      subtitleWrap.style.pointerEvents = 'none';
+    }
+    if (bottomActions) {
+      bottomActions.style.opacity = '0';
+      bottomActions.style.pointerEvents = 'none';
+    }
+    spans.forEach((sp) => {
+      sp.style.opacity = '0';
+    });
+
+    // Lock scroll during intro
+    document.documentElement.classList.add('intro-locked');
+    document.body.classList.add('intro-locked');
+
+    function lockScrollHandler(e) {
+      if (isIntroActive) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener('wheel', lockScrollHandler, { passive: false });
+    window.addEventListener('touchmove', lockScrollHandler, { passive: false });
+
+    const isDeepLink = window.location.hash && window.location.hash !== '#home';
+    const isRepeatSession = !!sessionStorage.getItem('coodz_intro_seen');
+
+    function finishIntroInstant() {
+      isIntroActive = false;
+      introCancelRequested = true;
+      if (introRafId) cancelAnimationFrame(introRafId);
+
+      if (blockStage) blockStage.innerHTML = '';
+      if (gateScreen) {
+        gateScreen.classList.add('faded-out');
+        gateScreen.style.display = 'none';
+      }
+      if (avatarStage) {
+        avatarStage.classList.add('stage-ready');
+        avatarStage.style.opacity = '1';
+        const kfHome = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[0]);
+        avatarStage.style.transform = `translate3d(${kfHome.x.toFixed(2)}px, ${kfHome.y.toFixed(2)}px, 0) scale(${kfHome.scale.toFixed(3)}) rotate(0rad)`;
+      }
+      if (floatAnimation) {
+        floatAnimation.transitionTo('float', 0.4);
+      }
+      spans.forEach((sp) => {
+        sp.style.opacity = '1';
+      });
+      if (navBar) {
+        navBar.style.opacity = '1';
+        navBar.style.pointerEvents = 'auto';
+        navBar.style.transition = 'opacity 0.4s ease';
+      }
+      if (subtitleWrap) {
+        subtitleWrap.style.opacity = '1';
+        subtitleWrap.style.pointerEvents = 'auto';
+        subtitleWrap.style.transition = 'opacity 0.4s ease';
+      }
+      if (bottomActions) {
+        bottomActions.style.opacity = '1';
+        bottomActions.style.pointerEvents = 'auto';
+        bottomActions.style.transition = 'opacity 0.4s ease';
+      }
+
+      document.documentElement.classList.remove('intro-locked');
+      document.body.classList.remove('intro-locked');
+      window.removeEventListener('wheel', lockScrollHandler);
+      window.removeEventListener('touchmove', lockScrollHandler);
+
+      sessionStorage.setItem('coodz_intro_seen', 'true');
+
+      if (audio && !audio.muted) {
+        fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 1200);
+      }
+
+      if (isDeepLink) {
+        setTimeout(handleRoute, 120);
+      } else {
+        updateNavIndicator('home');
+      }
+    }
+
+    if (prefersReducedMotion || isDeepLink) {
+      finishIntroInstant();
+      return;
+    }
+
+    // Gate button / click to start
+    let gateTriggered = false;
+    function onGateTrigger() {
+      if (gateTriggered) return;
+      gateTriggered = true;
+
+      // 1. Synchronously unlock audio (iOS/Safari strict requirement: no awaits before audio.play())
+      if (audio) {
+        audio.volume = 0;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {});
+        }
+      }
+
+      // 2. Start Intro Animation
+      startIntroSequence();
+    }
+
+    if (gateBtn) {
+      gateBtn.addEventListener('click', onGateTrigger);
+    }
+    if (gateScreen) {
+      gateScreen.addEventListener('click', onGateTrigger);
+    }
+    window.addEventListener('keydown', (e) => {
+      if (!gateTriggered && (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape')) {
+        onGateTrigger();
+      }
+    });
+
+    function startIntroSequence() {
+      isIntroActive = true;
+      if (gateScreen) {
+        gateScreen.classList.add('faded-out');
+        setTimeout(() => {
+          if (gateScreen) gateScreen.style.display = 'none';
+        }, 550);
+      }
+
+      function onSkipEvent() {
+        if (!isIntroActive) return;
+        finishIntroInstant();
+        removeSkipListeners();
+      }
+
+      function onKeyDownSkip(e) {
+        if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+          onSkipEvent();
+        }
+      }
+
+      function onResizeSkip() {
+        if (isIntroActive) {
+          finishIntroInstant();
+          removeSkipListeners();
+        }
+      }
+
+      function removeSkipListeners() {
+        window.removeEventListener('click', onSkipEvent);
+        window.removeEventListener('keydown', onKeyDownSkip);
+        window.removeEventListener('resize', onResizeSkip);
+      }
+
+      setTimeout(() => {
+        if (isIntroActive) {
+          window.addEventListener('click', onSkipEvent);
+          window.addEventListener('keydown', onKeyDownSkip);
+          window.addEventListener('resize', onResizeSkip, { passive: true });
+        }
+      }, 100);
+
+      // Measure character span rects and setup blocks
+      const charTexts = ['c', 'o', 'o', 'd', 'z', '_', '1', '0'];
+      const spanMetrics = spans.map((span, idx) => {
+        const rect = span.getBoundingClientRect();
+        return {
+          char: charTexts[idx] || span.textContent.trim(),
+          span: span,
+          rect: rect,
+          centerX: rect.left + rect.width * 0.5,
+          centerY: rect.top + rect.height * 0.5
+        };
+      });
+
+      const titleRect = titleEl ? titleEl.getBoundingClientRect() : { left: 0, width: window.innerWidth };
+
+      // Bitmaps for 8 characters
+      const BITMAPS = {
+        c: { w: 5, h: 5, rows: ['01110', '10000', '10000', '10000', '01110'] },
+        o: { w: 5, h: 5, rows: ['01110', '10001', '10001', '10001', '01110'] },
+        d: { w: 5, h: 7, rows: ['00001', '00001', '01111', '10001', '10001', '10001', '01111'] },
+        z: { w: 5, h: 5, rows: ['11111', '00010', '00100', '01000', '11111'] },
+        '_': { w: 5, h: 2, rows: ['11111', '11111'] },
+        '1': { w: 5, h: 7, rows: ['00100', '01100', '00100', '00100', '00100', '00100', '01110'] },
+        '0': { w: 5, h: 7, rows: ['01110', '10001', '10011', '10101', '11001', '10001', '01110'] }
+      };
+
+      function getBlockColor(blockX) {
+        const ratio = Math.max(0, Math.min(1, (blockX - titleRect.left) / Math.max(1, titleRect.width)));
+        let r, g, b;
+        if (ratio < 0.5) {
+          const t = ratio / 0.5;
+          r = 94 + (139 - 94) * t;
+          g = 168 + (108 - 168) * t;
+          b = 255;
+        } else {
+          const t = (ratio - 0.5) / 0.5;
+          r = 139 + (196 - 139) * t;
+          g = 108 + (181 - 108) * t;
+          b = 255;
+        }
+        const jitter = 1 + (Math.random() - 0.5) * 0.16;
+        return `rgb(${Math.min(255, Math.max(0, Math.round(r * jitter)))}, ${Math.min(255, Math.max(0, Math.round(g * jitter)))}, ${Math.min(255, Math.max(0, Math.round(b * jitter)))})`;
+      }
+
+      // Pre-compute block coordinates for each letter
+      const letterBlockData = spanMetrics.map((sm) => {
+        const bm = BITMAPS[sm.char] || BITMAPS['o'];
+        const blockSize = Math.max(3, Math.floor(sm.rect.width / bm.w));
+        const gridW = bm.w * blockSize;
+        const gridH = bm.h * blockSize;
+        const gridLeft = sm.rect.left + (sm.rect.width - gridW) * 0.5;
+        let gridTop = sm.rect.top + (sm.rect.height - gridH) * 0.5;
+        if (sm.char === '_') {
+          gridTop = sm.rect.bottom - gridH - (sm.rect.height * 0.05);
+        } else if (bm.h === 5) {
+          gridTop = sm.rect.bottom - gridH - (sm.rect.height * 0.14);
+        }
+
+        const blocks = [];
+        for (let row = 0; row < bm.h; row++) {
+          for (let col = 0; col < bm.w; col++) {
+            if (bm.rows[row][col] === '1') {
+              const bx = gridLeft + col * blockSize;
+              const by = gridTop + row * blockSize;
+              blocks.push({
+                x: bx,
+                y: by,
+                size: blockSize - 1,
+                color: getBlockColor(bx + blockSize * 0.5)
+              });
+            }
+          }
+        }
+        return {
+          ...sm,
+          blocks: blocks,
+          blockSize: blockSize,
+          gridLeft: gridLeft,
+          gridTop: gridTop,
+          gridW: gridW,
+          gridH: gridH,
+          built: false
+        };
+      });
+
+      if (avatarStage) {
+        avatarStage.classList.add('stage-ready');
+        avatarStage.style.opacity = '1';
+      }
+      if (floatAnimation) {
+        floatAnimation.transitionTo('fly', 0.2);
+      }
+
+      const T_GATE = CONFIG.INTRO.GATE_FADE_DUR;
+      const T_FLY_IN = T_GATE + CONFIG.INTRO.FLY_IN_DUR;
+      const T_BUILD_START = T_FLY_IN;
+      const T_BUILD_END = T_BUILD_START + (8 * CONFIG.INTRO.LETTER_BUILD_DUR);
+      const T_HOME_GLIDE = T_BUILD_END + CONFIG.INTRO.HOME_GLIDE_DUR;
+      const T_TOPBAR = T_HOME_GLIDE;
+      const T_SUBTITLE = T_TOPBAR + 0.5;
+      const T_TOTAL = T_SUBTITLE + CONFIG.INTRO.SUBTITLE_DECRYPT_DUR;
+
+      const timeScale = isRepeatSession ? (1 / CONFIG.INTRO.REPEAT_SPEED) : 1.0;
+      let startPerfTime = performance.now();
+      let lastTime = startPerfTime;
+      let virtualTime = 0;
+
+      let topBarRevealed = false;
+      let subtitleRevealed = false;
+      let homePoseSet = false;
+
+      function introTick(now) {
+        if (!isIntroActive || introCancelRequested) return;
+
+        const dtSec = Math.min(0.1, (now - lastTime) / 1000);
+        lastTime = now;
+        virtualTime += dtSec * timeScale;
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const halfW = vw * 0.5;
+        const halfH = vh * 0.5;
+
+        const homeKf = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[0]);
+
+        // Phase 1: Gate fade
+        if (virtualTime < T_GATE) {
+          if (avatarStage) avatarStage.style.opacity = '0';
+        }
+        // Phase 2: Fly-in from far away to above letter 0
+        else if (virtualTime >= T_GATE && virtualTime < T_FLY_IN) {
+          const u = (virtualTime - T_GATE) / (T_FLY_IN - T_GATE);
+          const t = smoothstep(u);
+
+          if (avatarStage) avatarStage.style.opacity = '1';
+
+          const firstL = letterBlockData[0];
+          const targetX = firstL.centerX - halfW;
+          const targetY = (firstL.rect.top - vh * 0.16) - halfH;
+
+          const startX = 0;
+          const startY = -vh * 0.44;
+          const startScale = 0.08;
+
+          const curX = startX + (targetX - startX) * t;
+          const curY = startY + (targetY - startY) * t;
+          const curScale = startScale + (homeKf.scale - startScale) * t;
+          const curRoll = -0.10 * Math.sin(Math.PI * t);
+
+          if (avatarStage) {
+            avatarStage.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+          }
+
+          if (floatAnimation && floatAnimation.currentPoseName !== 'fly') {
+            floatAnimation.transitionTo('fly', 0.2);
+          }
+
+          setDesiredLookTarget(firstL.centerX, firstL.centerY, 0.2);
+        }
+        // Phase 3: Building 8 letters
+        else if (virtualTime >= T_BUILD_START && virtualTime < T_BUILD_END) {
+          const buildElapsed = virtualTime - T_BUILD_START;
+          const letterIndex = Math.min(7, Math.floor(buildElapsed / CONFIG.INTRO.LETTER_BUILD_DUR));
+          const letterProgress = (buildElapsed % CONFIG.INTRO.LETTER_BUILD_DUR) / CONFIG.INTRO.LETTER_BUILD_DUR;
+
+          const curL = letterBlockData[letterIndex];
+          const prevL = letterIndex > 0 ? letterBlockData[letterIndex - 1] : letterBlockData[0];
+
+          const fromX = prevL.centerX - halfW;
+          const toX = curL.centerX - halfW;
+          const moveT = smoothstep(Math.min(1, letterProgress * 2.5));
+          const curX = fromX + (toX - fromX) * moveT;
+
+          const hoverBaseY = (curL.rect.top - vh * 0.14) - halfH;
+          const curY = hoverBaseY + Math.sin(virtualTime * 8) * 4;
+          const curScale = homeKf.scale;
+          const curRoll = 0.06 * Math.sin(Math.PI * moveT) * (toX >= fromX ? 1 : -1);
+
+          if (avatarStage) {
+            avatarStage.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+          }
+
+          if (floatAnimation) {
+            if (letterProgress < 0.35 && floatAnimation.currentPoseName !== 'place') {
+              floatAnimation.transitionTo('place', 0.15);
+            } else if (letterProgress >= 0.35 && floatAnimation.currentPoseName !== 'fly') {
+              floatAnimation.transitionTo('fly', 0.25);
+            }
+          }
+
+          setDesiredLookTarget(curL.centerX, curL.centerY, 0.2);
+
+          if (!curL.built) {
+            curL.built = true;
+            const letterEls = [];
+
+            curL.blocks.forEach((b, bIdx) => {
+              const el = document.createElement('div');
+              el.className = 'mc-block';
+              el.style.left = `${b.x}px`;
+              el.style.top = `${b.y}px`;
+              el.style.width = `${b.size}px`;
+              el.style.height = `${b.size}px`;
+              el.style.backgroundColor = b.color;
+              el.style.transform = 'scale(0)';
+              el.style.opacity = '0';
+              if (blockStage) blockStage.appendChild(el);
+              letterEls.push(el);
+
+              const delay = bIdx * (CONFIG.INTRO.BLOCK_INTERVAL * 1000) / timeScale;
+              setTimeout(() => {
+                if (!isIntroActive) return;
+                el.style.transition = `transform ${0.18 / timeScale}s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.08s ease`;
+                el.style.transform = 'scale(1)';
+                el.style.opacity = '1';
+              }, delay);
+            });
+
+            // Debris particles falling from hands
+            for (let d = 0; d < 3; d++) {
+              const part = document.createElement('div');
+              part.className = 'mc-particle';
+              const px = (halfW + curX) + (Math.random() - 0.5) * 24;
+              const py = (halfH + curY) + 20 + Math.random() * 10;
+              const pSize = Math.max(3, curL.blockSize * 0.55);
+              part.style.left = `${px}px`;
+              part.style.top = `${py}px`;
+              part.style.width = `${pSize}px`;
+              part.style.height = `${pSize}px`;
+              part.style.backgroundColor = curL.blocks[0] ? curL.blocks[0].color : '#5ea8ff';
+              part.style.transition = `transform ${0.45 / timeScale}s ease-in, opacity ${0.45 / timeScale}s ease`;
+              if (blockStage) blockStage.appendChild(part);
+
+              setTimeout(() => {
+                part.style.transform = `translate3d(${(Math.random() - 0.5) * 25}px, ${35 + Math.random() * 20}px, 0) scale(0.3)`;
+                part.style.opacity = '0';
+                setTimeout(() => part.remove(), 500 / timeScale);
+              }, 40 / timeScale);
+            }
+
+            const dissolveTime = (CONFIG.INTRO.LETTER_BUILD_DUR * 1000) / timeScale;
+            setTimeout(() => {
+              if (!isIntroActive) return;
+              letterEls.forEach((el) => {
+                el.style.transition = `transform ${0.2 / timeScale}s ease-in, opacity ${0.2 / timeScale}s ease`;
+                el.style.transform = 'scale(0)';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 250 / timeScale);
+              });
+              curL.span.style.transition = `opacity ${0.3 / timeScale}s ease`;
+              curL.span.style.opacity = '1';
+            }, dissolveTime);
+          }
+        }
+        // Phase 4: Glide to CONFIG.HOME_AVATAR
+        else if (virtualTime >= T_BUILD_END && virtualTime < T_HOME_GLIDE) {
+          const u = (virtualTime - T_BUILD_END) / (T_HOME_GLIDE - T_BUILD_END);
+          const t = smoothstep(u);
+
+          const lastL = letterBlockData[7];
+          const fromX = lastL.centerX - halfW;
+          const fromY = (lastL.rect.top - vh * 0.14) - halfH;
+
+          const toX = homeKf.x;
+          const toY = homeKf.y;
+
+          const curX = fromX + (toX - fromX) * t;
+          const curY = fromY + (toY - fromY) * t;
+          const curScale = homeKf.scale;
+          const curRoll = 0.05 * Math.sin(Math.PI * t) * (toX >= fromX ? 1 : -1);
+
+          if (avatarStage) {
+            avatarStage.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+          }
+
+          if (!homePoseSet && u > 0.3) {
+            homePoseSet = true;
+            if (floatAnimation) {
+              floatAnimation.transitionTo('float', 1.0);
+            }
+            if (titleEl) {
+              titleEl.classList.add('shimmer-active');
+            }
+          }
+        }
+        // Phase 5: Reveal Top Bar with stagger and fade audio in
+        else if (virtualTime >= T_HOME_GLIDE && virtualTime < T_SUBTITLE) {
+          if (avatarStage) {
+            avatarStage.style.transform = `translate3d(${homeKf.x.toFixed(2)}px, ${homeKf.y.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(0rad)`;
+          }
+
+          if (!topBarRevealed) {
+            topBarRevealed = true;
+            if (navBar) {
+              navBar.style.opacity = '1';
+              navBar.style.pointerEvents = 'auto';
+              navBar.style.transition = 'opacity 0.4s ease';
+            }
+            if (audio && !audio.muted) {
+              fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, (CONFIG.INTRO.AUDIO_FADE_DUR * 1000) / timeScale);
+            }
+          }
+        }
+        // Phase 6: Subtitle decrypt and bottom actions fade
+        else if (virtualTime >= T_SUBTITLE && virtualTime < T_TOTAL) {
+          if (avatarStage) {
+            avatarStage.style.transform = `translate3d(${homeKf.x.toFixed(2)}px, ${homeKf.y.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(0rad)`;
+          }
+
+          if (!subtitleRevealed) {
+            subtitleRevealed = true;
+            if (subtitleWrap) {
+              subtitleWrap.style.opacity = '1';
+              subtitleWrap.style.pointerEvents = 'auto';
+              subtitleWrap.style.transition = 'opacity 0.4s ease';
+              const subTextEl = subtitleWrap.querySelector('.hero-subtitle');
+              if (subTextEl) {
+                decryptTitle(subTextEl, 'MINECRAFT SCREENSHARER', (CONFIG.INTRO.SUBTITLE_DECRYPT_DUR * 1000) / timeScale);
+              }
+            }
+            if (bottomActions) {
+              bottomActions.style.opacity = '1';
+              bottomActions.style.pointerEvents = 'auto';
+              bottomActions.style.transition = 'opacity 0.6s ease';
+            }
+          }
+        }
+        // Complete intro
+        else if (virtualTime >= T_TOTAL) {
+          finishIntroInstant();
+          removeSkipListeners();
+          return;
+        }
+
+        introRafId = requestAnimationFrame(introTick);
+      }
+
+      introRafId = requestAnimationFrame(introTick);
+    }
+  }
+
+  // ==========================================================================
+  // VIEWPORT & LAYOUT CACHING
   // ==========================================================================
   function updateCachedDimensions() {
     cachedWindowWidth = window.innerWidth;
@@ -1049,61 +1532,6 @@
     } else {
       cachedSectionHeight = window.innerHeight;
     }
-
-    updateHomeAvatarAnchor();
-  }
-
-  function updateHomeAvatarAnchor() {
-    const titleEl = document.getElementById('hero-title');
-    const heroSwayGroup = document.getElementById('hero-sway-group');
-    if (!titleEl || !heroSwayGroup) return;
-
-    const underscoreSpan = document.querySelector('.ch-underscore');
-
-    // 1. Avatar Home Scale
-    isMobile = window.innerWidth <= 768;
-    const scale = isMobile ? (CONFIG.HOME_AVATAR_SCALE * 0.8) : CONFIG.HOME_AVATAR_SCALE;
-
-    // 2. Intrinsic Layout Dimensions (Independent of scroll position and live transforms)
-    // .hero-sway-group is placed at top: 40vh, left: 50%, transform: translate(-50%, -50%)
-    const groupHeight = heroSwayGroup.offsetHeight || (window.innerHeight * 0.2);
-    const groupTop = (window.innerHeight * 0.40) - (groupHeight * 0.5);
-    const titleTop = groupTop + (titleEl.offsetTop || 0);
-    const titleHeight = titleEl.offsetHeight || (window.innerHeight * 0.15);
-    const bottomY = titleTop + titleHeight;
-
-    // 3. Hands position math
-    // Model height in unscaled canvas is ~74vh (window.innerHeight * 0.74)
-    // Distance from center of unscaled avatar to raised hands top is ~0.37 * window.innerHeight
-    const handsDistFromCenter = (window.innerHeight * 0.74 * 0.5) * scale;
-
-    let targetX = window.innerWidth * 0.5;
-    if (CONFIG.HOLD_ANCHOR === 'underscore' && underscoreSpan) {
-      const titleLeft = (window.innerWidth * 0.5) - (titleEl.offsetWidth * 0.5);
-      targetX = titleLeft + (underscoreSpan.offsetLeft || 0) + ((underscoreSpan.offsetWidth || 0) * 0.5);
-    }
-
-    const targetY = CONFIG.HOLD_TITLE
-      ? (bottomY + window.innerHeight * 0.012)
-      : (titleTop - window.innerHeight * 0.04);
-
-    const ax = targetX - (window.innerWidth * 0.5);
-    const ay = targetY + handsDistFromCenter - (window.innerHeight * 0.5);
-
-    cachedAnchorAxPx = ax;
-    cachedAnchorAyPx = ay;
-    cachedAnchorScale = scale;
-
-    document.documentElement.style.setProperty('--home-ax', `${ax.toFixed(2)}px`);
-    document.documentElement.style.setProperty('--home-ay', `${ay.toFixed(2)}px`);
-    document.documentElement.style.setProperty('--home-as', `${scale.toFixed(3)}`);
-    document.documentElement.style.setProperty('--spill-opacity', CONFIG.SPILL_OPACITY);
-
-    heroSwayGroup.style.transformOrigin = '50% 50%';
-    const avatarFloatEl = document.getElementById('avatar-float');
-    if (avatarFloatEl) {
-      avatarFloatEl.style.transformOrigin = '50% 50%';
-    }
   }
 
   function smoothstep(x) {
@@ -1112,19 +1540,10 @@
   }
 
   function resolveKeyframe(kf) {
-    if (kf.anchor || kf.x === 'anchor') {
-      return {
-        x: cachedAnchorAxPx,
-        y: cachedAnchorAyPx,
-        scale: cachedAnchorScale,
-        yaw: (typeof kf.yaw === 'number') ? kf.yaw : 0.15,
-        roll: 0
-      };
-    }
     const isMob = cachedWindowWidth <= 768;
     const kfX = (kf.x / 100) * cachedWindowWidth;
     const kfY = (kf.y / 100) * cachedWindowHeight + (CONFIG.AVATAR_Y_OFFSET || 0);
-    const kfScale = isMob ? (kf.scaleMobile || kf.scale * 0.75) : kf.scale;
+    const kfScale = isMob ? (kf.scaleMobile || kf.scale * 0.8) : kf.scale;
     return {
       x: kfX,
       y: kfY,
@@ -1205,37 +1624,25 @@
       targetPlayerRotY = baseYaw;
     }
 
-    // 6. Home pendulum bob (pure vertical gentle synchronized bob, no tilting/rotation)
-    const heroSwayGroup = document.getElementById('hero-sway-group');
+    // 6. Home float bob (fades out as f -> 0.35, fades back in near 0)
     const avatarFloatEl = document.getElementById('avatar-float');
     let homeWeight = 0;
     if (fDisplay < 0.35) {
       homeWeight = Math.max(0, 1 - (fDisplay / 0.35));
     }
 
-    if (!prefersReducedMotion && homeWeight > 0.001) {
-      const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * homeWeight;
-
-      if (heroSwayGroup) {
-        heroSwayGroup.style.transform = `translate(-50%, -50%) translate3d(0, ${bobPx.toFixed(2)}px, 0)`;
-      }
-
-      if (avatarFloatEl) {
+    if (!prefersReducedMotion && avatarFloatEl) {
+      if (homeWeight > 0.001) {
+        const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * homeWeight * (1 - flightW);
         avatarFloatEl.style.transformOrigin = '50% 50%';
         avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0)`;
-      }
-    } else {
-      if (heroSwayGroup) {
-        heroSwayGroup.style.transform = 'translate(-50%, -50%)';
-      }
-      if (!prefersReducedMotion && avatarFloatEl && fDisplay >= 0.35) {
-        // Zero-gravity bob & gentle roll in subsequent sections
+      } else if (fDisplay >= 0.35) {
         const nonHomeWeight = Math.min(1, (fDisplay - 0.35) / 0.2);
         const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * nonHomeWeight * (1 - flightW);
         const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * nonHomeWeight * (1 - flightW);
         avatarFloatEl.style.transformOrigin = '50% 50%';
         avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
-      } else if (avatarFloatEl) {
+      } else {
         avatarFloatEl.style.transform = 'none';
       }
     }
@@ -1248,7 +1655,7 @@
         const s = 1 + 0.18 * p;
         const op = Math.max(0, 1 - p);
         const bl = (6 * p).toFixed(1);
-        heroTitle.style.transform = `scale(${s.toFixed(3)})`;
+        heroTitle.style.transform = `translate(-50%, -50%) scale(${s.toFixed(3)})`;
         heroTitle.style.opacity = op.toFixed(3);
         heroTitle.style.filter = `blur(${bl}px)`;
         heroTitle.style.pointerEvents = op < 0.1 ? 'none' : 'auto';
@@ -1259,7 +1666,7 @@
       }
     }
 
-    const heroSubElements = document.querySelectorAll('.hero-subtitle, .hero-actions, .scroll-hint');
+    const heroSubElements = document.querySelectorAll('.hero-subtitle-wrap, .home-bottom-actions, .hero-light-spill');
     if (fDisplay <= 0.3) {
       const subOp = Math.max(0, 1 - (fDisplay / 0.3));
       heroSubElements.forEach((el) => {
@@ -1321,8 +1728,7 @@
     } else if (state === 'esperienze-detail') {
       targetPlayerRotY = CONFIG.ROT_EXP_DETAIL;
     } else if (state === 'home') {
-      targetPlayerRotY = 0.15; // slight turn in home holding banner
-      updateHomeAvatarAnchor();
+      targetPlayerRotY = CONFIG.HOME_AVATAR.yaw; // slight turn in home
     } else {
       targetPlayerRotY = 0;
     }
@@ -1356,8 +1762,6 @@
     if (stage) {
       stage.style.setProperty('--avatar-y', `${CONFIG.AVATAR_Y_OFFSET}px`);
     }
-
-    updateHomeAvatarAnchor();
   }
 
   function initAvatar() {
@@ -1719,12 +2123,10 @@
         }
 
         // 3. Subtle thrust particles under avatar feet when in home section
-        if (activeSectionId === 'home' && !prefersReducedMotion) {
-          const ax = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--home-ax')) || 0;
-          const ay = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--home-ay')) || 0;
-          const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--home-as')) || CONFIG.HOME_AVATAR_SCALE;
-          const feetX = (width * 0.5) + ax;
-          const feetY = (height * 0.5) + ay + (height * 0.74 * 0.5 * scale);
+        if (activeSectionId === 'home' && !prefersReducedMotion && fDisplay < 0.2) {
+          const scale = isMobile ? CONFIG.HOME_AVATAR.scaleMobile : CONFIG.HOME_AVATAR.scale;
+          const feetX = (width * 0.5) + lastComputedStageX;
+          const feetY = (height * 0.5) + lastComputedStageY + (height * 0.74 * 0.5 * scale);
 
           if (thrustParticles.length < 10 && Math.random() < 0.35) {
             thrustParticles.push({
@@ -2288,132 +2690,105 @@
   }
 
   // ==========================================================================
-  // 6. AUDIO CONTROLS & REAL PLAYLIST ENGINE
+  // 6. AUDIO CONTROLS & SEAMLESS BACKGROUND PLAYLIST
   // ==========================================================================
+  function fadeAudioVolume(audio, targetVol, duration = 1000, onComplete) {
+    if (!audio) return;
+    const startVol = audio.volume;
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const p = Math.min(1, elapsed / Math.max(10, duration));
+      audio.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * p));
+      if (p < 1) {
+        requestAnimationFrame(step);
+      } else {
+        if (onComplete) onComplete();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
   function initAudio() {
     const audio = document.getElementById('bg-audio');
-    const audioToggleBtn = document.getElementById('audio-toggle-btn');
-    const audioSkipBtn = document.getElementById('audio-skip-btn');
-    const trackNameEl = document.getElementById('current-track-name');
-
+    const muteBtn = document.getElementById('mute-btn');
     if (!audio) return;
 
     let playlistIndex = 0;
-    let isPlaying = false;
-
-    // Volume remembered via localStorage, defaulting to CONFIG.DEFAULT_VOLUME (0.4)
-    const savedVol = localStorage.getItem('coodz_audio_volume');
-    audio.volume = savedVol !== null ? parseFloat(savedVol) : CONFIG.DEFAULT_VOLUME;
-    audio.loop = false;
+    const isMuted = localStorage.getItem('coodz_muted') === 'true';
 
     function loadTrack(index) {
       playlistIndex = ((index % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
-      const track = CONFIG.PLAYLIST[playlistIndex];
-      audio.src = track.src;
-      if (trackNameEl) {
-        trackNameEl.textContent = track.name;
-        trackNameEl.setAttribute('title', track.name);
-      }
+      audio.src = CONFIG.PLAYLIST[playlistIndex].src;
     }
 
-    function tryStartAudio() {
-      if (audio && audio.paused) {
-        const p = audio.play();
-        if (p !== undefined) {
-          p.then(() => {
-            isPlaying = true;
-            if (audioToggleBtn) audioToggleBtn.classList.add('playing');
-            removeGestureListeners();
-          }).catch(() => {
-            // Autoplay blocked until user interaction
-          });
-        }
-      }
-    }
-
-    tryStartAudioGlobal = tryStartAudio;
-
-    function onUserGesture() {
-      tryStartAudio();
-    }
-
-    function removeGestureListeners() {
-      ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach((evt) => {
-        window.removeEventListener(evt, onUserGesture, true);
-      });
-      const scrollEl = document.getElementById('scroll-container');
-      if (scrollEl) {
-        scrollEl.removeEventListener('scroll', onUserGesture, true);
-      }
-    }
-
-    function addGestureListeners() {
-      ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach((evt) => {
-        window.addEventListener(evt, onUserGesture, { capture: true, once: false, passive: true });
-      });
-      const scrollEl = document.getElementById('scroll-container');
-      if (scrollEl) {
-        scrollEl.addEventListener('scroll', onUserGesture, { capture: true, once: false, passive: true });
-      }
-    }
-
-    // Load initial track (dorado), attempt immediate playback and attach gesture triggers
     loadTrack(0);
-    tryStartAudio();
-    addGestureListeners();
+    audio.loop = false;
+    audio.muted = isMuted;
 
-    // Audio Play/Pause Button
-    if (audioToggleBtn) {
-      audioToggleBtn.addEventListener('click', (e) => {
+    function updateMuteBtnState() {
+      if (!muteBtn) return;
+      if (audio.muted || audio.paused || audio.volume < 0.01) {
+        muteBtn.classList.remove('playing');
+        muteBtn.setAttribute('aria-label', 'Attiva Audio');
+      } else {
+        muteBtn.classList.add('playing');
+        muteBtn.setAttribute('aria-label', 'Disattiva Audio');
+      }
+    }
+
+    if (muteBtn) {
+      muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!isPlaying) {
-          audio.play().then(() => {
-            isPlaying = true;
-            audioToggleBtn.classList.add('playing');
-            removeGestureListeners();
-          }).catch((err) => {
-            console.warn('Audio play request blocked or failed:', err);
-          });
+        if (audio.muted || audio.volume < 0.05) {
+          audio.muted = false;
+          fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 500);
+          localStorage.setItem('coodz_muted', 'false');
+          if (audio.paused) {
+            audio.play().catch(() => {});
+          }
         } else {
-          audio.pause();
-          isPlaying = false;
-          audioToggleBtn.classList.remove('playing');
+          fadeAudioVolume(audio, 0, 400, () => {
+            audio.muted = true;
+          });
+          localStorage.setItem('coodz_muted', 'true');
         }
+        setTimeout(updateMuteBtnState, 50);
       });
     }
 
-    // Skip Button: advances to next track and loops at end
-    if (audioSkipBtn) {
-      audioSkipBtn.addEventListener('click', () => {
-        audioSkipBtn.classList.add('pulse');
-        setTimeout(() => audioSkipBtn.classList.remove('pulse'), 250);
-
-        loadTrack(playlistIndex + 1);
-        if (isPlaying) {
-          audio.play().catch(() => {});
-        }
-      });
-    }
-
-    // Auto-advance to next track on ended (loops playlist)
+    // Auto loop playlist: track 1 -> track 2 -> track 3 -> loop
     audio.addEventListener('ended', () => {
       loadTrack(playlistIndex + 1);
       audio.play().catch(() => {});
     });
 
-    audio.addEventListener('play', () => {
-      isPlaying = true;
-      if (audioToggleBtn) audioToggleBtn.classList.add('playing');
+    audio.addEventListener('play', updateMuteBtnState);
+    audio.addEventListener('pause', updateMuteBtnState);
+    audio.addEventListener('volumechange', updateMuteBtnState);
+
+    // Tab visibility change: fade out 0.4s and pause; resume on visible
+    let wasPlayingBeforeHidden = false;
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        wasPlayingBeforeHidden = !audio.paused && !audio.muted;
+        if (wasPlayingBeforeHidden) {
+          fadeAudioVolume(audio, 0, 400, () => {
+            audio.pause();
+          });
+        }
+      } else {
+        if (wasPlayingBeforeHidden && localStorage.getItem('coodz_muted') !== 'true') {
+          audio.muted = false;
+          audio.play().then(() => {
+            fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 400);
+          }).catch(() => {});
+        }
+      }
     });
 
-    audio.addEventListener('pause', () => {
-      isPlaying = false;
-      if (audioToggleBtn) audioToggleBtn.classList.remove('playing');
-    });
-
-    audio.addEventListener('volumechange', () => {
-      localStorage.setItem('coodz_audio_volume', audio.volume.toString());
-    });
+    updateMuteBtnState();
   }
 
   // ==========================================================================
@@ -2792,16 +3167,13 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
     });
 
     sliderHomeScale.addEventListener('input', (e) => {
-      CONFIG.HOME_AVATAR_SCALE = parseFloat(e.target.value);
-      valHomeScale.textContent = CONFIG.HOME_AVATAR_SCALE.toFixed(2);
-      updateHomeAvatarAnchor();
+      CONFIG.HOME_AVATAR.scale = parseFloat(e.target.value);
+      valHomeScale.textContent = CONFIG.HOME_AVATAR.scale.toFixed(2);
       updateConfigReadout();
     });
 
     sliderSpill.addEventListener('input', (e) => {
-      CONFIG.SPILL_OPACITY = parseFloat(e.target.value);
-      valSpill.textContent = CONFIG.SPILL_OPACITY.toFixed(2);
-      document.documentElement.style.setProperty('--spill-opacity', CONFIG.SPILL_OPACITY);
+      valSpill.textContent = parseFloat(e.target.value).toFixed(2);
       updateConfigReadout();
     });
 
@@ -2853,19 +3225,12 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       }
     });
 
-    toggleHoldTitle.addEventListener('click', () => {
-      CONFIG.HOLD_TITLE = !CONFIG.HOLD_TITLE;
-      toggleHoldTitle.textContent = `[ HOLD: ${CONFIG.HOLD_TITLE ? 'BOTTOM' : 'ABOVE'} ]`;
-      updateHomeAvatarAnchor();
-      updateConfigReadout();
-    });
-
-    toggleHoldAnchor.addEventListener('click', () => {
-      CONFIG.HOLD_ANCHOR = CONFIG.HOLD_ANCHOR === 'underscore' ? 'center' : 'underscore';
-      toggleHoldAnchor.textContent = `[ ANCHOR: ${CONFIG.HOLD_ANCHOR} ]`;
-      updateHomeAvatarAnchor();
-      updateConfigReadout();
-    });
+    if (toggleHoldTitle) {
+      toggleHoldTitle.style.display = 'none';
+    }
+    if (toggleHoldAnchor) {
+      toggleHoldAnchor.style.display = 'none';
+    }
 
     poseSelect.addEventListener('change', (e) => {
       const val = e.target.value;
@@ -2897,7 +3262,8 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
   // ==========================================================================
   document.addEventListener('DOMContentLoaded', () => {
     initAudio();
-    initOpeningSequence();
+    initGateAndIntro();
+    initTitleHoverScramble();
     initAvatar();
     initAvatarInteraction();
     initStars();
