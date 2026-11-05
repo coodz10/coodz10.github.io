@@ -89,6 +89,7 @@
     WARP_STRENGTH: 28,         // Warp star streak length multiplier
 
     // Audio & Playlist
+    AUDIO_VOLUME: 0.4,
     DEFAULT_VOLUME: 0.4,
     PLAYLIST: [
       { name: 'dorado', src: 'music/dorado.mp3' },
@@ -101,6 +102,7 @@
   const TRANSLATIONS = {
     it: {
       gateText: 'ENTRA',
+      audioSkip: '[ ⏭ ]',
       navHome: '[ home ]',
       navAbout: '[ chi_sono ]',
       navExp: '[ esperienze ]',
@@ -155,6 +157,7 @@
     },
     en: {
       gateText: 'ENTER',
+      audioSkip: '[ ⏭ ]',
       navHome: '[ home ]',
       navAbout: '[ about_me ]',
       navExp: '[ experiences ]',
@@ -380,6 +383,20 @@
   let lastComputedStageY = 0;
   let tryStartAudioGlobal = null;
 
+  // Look mode: 'intro' forces target and completely ignores mouse; 'normal' follows mouse in home
+  let headLookMode = 'intro';
+
+  // Float driver state (fades from 0 to 1 over 1.2s after intro)
+  let floatDriverAmplitude = 0;
+  let floatFadeStartTime = null;
+  const FLOAT_FADE_DURATION = 1.2;
+  let currentHomeFloatAmp = 0;
+
+  // Audio diagnostics and interaction retry
+  let audioLastError = null;
+  let audioNeedsRetry = false;
+  let audioRetryAttached = false;
+
   // ==========================================================================
   // ZERO-GRAVITY POSES & CUBIC EASING ENGINE
   // ==========================================================================
@@ -487,7 +504,10 @@
   function updateLookTargetEveryFrame() {
     const nowSec = performance.now() / 1000;
 
-    if (flightW > 0.3) {
+    if (headLookMode === 'intro') {
+      // While intro runs, IGNORE mouse completely.
+      // Look targets are driven strictly by the intro timeline via setDesiredLookTarget().
+    } else if (flightW > 0.3) {
       // During flight look forward / at camera (target = viewport center)
       desiredLookTargetX = cachedWindowWidth * 0.5;
       desiredLookTargetY = cachedWindowHeight * 0.5;
@@ -774,7 +794,7 @@
 
       // In home section (fDisplay < 0.15): stay in 'float' pose (unless forced or playing intro gesture)
       if (fDisplay < 0.15) {
-        if (this.currentPoseName !== 'float' && !this.forcedPose && this.currentPoseName !== 'place' && this.currentPoseName !== 'fly') {
+        if (this.currentPoseName !== 'float' && !this.forcedPose && !isIntroActive) {
           this.transitionTo('float', 0.6);
         }
       } else {
@@ -806,18 +826,18 @@
       let legSway = 0;
 
       if (!prefersReducedMotion) {
-        if (this.currentPoseName === 'float' && fDisplay < 0.15) {
-          const homeInf = Math.max(0, 1 - fDisplay / 0.15);
-          legSway = 0.14 * Math.sin(nowSec * 1.8) * homeInf; // slow alternating sway
+        if (this.currentPoseName === 'float' && currentHomeFloatAmp > 0.001) {
+          legSway = 0.14 * Math.sin(nowSec * 1.8) * currentHomeFloatAmp; // slow alternating sway
         }
 
         const driftWeight = 1 - w * 0.7; // drift calms down during high-speed flight
-        armLDriftZ = 0.08 * Math.sin(nowSec * 1.1 + 0.5) * driftWeight;
-        armRDriftZ = -0.08 * Math.sin(nowSec * 1.3 + 2.0) * driftWeight;
-        legLDriftX = 0.06 * Math.sin(nowSec * 0.9 + 1.2) * driftWeight;
-        legRDriftX = -0.06 * Math.sin(nowSec * 1.05 + 3.4) * driftWeight;
-        bodyNoiseX = 0.02 * Math.sin(nowSec * 0.8 + 0.2) * driftWeight;
-        bodyNoiseZ = 0.015 * Math.sin(nowSec * 0.7 + 1.5) * driftWeight;
+        const armFactor = (fDisplay < 0.35) ? currentHomeFloatAmp : 1;
+        armLDriftZ = 0.08 * Math.sin(nowSec * 1.1 + 0.5) * driftWeight * armFactor;
+        armRDriftZ = -0.08 * Math.sin(nowSec * 1.3 + 2.0) * driftWeight * armFactor;
+        legLDriftX = 0.06 * Math.sin(nowSec * 0.9 + 1.2) * driftWeight * armFactor;
+        legRDriftX = -0.06 * Math.sin(nowSec * 1.05 + 3.4) * driftWeight * armFactor;
+        bodyNoiseX = 0.02 * Math.sin(nowSec * 0.8 + 0.2) * driftWeight * armFactor;
+        bodyNoiseZ = 0.015 * Math.sin(nowSec * 0.7 + 1.5) * driftWeight * armFactor;
 
         if (this.currentPoseName === 'wave' || this.isOneShotWave) {
           waveOscZ = Math.sin(nowSec * 7.0) * 0.35 * (1 - w);
@@ -887,6 +907,9 @@
       if (flightW > 0.3) {
         clampedYaw = Math.max(-0.25, Math.min(0.25, targetHeadYaw));
         clampedPitch = Math.max(-0.15, Math.min(0.15, rawPitch));
+      } else if (headLookMode === 'intro') {
+        clampedYaw = Math.max(-0.65, Math.min(0.65, targetHeadYaw));
+        clampedPitch = Math.max(-0.55, Math.min(0.55, rawPitch));
       } else if (fDisplay < 0.2) {
         clampedYaw = Math.max(-0.45, Math.min(0.45, targetHeadYaw));
         clampedPitch = Math.max(-0.35, Math.min(0.35, rawPitch));
@@ -1032,6 +1055,11 @@
     document.documentElement.classList.add('intro-locked');
     document.body.classList.add('intro-locked');
 
+    // Safety fallback: ensure .intro-pending is never stuck indefinitely
+    setTimeout(() => {
+      document.documentElement.classList.remove('intro-pending');
+    }, 15000);
+
     function lockScrollHandler(e) {
       if (isIntroActive) {
         e.preventDefault();
@@ -1073,8 +1101,11 @@
           const p = audio.play();
           if (p !== undefined) {
             p.then(() => {
-              fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 3000);
-            }).catch(() => {});
+              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 3000);
+              audioLastError = null;
+            }).catch((err) => {
+              audioLastError = err ? (err.message || String(err)) : 'play error';
+            });
           }
         }
       }
@@ -1083,11 +1114,39 @@
       });
     }
 
+    function attachAudioRetryListener() {
+      if (audioRetryAttached) return;
+      audioRetryAttached = true;
+      const retryEvents = ['click', 'pointerdown', 'keydown', 'touchstart'];
+      function onRetryInteraction() {
+        retryEvents.forEach((evt) => window.removeEventListener(evt, onRetryInteraction, true));
+        audioRetryAttached = false;
+        if (audio && localStorage.getItem('coodz_muted') !== 'true') {
+          audio.muted = false;
+          const p = audio.play();
+          if (p !== undefined) {
+            p.then(() => {
+              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
+              audioLastError = null;
+            }).catch((err) => {
+              audioLastError = err ? (err.message || String(err)) : 'retry error';
+            });
+          }
+        }
+      }
+      retryEvents.forEach((evt) => window.addEventListener(evt, onRetryInteraction, { capture: true, once: true }));
+    }
+
     function finishIntroInstant(options = {}) {
       const startMusic = options.startMusic !== false;
       isIntroActive = false;
       introCancelRequested = true;
       if (introRafId) cancelAnimationFrame(introRafId);
+
+      // Remove CSS intro-pending hide and switch look mode to normal
+      document.documentElement.classList.remove('intro-pending');
+      headLookMode = 'normal';
+      setDesiredLookTarget(mouseX, mouseY, 0.8);
 
       if (blockStage) blockStage.innerHTML = '';
       if (gateScreen) {
@@ -1100,26 +1159,47 @@
         const kfHome = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[0]);
         avatarStage.style.transform = `translate3d(${kfHome.x.toFixed(2)}px, ${kfHome.y.toFixed(2)}px, 0) scale(${kfHome.scale.toFixed(3)}) rotate(0rad)`;
       }
+
+      // Transition to float pose with 1.2s blend and start float fade
       if (floatAnimation) {
-        floatAnimation.transitionTo('float', 0.4);
+        floatAnimation.transitionTo('float', 1.2);
       }
+      if (floatFadeStartTime === null) {
+        floatFadeStartTime = performance.now() / 1000;
+      }
+
       spans.forEach((sp) => {
+        sp.classList.add('intro-revealed');
         sp.style.opacity = '1';
       });
       if (navBar) {
+        navBar.classList.add('intro-revealed');
         navBar.style.opacity = '1';
         navBar.style.pointerEvents = 'auto';
         navBar.style.transition = 'opacity 0.4s ease';
       }
       if (subtitleWrap) {
+        subtitleWrap.classList.add('intro-revealed');
         subtitleWrap.style.opacity = '1';
         subtitleWrap.style.pointerEvents = 'auto';
         subtitleWrap.style.transition = 'opacity 0.4s ease';
       }
       if (bottomActions) {
+        bottomActions.classList.add('intro-revealed');
         bottomActions.style.opacity = '1';
         bottomActions.style.pointerEvents = 'auto';
         bottomActions.style.transition = 'opacity 0.4s ease';
+      }
+      const scrollHint = document.querySelector('.scroll-hint-wrap');
+      if (scrollHint) {
+        scrollHint.classList.add('intro-revealed');
+        scrollHint.style.opacity = '1';
+        scrollHint.style.pointerEvents = 'auto';
+      }
+      const heroLightSpill = document.getElementById('hero-light-spill');
+      if (heroLightSpill) {
+        heroLightSpill.classList.add('intro-revealed');
+        heroLightSpill.style.opacity = '1';
       }
 
       document.documentElement.classList.remove('intro-locked');
@@ -1130,7 +1210,7 @@
       sessionStorage.setItem('coodz_intro_seen', 'true');
 
       if (startMusic && audio && !audio.muted) {
-        fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 1200);
+        fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1200);
       }
 
       if (isDeepLink) {
@@ -1141,6 +1221,9 @@
     }
 
     if (isIntroSkip || isDeepLink || prefersReducedMotion) {
+      headLookMode = 'normal';
+      floatDriverAmplitude = prefersReducedMotion ? 0 : 1.0;
+      floatFadeStartTime = null;
       finishIntroInstant({ startMusic: false });
       if (isIntroSkip || isDeepLink) {
         attachMusicStartOnInteraction();
@@ -1156,14 +1239,27 @@
 
       // 1. Synchronously unlock audio (iOS/Safari strict requirement: no awaits before audio.play())
       if (audio) {
+        if (!audio.src) {
+          audio.src = CONFIG.PLAYLIST[0].src;
+        }
+        const isMuted = localStorage.getItem('coodz_muted') === 'true';
+        if (!isMuted) audio.muted = false;
         audio.volume = 0;
         const playPromise = audio.play();
         if (playPromise !== undefined) {
-          playPromise.catch(() => {});
+          playPromise.then(() => {
+            audioLastError = null;
+          }).catch((err) => {
+            audioLastError = err ? (err.message || String(err)) : 'gate play rejected';
+            console.warn('[Audio] play rejected at gate:', err);
+            audioNeedsRetry = true;
+            attachAudioRetryListener();
+          });
         }
       }
 
       // 2. Start Intro Animation
+      headLookMode = 'intro';
       startIntroSequence();
     }
 
@@ -1331,6 +1427,8 @@
       let topBarRevealed = false;
       let subtitleRevealed = false;
       let homePoseSet = false;
+      let handoverLookSet = false;
+      let currentBuildingLetter = -1;
 
       function introTick(now) {
         if (!isIntroActive || introCancelRequested) return;
@@ -1411,7 +1509,10 @@
             }
           }
 
-          setDesiredLookTarget(curL.centerX, curL.centerY, 0.2);
+          if (letterIndex !== currentBuildingLetter) {
+            currentBuildingLetter = letterIndex;
+            setDesiredLookTarget(curL.centerX, curL.centerY, 0.12);
+          }
 
           if (!curL.built) {
             curL.built = true;
@@ -1470,6 +1571,7 @@
                 el.style.opacity = '0';
                 setTimeout(() => el.remove(), 250 / timeScale);
               });
+              curL.span.classList.add('intro-revealed');
               curL.span.style.transition = `opacity ${0.3 / timeScale}s ease`;
               curL.span.style.opacity = '1';
             }, dissolveTime);
@@ -1496,11 +1598,17 @@
             avatarStage.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
           }
 
+          if (!handoverLookSet) {
+            handoverLookSet = true;
+            setDesiredLookTarget(halfW, halfH, 0.8);
+          }
+
           if (!homePoseSet && u > 0.3) {
             homePoseSet = true;
             if (floatAnimation) {
-              floatAnimation.transitionTo('float', 1.0);
+              floatAnimation.transitionTo('float', 1.2);
             }
+            floatFadeStartTime = performance.now() / 1000;
             if (titleEl) {
               titleEl.classList.add('shimmer-active');
             }
@@ -1515,13 +1623,20 @@
           if (!topBarRevealed) {
             topBarRevealed = true;
             if (navBar) {
+              navBar.classList.add('intro-revealed');
               navBar.style.opacity = '1';
               navBar.style.pointerEvents = 'auto';
               navBar.style.transition = 'opacity 0.4s ease';
             }
             if (audio && !audio.muted) {
-              fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, (CONFIG.INTRO.AUDIO_FADE_DUR * 1000) / timeScale);
+              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, (CONFIG.INTRO.AUDIO_FADE_DUR * 1000) / timeScale);
             }
+            setTimeout(() => {
+              if (audio && (audio.paused || audio.volume < 0.05) && localStorage.getItem('coodz_muted') !== 'true') {
+                audioNeedsRetry = true;
+                attachAudioRetryListener();
+              }
+            }, 1500 / timeScale);
           }
         }
         // Phase 6: Subtitle decrypt and bottom actions fade
@@ -1532,7 +1647,13 @@
 
           if (!subtitleRevealed) {
             subtitleRevealed = true;
+            const heroLightSpill = document.getElementById('hero-light-spill');
+            if (heroLightSpill) {
+              heroLightSpill.classList.add('intro-revealed');
+              heroLightSpill.style.opacity = '1';
+            }
             if (subtitleWrap) {
+              subtitleWrap.classList.add('intro-revealed');
               subtitleWrap.style.opacity = '1';
               subtitleWrap.style.pointerEvents = 'auto';
               subtitleWrap.style.transition = 'opacity 0.4s ease';
@@ -1542,9 +1663,16 @@
               }
             }
             if (bottomActions) {
+              bottomActions.classList.add('intro-revealed');
               bottomActions.style.opacity = '1';
               bottomActions.style.pointerEvents = 'auto';
               bottomActions.style.transition = 'opacity 0.6s ease';
+            }
+            const scrollHint = document.querySelector('.scroll-hint-wrap');
+            if (scrollHint) {
+              scrollHint.classList.add('intro-revealed');
+              scrollHint.style.opacity = '1';
+              scrollHint.style.pointerEvents = 'auto';
             }
           }
         }
@@ -1657,10 +1785,12 @@
     lastComputedStageX = finalX;
     lastComputedStageY = finalY;
 
-    // Apply transform directly to #avatar-stage (translate3d, scale, rotate)
-    const stage = document.getElementById('avatar-stage');
-    if (stage) {
-      stage.style.transform = `translate3d(${finalX.toFixed(2)}px, ${finalY.toFixed(2)}px, 0) scale(${finalScale.toFixed(3)}) rotate(${finalRoll.toFixed(4)}rad)`;
+    // Apply transform directly to #avatar-stage (translate3d, scale, rotate) when intro is not running
+    if (!isIntroActive) {
+      const stage = document.getElementById('avatar-stage');
+      if (stage) {
+        stage.style.transform = `translate3d(${finalX.toFixed(2)}px, ${finalY.toFixed(2)}px, 0) scale(${finalScale.toFixed(3)}) rotate(${finalRoll.toFixed(4)}rad)`;
+      }
     }
 
     // Pass target yaw to model
@@ -1668,18 +1798,30 @@
       targetPlayerRotY = baseYaw;
     }
 
-    // 6. Home float bob (fades out as f -> 0.35, fades back in near 0)
-    const avatarFloatEl = document.getElementById('avatar-float');
-    let homeWeight = 0;
-    if (fDisplay < 0.35) {
-      homeWeight = Math.max(0, 1 - (fDisplay / 0.35));
+    // Float driver amplitude fade (0 to 1 over 1.2s after intro)
+    if (floatFadeStartTime !== null) {
+      const elapsed = nowSec - floatFadeStartTime;
+      floatDriverAmplitude = Math.min(1, Math.max(0, elapsed / FLOAT_FADE_DURATION));
+      if (elapsed >= FLOAT_FADE_DURATION) {
+        floatFadeStartTime = null;
+        floatDriverAmplitude = 1.0;
+      }
+    } else if (!isIntroActive && !prefersReducedMotion) {
+      floatDriverAmplitude = 1.0;
     }
 
+    // Combined home float amplitude (strictly 1 at fDisplay=0 after intro fade; fades out while scrolling away)
+    const homeWeight = (fDisplay < 0.35) ? Math.max(0, 1 - (fDisplay / 0.35)) : 0;
+    currentHomeFloatAmp = prefersReducedMotion ? 0 : (floatDriverAmplitude * homeWeight * (1 - flightW));
+
+    // 6. Home float bob and slow roll tilt
+    const avatarFloatEl = document.getElementById('avatar-float');
     if (!prefersReducedMotion && avatarFloatEl) {
-      if (homeWeight > 0.001) {
-        const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * homeWeight * (1 - flightW);
+      if (currentHomeFloatAmp > 0.001) {
+        const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * currentHomeFloatAmp;
+        const rollDeg = 1.2 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * currentHomeFloatAmp;
         avatarFloatEl.style.transformOrigin = '50% 50%';
-        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0)`;
+        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
       } else if (fDisplay >= 0.35) {
         const nonHomeWeight = Math.min(1, (fDisplay - 0.35) / 0.2);
         const bobPx = (cachedWindowHeight * (CONFIG.FLOAT_BOB / 100)) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * nonHomeWeight * (1 - flightW);
@@ -1899,8 +2041,12 @@
         // 3. Continuous rotation lerp on player.rotation.y (NEVER move the camera)
         if (skinViewer.playerObject) {
           let yawDrift = 0;
-          if (!prefersReducedMotion && fDisplay >= 0.35 && flightW < 0.2) {
-            yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
+          if (!prefersReducedMotion && flightW < 0.2) {
+            if (currentHomeFloatAmp > 0.001) {
+              yawDrift = 0.10 * Math.sin(nowSec * (2 * Math.PI / 11.0)) * currentHomeFloatAmp;
+            } else if (fDisplay >= 0.35) {
+              yawDrift = 0.12 * Math.sin(nowSec * (2 * Math.PI / 11.0));
+            }
           }
           const finalTargetRotY = targetPlayerRotY + CONFIG.ROT_OFFSET + yawDrift;
           skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
@@ -2610,6 +2756,11 @@
       }
     });
 
+    const skipBtn = document.getElementById('audio-skip-btn');
+    if (skipBtn) {
+      skipBtn.setAttribute('aria-label', lang === 'it' ? 'Brano successivo' : 'Next track');
+    }
+
     // If an experience detail is open, immediately re-render it with new language
     if (activeDetailId) {
       renderExperienceDetail(activeDetailId);
@@ -2757,6 +2908,7 @@
   function initAudio() {
     const audio = document.getElementById('bg-audio');
     const muteBtn = document.getElementById('mute-btn');
+    const skipBtn = document.getElementById('audio-skip-btn');
     if (!audio) return;
 
     let playlistIndex = 0;
@@ -2765,6 +2917,9 @@
     function loadTrack(index) {
       playlistIndex = ((index % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
       audio.src = CONFIG.PLAYLIST[playlistIndex].src;
+      try {
+        audio.load();
+      } catch (e) {}
     }
 
     loadTrack(0);
@@ -2787,10 +2942,17 @@
         e.stopPropagation();
         if (audio.muted || audio.volume < 0.05) {
           audio.muted = false;
-          fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 500);
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 500);
           localStorage.setItem('coodz_muted', 'false');
           if (audio.paused) {
-            audio.play().catch(() => {});
+            const p = audio.play();
+            if (p !== undefined) {
+              p.then(() => {
+                audioLastError = null;
+              }).catch((err) => {
+                audioLastError = err ? (err.message || String(err)) : 'unmute play error';
+              });
+            }
           }
         } else {
           fadeAudioVolume(audio, 0, 400, () => {
@@ -2802,10 +2964,62 @@
       });
     }
 
+    function skipNextTrack() {
+      if (!audio) return;
+      const nextIdx = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
+      const isCurrentlyMuted = audio.muted || localStorage.getItem('coodz_muted') === 'true';
+      const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted && audio.volume > 0.01;
+
+      if (isCurrentlyPlaying) {
+        // Quick 0.3s transition: 0.15s fade-out, 0.15s fade-in
+        fadeAudioVolume(audio, 0, 150, () => {
+          loadTrack(nextIdx);
+          const p = audio.play();
+          if (p !== undefined) {
+            p.then(() => {
+              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 150);
+              audioLastError = null;
+            }).catch((err) => {
+              audioLastError = err ? (err.message || String(err)) : 'skip play error';
+            });
+          }
+        });
+      } else {
+        loadTrack(nextIdx);
+        if (isCurrentlyMuted) {
+          audio.muted = true;
+        }
+        if (!audio.paused) {
+          const p = audio.play();
+          if (p !== undefined) {
+            p.then(() => {
+              audioLastError = null;
+            }).catch((err) => {
+              audioLastError = err ? (err.message || String(err)) : 'skip error';
+            });
+          }
+        }
+      }
+    }
+
+    if (skipBtn) {
+      skipBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        skipNextTrack();
+      });
+    }
+
     // Auto loop playlist: track 1 -> track 2 -> track 3 -> loop
     audio.addEventListener('ended', () => {
       loadTrack(playlistIndex + 1);
-      audio.play().catch(() => {});
+      const p = audio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          audioLastError = null;
+        }).catch((err) => {
+          audioLastError = err ? (err.message || String(err)) : 'loop error';
+        });
+      }
     });
 
     audio.addEventListener('play', updateMuteBtnState);
@@ -2826,11 +3040,20 @@
         if (wasPlayingBeforeHidden && localStorage.getItem('coodz_muted') !== 'true') {
           audio.muted = false;
           audio.play().then(() => {
-            fadeAudioVolume(audio, CONFIG.DEFAULT_VOLUME, 400);
-          }).catch(() => {});
+            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 400);
+            audioLastError = null;
+          }).catch((err) => {
+            audioLastError = err ? (err.message || String(err)) : 'resume error';
+          });
         }
       }
     });
+
+    // Debug readout accessor
+    window.__coAudioDebug = {
+      getAudio: () => audio,
+      getTrackIndex: () => playlistIndex
+    };
 
     updateMuteBtnState();
   }
@@ -3034,7 +3257,7 @@
           <span>Force Pose:</span>
           <select id="debug-pose-select" class="debug-select cursor-pointer">
             <option value="auto">[ AUTO / SECTION ]</option>
-            <option value="hold">hold</option>
+            <option value="float">float</option>
             <option value="neutral">neutral</option>
             <option value="open">open</option>
             <option value="reach">reach</option>
@@ -3043,6 +3266,16 @@
             <option value="wave">wave</option>
           </select>
         </label>
+
+        <div style="border-top: 1px solid rgba(94, 168, 255, 0.25); margin: 0.75rem 0 0.5rem; padding-top: 0.5rem;">
+          <div class="debug-row"><span>Float Amp: <b id="val-float-amp">0.00</b></span></div>
+          <div class="debug-row"><span>Current Pose: <b id="val-current-pose">float</b></span></div>
+          <div class="debug-row"><span>Audio State: <b id="val-audio-state">PAUSED</b></span></div>
+          <div class="debug-row"><span>Audio Vol: <b id="val-audio-vol">0.00</b></span></div>
+          <div class="debug-row"><span>Audio Muted: <b id="val-audio-muted">false</b></span></div>
+          <div class="debug-row"><span>Track Index: <b id="val-audio-track">0</b></span></div>
+          <div class="debug-row"><span>Audio Error: <b id="val-audio-err" style="font-size: 0.65rem; color: #ff8b8b;">none</b></span></div>
+        </div>
       </div>
       <pre id="debug-code-output" class="debug-output"></pre>
     `;
@@ -3297,6 +3530,35 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
         });
       }
     });
+
+    const valFloatAmp = panel.querySelector('#val-float-amp');
+    const valCurrentPose = panel.querySelector('#val-current-pose');
+    const valAudioState = panel.querySelector('#val-audio-state');
+    const valAudioVol = panel.querySelector('#val-audio-vol');
+    const valAudioMuted = panel.querySelector('#val-audio-muted');
+    const valAudioTrack = panel.querySelector('#val-audio-track');
+    const valAudioErr = panel.querySelector('#val-audio-err');
+
+    setInterval(() => {
+      if (valFloatAmp) {
+        valFloatAmp.textContent = currentHomeFloatAmp.toFixed(2);
+      }
+      if (valCurrentPose) {
+        valCurrentPose.textContent = floatAnimation ? floatAnimation.currentPoseName : 'none';
+      }
+      const audio = document.getElementById('bg-audio');
+      if (audio) {
+        if (valAudioState) valAudioState.textContent = audio.paused ? 'PAUSED' : 'PLAYING';
+        if (valAudioVol) valAudioVol.textContent = audio.volume.toFixed(2);
+        if (valAudioMuted) valAudioMuted.textContent = String(audio.muted);
+      }
+      if (window.__coAudioDebug && valAudioTrack) {
+        valAudioTrack.textContent = String(window.__coAudioDebug.getTrackIndex());
+      }
+      if (valAudioErr) {
+        valAudioErr.textContent = audioLastError || 'none';
+      }
+    }, 100);
 
     updateConfigReadout();
   }

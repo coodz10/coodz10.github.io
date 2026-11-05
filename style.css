@@ -155,6 +155,18 @@ html, body {
   user-select: none;
 }
 
+/* Pre-paint intro hidden state (Strict pre-paint hiding until each group's timeline moment) */
+.intro-pending .nav-bar:not(.intro-revealed),
+.intro-pending .hero-subtitle-wrap:not(.intro-revealed),
+.intro-pending .home-bottom-actions:not(.intro-revealed),
+.intro-pending .scroll-hint-wrap:not(.intro-revealed),
+.intro-pending .hero-light-spill:not(.intro-revealed),
+.intro-pending #hero-title .ch:not(.intro-revealed) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* Debug Badge for Slow-Motion Inspection (?slow=N) */
 .slow-debug-badge {
   position: fixed;
@@ -433,6 +445,32 @@ html, body {
 @keyframes eqJump {
   0% { transform: scaleY(0.25); }
   100% { transform: scaleY(1); }
+}
+
+/* Skip Track Button [ ⏭ ] (Icon-only cyberpunk bracket button, no text/labels) */
+.skip-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 0.35rem 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.skip-btn:hover {
+  color: var(--accent-blue);
+}
+
+.skip-btn:focus-visible {
+  outline: 1px dashed var(--accent-blue);
+  outline-offset: 2px;
 }
 
 .menu-btn {
@@ -1735,17 +1773,9 @@ html, body {
     padding: 0.75rem 1rem;
   }
   .nav-right {
-    gap: 0.35rem;
-  }
-  .audio-controls {
-    padding-left: 0.45rem;
     gap: 0.25rem;
   }
-  .track-name {
-    max-width: 52px;
-    font-size: 0.62rem;
-  }
-  .nav-btn {
+  .nav-btn, .skip-btn, .mute-btn {
     padding: 0.25rem 0.35rem;
     font-size: 0.72rem;
   }
@@ -1754,6 +1784,22 @@ html, body {
   }
   .snap-section {
     padding: 32vh 1rem 2rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .nav-bar {
+    padding: 0.6rem 0.75rem;
+  }
+  .nav-right {
+    gap: 0.15rem;
+  }
+  .nav-btn, .skip-btn, .mute-btn {
+    padding: 0.2rem 0.25rem;
+    font-size: 0.68rem;
+  }
+  .status-indicator {
+    font-size: 0.64rem;
   }
 }
 

@@ -21,6 +21,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Pre-paint hiding for intro sequence -->
+  <script>
+    (function () {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var isIntroSkip = params.get('intro') === 'skip';
+        var isDeepLink = window.location.hash && window.location.hash !== '#home';
+        var prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!isIntroSkip && !isDeepLink && !prefersReduce) {
+          document.documentElement.classList.add('intro-pending');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
@@ -84,6 +99,8 @@
           <span class="eq-bar"></span>
         </span>
       </button>
+
+      <button id="audio-skip-btn" class="nav-btn skip-btn mono" aria-label="Brano successivo" data-i18n="audioSkip">[ ⏭ ]</button>
 
       <button id="menu-toggle-btn" class="nav-btn mobile-only menu-btn" aria-label="Menu">[ ☰ ]</button>
     </div>
