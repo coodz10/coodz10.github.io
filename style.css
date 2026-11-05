@@ -819,17 +819,31 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  max-height: calc(100vh - 120px);
 }
 
 .about-col-left .section-title {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .about-col-left .about-text {
-  font-size: clamp(1rem, 1.35vw, 1.15rem);
-  line-height: 1.75;
+  font-size: clamp(0.78rem, 0.92vw, 0.88rem);
+  line-height: 1.6;
   color: var(--muted);
-  max-width: 32ch;
+  max-width: min(520px, 100%);
+  margin-bottom: 0;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 168, 255, 0.3) transparent;
+  padding-right: 0.5rem;
+}
+
+.about-col-left .about-text p {
+  margin: 0 0 0.65rem 0;
+}
+
+.about-col-left .about-text p:last-child {
   margin-bottom: 0;
 }
 

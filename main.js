@@ -91,7 +91,7 @@
       scrollHint: '[ SCROLL ]',
       aboutTag: 'LOG_ENTRY_00 // CHI_SONO',
       aboutTitle: 'Chi Sono',
-      aboutText: "Ho una forte passione per l'informatica a 360°: dall'ottimizzazione dei sistemi Windows alla gestione di infrastrutture server, fino alla sicurezza informatica e allo sviluppo di software su misura.",
+      aboutText: `<p>Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.</p><p>Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.</p><p>Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.</p><p>Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.</p>`,
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'RUOLO:',
       aboutRoleVal: 'SysAdmin // Security',
@@ -138,7 +138,7 @@
       scrollHint: '[ SCROLL ]',
       aboutTag: 'LOG_ENTRY_00 // ABOUT_ME',
       aboutTitle: 'About Me',
-      aboutText: 'I have a strong passion for 360° IT: from Windows system optimization to server infrastructure management, cybersecurity, and custom software development.',
+      aboutText: `<p>My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.</p><p>On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.</p><p>In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.</p><p>On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.</p>`,
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'ROLE:',
       aboutRoleVal: 'SysAdmin // Security',
@@ -2153,7 +2153,11 @@
     document.querySelectorAll('[data-i18n]').forEach((el) => {
       const key = el.getAttribute('data-i18n');
       if (dict[key]) {
-        el.textContent = dict[key];
+        if (key === 'aboutText') {
+          el.innerHTML = dict[key];
+        } else {
+          el.textContent = dict[key];
+        }
       }
     });
 
