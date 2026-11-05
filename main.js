@@ -99,6 +99,11 @@
       aboutStatusVal: '[ OPERATIVO ]',
       expTag: 'LOG_ENTRY_01 // ESPERIENZE',
       expTitle: 'Esperienze',
+      expTabAll: '[ TUTTO ]',
+      expCatMinecraft: '[ MINECRAFT ]',
+      expCatDiscord: '[ DISCORD ]',
+      expGroupMinecraft: '[ MINECRAFT ]',
+      expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
       expRedisStatus: '[ Stato: Attivo ]',
       expMetaRole: 'Helper ★★★★☆',
@@ -137,6 +142,11 @@
       aboutStatusVal: '[ OPERATIONAL ]',
       expTag: 'LOG_ENTRY_01 // EXPERIENCES',
       expTitle: 'Experiences',
+      expTabAll: '[ ALL ]',
+      expCatMinecraft: '[ MINECRAFT ]',
+      expCatDiscord: '[ DISCORD ]',
+      expGroupMinecraft: '[ MINECRAFT ]',
+      expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
       expRedisStatus: '[ Status: Active ]',
       expMetaRole: 'Helper ★★★★☆',
@@ -165,7 +175,8 @@
   const EXPERIENCE_DETAILS = {
     redismc: {
       index: '01',
-      title: 'RedisMC',
+      title: 'Redis',
+      category: 'ds',
       role: { it: 'Helper', en: 'Helper' },
       stars: '',
       status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
@@ -181,8 +192,9 @@
       ]
     },
     metamc: {
-      index: '02',
+      index: '01',
       title: 'MetaMc',
+      category: 'minecraft',
       role: { it: 'Helper', en: 'Helper' },
       stars: '★★★★☆',
       status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
@@ -224,8 +236,9 @@
       ]
     },
     pixymc: {
-      index: '03',
+      index: '02',
       title: 'PixyMC',
+      category: 'minecraft',
       role: { it: 'Owner [ SS Manager ]', en: 'Owner [ SS Manager ]' },
       stars: '★★★★☆',
       status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
@@ -1950,6 +1963,26 @@
   }
 
   function initExperienceCards() {
+    // Experience Category Filter Tabs (Tutto / Minecraft / Discord)
+    const tabBtns = document.querySelectorAll('.exp-tab-btn');
+    const expGroups = document.querySelectorAll('.exp-group');
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter');
+        tabBtns.forEach((b) => b.classList.toggle('active', b === btn));
+
+        expGroups.forEach((group) => {
+          const cat = group.getAttribute('data-category');
+          if (filter === 'all' || cat === filter) {
+            group.classList.remove('group-hidden');
+          } else {
+            group.classList.add('group-hidden');
+          }
+        });
+      });
+    });
+
     // Intercept clicks on experience cards to keep visitor inside the single-page layout
     document.querySelectorAll('.card-minimal[data-exp]').forEach((card) => {
       card.addEventListener('click', (e) => {

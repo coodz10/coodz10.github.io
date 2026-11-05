@@ -188,51 +188,74 @@
           <p class="section-tag mono" data-i18n="expTag">LOG_ENTRY_01 // ESPERIENZE</p>
           <h2 class="section-title" data-i18n="expTitle">Esperienze</h2>
 
-          <div class="cards-list">
-            <!-- Card 01: RedisMC -->
-            <a href="#esperienze/redismc" class="card-minimal" data-exp="redismc">
-              <div class="card-left">
-                <span class="card-index mono">01</span>
-                <div>
-                  <h3 class="card-name">RedisMC</h3>
-                  <p class="card-sub mono" data-i18n="expRedisRole">Helper</p>
-                </div>
-              </div>
-              <div class="card-right mono">
-                <span class="card-status accent" data-i18n="expRedisStatus">[ Stato: Attivo ]</span>
-                <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
-              </div>
-            </a>
+          <!-- Category Filter Tabs (Cyberpunk bracket UI) -->
+          <div class="exp-category-tabs mono">
+            <button type="button" class="exp-tab-btn active cursor-pointer" data-filter="all" data-i18n="expTabAll">[ TUTTO ]</button>
+            <button type="button" class="exp-tab-btn cursor-pointer" data-filter="minecraft" data-i18n="expCatMinecraft">[ MINECRAFT ]</button>
+            <button type="button" class="exp-tab-btn cursor-pointer" data-filter="ds" data-i18n="expCatDiscord">[ DISCORD ]</button>
+          </div>
 
-            <!-- Card 02: MetaMc -->
-            <a href="#esperienze/metamc" class="card-minimal" data-exp="metamc">
-              <div class="card-left">
-                <span class="card-index mono">02</span>
-                <div>
-                  <h3 class="card-name">MetaMc</h3>
-                  <p class="card-sub mono" data-i18n="expMetaRole">Helper ★★★★☆</p>
+          <!-- GROUP 1: MINECRAFT -->
+          <div class="exp-group" data-category="minecraft">
+            <div class="exp-group-header mono">
+              <span class="exp-group-tag" data-i18n="expGroupMinecraft">[ MINECRAFT ]</span>
+            </div>
+            <div class="cards-list">
+              <!-- Card 01: MetaMc -->
+              <a href="#esperienze/metamc" class="card-minimal" data-exp="metamc">
+                <div class="card-left">
+                  <span class="card-index mono">01</span>
+                  <div>
+                    <h3 class="card-name">MetaMc</h3>
+                    <p class="card-sub mono" data-i18n="expMetaRole">Helper ★★★★☆</p>
+                  </div>
                 </div>
-              </div>
-              <div class="card-right mono">
-                <span class="card-status muted" data-i18n="expMetaStatus">[ Stato: Dimesso ]</span>
-                <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
-              </div>
-            </a>
+                <div class="card-right mono">
+                  <span class="card-status muted" data-i18n="expMetaStatus">[ Stato: Dimesso ]</span>
+                  <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+                </div>
+              </a>
 
-            <!-- Card 03: PixyMC -->
-            <a href="#esperienze/pixymc" class="card-minimal" data-exp="pixymc">
-              <div class="card-left">
-                <span class="card-index mono">03</span>
-                <div>
-                  <h3 class="card-name">PixyMC</h3>
-                  <p class="card-sub mono" data-i18n="expPixyRole">Owner [ SS Manager ] ★★★★☆</p>
+              <!-- Card 02: PixyMC -->
+              <a href="#esperienze/pixymc" class="card-minimal" data-exp="pixymc">
+                <div class="card-left">
+                  <span class="card-index mono">02</span>
+                  <div>
+                    <h3 class="card-name">PixyMC</h3>
+                    <p class="card-sub mono" data-i18n="expPixyRole">Owner [ SS Manager ] ★★★★☆</p>
+                  </div>
                 </div>
-              </div>
-              <div class="card-right mono">
-                <span class="card-status muted" data-i18n="expPixyStatus">[ Stato: Dimesso ]</span>
-                <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
-              </div>
-            </a>
+                <div class="card-right mono">
+                  <span class="card-status muted" data-i18n="expPixyStatus">[ Stato: Dimesso ]</span>
+                  <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- GROUP 2: DISCORD (DS) -->
+          <div class="exp-group" data-category="ds">
+            <div class="exp-group-header mono">
+              <span class="exp-group-tag" data-i18n="expGroupDiscord">[ DISCORD // DS ]</span>
+            </div>
+            <div class="cards-list">
+              <!-- Card 01: Redis -->
+              <a href="#esperienze/redismc" class="card-minimal" data-exp="redismc">
+                <div class="card-left">
+                  <span class="card-index mono">01</span>
+                  <div>
+                    <h3 class="card-name">Redis</h3>
+                    <p class="card-sub mono" data-i18n="expRedisRole">Helper</p>
+                  </div>
+                </div>
+                <div class="card-right mono">
+                  <span class="card-status accent" data-i18n="expRedisStatus">[ Stato: Attivo ]</span>
+                  <span class="card-link" data-i18n="viewDossier">[ VEDI SCHEDA ]</span>
+                </div>
+              </a>
+
+              <!-- Future Discord server card slot can be placed here -->
+            </div>
           </div>
         </div>
 

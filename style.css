@@ -917,6 +917,65 @@ html, body {
   width: 100%;
 }
 
+/* Category Filter Tabs (Cyberpunk bracket UI) */
+.exp-category-tabs {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.exp-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  padding: 0.35rem 0;
+  transition: color 0.25s ease, text-shadow 0.25s ease;
+  user-select: none;
+}
+
+.exp-tab-btn:hover {
+  color: #fff;
+}
+
+.exp-tab-btn.active {
+  color: var(--accent-blue);
+  text-shadow: 0 0 10px rgba(94, 168, 255, 0.5);
+}
+
+/* Category Groups */
+.exp-group {
+  margin-bottom: 1.75rem;
+  transition: opacity 0.3s ease;
+}
+
+.exp-group:last-child {
+  margin-bottom: 0;
+}
+
+.exp-group.group-hidden {
+  display: none;
+}
+
+.exp-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(124, 131, 168, 0.15);
+}
+
+.exp-group-tag {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-lilac);
+  text-transform: uppercase;
+}
+
 .cards-list {
   display: flex;
   flex-direction: column;
@@ -1022,6 +1081,16 @@ html, body {
 .experiences-view {
   width: 100%;
   transition: opacity 500ms var(--ease-smooth), transform 500ms var(--ease-smooth), filter 500ms var(--ease-smooth);
+}
+
+.experiences-cards-view {
+  width: 100%;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 168, 255, 0.25) transparent;
+  padding-right: 0.35rem;
 }
 
 .experiences-cards-view.view-hidden {
