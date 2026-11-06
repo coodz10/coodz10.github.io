@@ -33,14 +33,17 @@
     ROT_EXP: 0.50,             // esperienze: turns toward cards on the right
     ROT_EXP_DETAIL: 0.65,      // esperienze-detail: turns toward detail panel on right
 
-    // Lighting (illuminates dark skin on dark backgrounds)
-    GLOBAL_LIGHT: 4.5,         // Global ambient light intensity
-    CAMERA_LIGHT: 1.8,         // Directional camera light intensity
+    // Lighting & Emissive Luminous Skin (Dark navy black texels, vivid blues)
+    GLOBAL_LIGHT: 5.2,         // Global ambient light intensity
+    CAMERA_LIGHT: 2.0,         // Directional camera light intensity
+    AVATAR_EMISSIVE: '#0c1238', // Dark navy emissive so pure black texels read dark navy, blues stay vivid
+    AVATAR_EMISSIVE_INTENSITY: 1.0, // Emissive intensity in 3D materials
+    AURA: 1.0,                 // Aura drop-shadow strength (0 to 1)
 
-    // Display Filters & Backdrop Haze (Mild lift, faint edge, soft wide haze)
-    AVATAR_CONTRAST: 0.92,     // Mild lift contrast
-    AVATAR_BRIGHTNESS: 1.25,   // Mild lift brightness
-    HAZE_OPACITY: 0.35,        // Soft wide haze backdrop opacity
+    // Hand-Writing Pen & IK
+    PEN_ARM: 'left',           // 'left' arm faces viewer right when facing camera
+    ARM_TIP: 10.0,             // Skin local Y distance for fingertip (~10 units)
+    WRITE_SCALE: 0.42,         // Avatar scale during writing (~30vh tall)
 
     // Zero-Gravity Float Dynamics
     FLOAT_BOB: 1.2,            // Vertical bob amplitude in vh (period ~6s)
@@ -460,11 +463,11 @@
       rightLeg: { x: -0.25, y: 0, z: 0.04 }
     },
     write: {
-      body: { x: 0.25, y: 0.08, z: 0 },
-      leftArm: { x: 0.45, y: 0.1, z: -0.25 },
-      rightArm: { x: -0.95, y: -0.2, z: 0.15 },
-      leftLeg: { x: -0.22, y: 0, z: -0.04 },
-      rightLeg: { x: -0.16, y: 0, z: 0.04 }
+      body: { x: 0.35, y: 0.08, z: 0 },
+      leftArm: { x: -0.75, y: 0.1, z: -0.25 },
+      rightArm: { x: 0.40, y: -0.1, z: 0.25 },
+      leftLeg: { x: -0.28, y: 0, z: -0.05 },
+      rightLeg: { x: -0.22, y: 0, z: 0.05 }
     },
     place: {
       body: { x: 0.15, y: 0.08, z: 0 },
@@ -919,12 +922,18 @@
         skin.body.rotation.z = b.body.z + bodyNoiseZ;
       }
 
-      skin.leftArm.rotation.x = leftArmRotX;
-      skin.leftArm.rotation.y = b.leftArm.y;
+      const isPenLeft = (CONFIG.PEN_ARM !== 'right');
+      const writeCircleArmLX = isPenLeft ? writeCircleX : 0;
+      const writeCircleArmLY = isPenLeft ? writeCircleY : 0;
+      const writeCircleArmRX = !isPenLeft ? writeCircleX : 0;
+      const writeCircleArmRY = !isPenLeft ? writeCircleY : 0;
+
+      skin.leftArm.rotation.x = leftArmRotX + writeCircleArmLX;
+      skin.leftArm.rotation.y = b.leftArm.y + writeCircleArmLY;
       skin.leftArm.rotation.z = leftArmRotZ + armLDriftZ;
 
-      skin.rightArm.rotation.x = rightArmRotX + writeCircleX;
-      skin.rightArm.rotation.y = b.rightArm.y + writeCircleY;
+      skin.rightArm.rotation.x = rightArmRotX + writeCircleArmRX;
+      skin.rightArm.rotation.y = b.rightArm.y + writeCircleArmRY;
       skin.rightArm.rotation.z = rightArmRotZ + armRDriftZ + waveOscZ;
 
       skin.leftLeg.rotation.x = leftLegRotX + legLDriftX + legSway + writeFlutter;
@@ -1110,6 +1119,7 @@
 
   let debugOverlayGlyphs = false;
   let debugShowWaypointsMask = false;
+  let debugShowIntroPoints = false;
 
   function initGateAndIntro() {
     const gateScreen = document.getElementById('gate-screen');
@@ -1238,6 +1248,9 @@
 
       if (introCanvas) {
         introCanvas.style.display = 'none';
+      }
+      if (titleEl) {
+        titleEl.style.transform = 'translate(-50%, -50%)';
       }
       if (gateScreen) {
         gateScreen.classList.add('faded-out');
@@ -1472,15 +1485,17 @@
           offGlyphsCtx.textAlign = 'left';
           offGlyphsCtx.textBaseline = 'alphabetic';
 
-          const titleRect = titleEl.getBoundingClientRect();
-          const grad = offGlyphsCtx.createLinearGradient(titleRect.left, 0, titleRect.right, 0);
-          grad.addColorStop(0, '#5ea8ff');
-          grad.addColorStop(0.5, '#8b6cff');
-          grad.addColorStop(1, '#c4b5ff');
-          offGlyphsCtx.fillStyle = grad;
+          // 1. Initial title placement: center vertically around 50vh
+          const finalTitleRect = titleEl.getBoundingClientRect();
+          const finalCenterY = finalTitleRect.top + finalTitleRect.height * 0.5;
+          const introCenterY = vh * 0.5;
+          let introDeltaY = introCenterY - finalCenterY;
+          let introDeltaX = 0;
+
+          titleEl.style.transform = `translate(calc(-50% + ${introDeltaX}px), calc(-50% + ${introDeltaY.toFixed(2)}px))`;
 
           const charTexts = ['c', 'o', 'o', 'd', 'z', '_', '1', '0'];
-          const letterData = spans.map((span, idx) => {
+          const rawMetrics = spans.map((span, idx) => {
             const ch = charTexts[idx] || span.textContent.trim();
             const rect = span.getBoundingClientRect();
             const metrics = offGlyphsCtx.measureText(ch);
@@ -1491,10 +1506,6 @@
             const baselineY = rect.top + (rect.height - (fontAscent + fontDescent)) * 0.5 + fontAscent;
             const charX = rect.left;
 
-            // Draw glyph once to offscreen glyph canvas
-            offGlyphsCtx.fillText(ch, charX, baselineY);
-
-            // Compute ink box
             const actLeft = metrics.actualBoundingBoxLeft !== undefined ? metrics.actualBoundingBoxLeft : 0;
             const actRight = metrics.actualBoundingBoxRight !== undefined ? metrics.actualBoundingBoxRight : rect.width;
             const actAscent = metrics.actualBoundingBoxAscent !== undefined ? metrics.actualBoundingBoxAscent : fontAscent;
@@ -1504,11 +1515,42 @@
             const inkRight = charX + actRight;
             const inkTop = baselineY - actAscent;
             const inkBottom = baselineY + actDescent;
+
+            return {
+              ch, span, rect, baselineY, charX, inkLeft, inkRight, inkTop, inkBottom
+            };
+          });
+
+          // Horizontal & Vertical centering by INK bounds: (inkLeft + inkRight)/2 == vw/2 within 1px
+          const totalInkLeft = Math.min(...rawMetrics.map((m) => m.inkLeft));
+          const totalInkRight = Math.max(...rawMetrics.map((m) => m.inkRight));
+          const currentInkCenterX = (totalInkLeft + totalInkRight) * 0.5;
+          const viewportCenterX = vw * 0.5;
+          const horizontalCorr = viewportCenterX - currentInkCenterX;
+
+          const totalInkTop = Math.min(...rawMetrics.map((m) => m.inkTop));
+          const totalInkBottom = Math.max(...rawMetrics.map((m) => m.inkBottom));
+          const currentInkCenterY = (totalInkTop + totalInkBottom) * 0.5;
+          const viewportCenterY = vh * 0.5;
+          const verticalCorr = viewportCenterY - currentInkCenterY;
+
+          introDeltaX += horizontalCorr;
+          introDeltaY += verticalCorr;
+          titleEl.style.transform = `translate(calc(-50% + ${introDeltaX.toFixed(2)}px), calc(-50% + ${introDeltaY.toFixed(2)}px))`;
+
+          // Shift metrics by corrections to align offscreen canvas with DOM
+          const letterData = rawMetrics.map((m) => {
+            const charX = m.charX + horizontalCorr;
+            const baselineY = m.baselineY + verticalCorr;
+            const inkLeft = m.inkLeft + horizontalCorr;
+            const inkRight = m.inkRight + horizontalCorr;
+            const inkTop = m.inkTop + verticalCorr;
+            const inkBottom = m.inkBottom + verticalCorr;
             const inkWidth = Math.max(1, inkRight - inkLeft);
             const inkHeight = Math.max(1, inkBottom - inkTop);
 
             // Build strokes with precalculated segment distances
-            const rawPolys = CHAR_STROKES[ch] || CHAR_STROKES['o'];
+            const rawPolys = CHAR_STROKES[m.ch] || CHAR_STROKES['o'];
             const strokes = rawPolys.map((poly) => {
               const points = poly.map((pt) => ({
                 x: inkLeft + pt[0] * inkWidth,
@@ -1525,18 +1567,37 @@
             });
 
             return {
-              char: ch,
-              span: span,
-              rect: rect,
-              baselineY: baselineY,
-              charX: charX,
-              inkLeft: inkLeft,
-              inkTop: inkTop,
-              inkWidth: inkWidth,
-              inkHeight: inkHeight,
-              strokes: strokes,
+              char: m.ch,
+              span: m.span,
+              rect: {
+                left: m.rect.left + horizontalCorr,
+                right: m.rect.right + horizontalCorr,
+                top: m.rect.top + verticalCorr,
+                bottom: m.rect.bottom + verticalCorr,
+                width: m.rect.width,
+                height: m.rect.height
+              },
+              baselineY,
+              charX,
+              inkLeft,
+              inkTop,
+              inkWidth,
+              inkHeight,
+              strokes,
               completed: false
             };
+          });
+
+          // Draw real glyphs on offscreen canvas with horizontal gradient
+          const finalInkLeft = Math.min(...letterData.map((l) => l.inkLeft));
+          const finalInkRight = Math.max(...letterData.map((l) => l.inkRight));
+          const grad = offGlyphsCtx.createLinearGradient(finalInkLeft, 0, finalInkRight, 0);
+          grad.addColorStop(0, '#5ea8ff');
+          grad.addColorStop(0.5, '#8b6cff');
+          grad.addColorStop(1, '#c4b5ff');
+          offGlyphsCtx.fillStyle = grad;
+          letterData.forEach((ld) => {
+            offGlyphsCtx.fillText(ld.char, ld.charX, ld.baselineY);
           });
 
           // Helper to get point and path along a stroke at progress u (0..1)
@@ -1596,6 +1657,10 @@
 
           let curAvatarX = 0;
           let curAvatarY = -vh * 0.45;
+          let lastAvatarX = 0;
+          let lastAvatarY = -vh * 0.45;
+          let lastAvatarScale = CONFIG.WRITE_SCALE;
+          let settleCrossfadeStarted = false;
           let topBarRevealed = false;
           let subtitleRevealed = false;
           let bottomRevealed = false;
@@ -1621,6 +1686,8 @@
 
             let activePenX = cStart.x;
             let activePenY = cStart.y;
+            let targetPenX = cStart.x;
+            let targetPenY = cStart.y;
             let isPenWriting = false;
 
             // Phase 1: Gate fade out
@@ -1634,17 +1701,24 @@
               const u = (virtualTime - T_GATE) / (T_FLY_IN - T_GATE);
               const t = smoothstep(u);
 
-              const targetX = (cStart.x - (isMobile ? 3 : 4) * (curVw / 100)) - halfW;
-              const targetY = (cStart.y - (isMobile ? 19 : 26) * (curVh / 100)) - halfH;
+              const curWriteScale = isMobile ? (CONFIG.WRITE_SCALE * 0.82) : CONFIG.WRITE_SCALE;
+              const startScale = 0.10;
+              const curScale = startScale + (curWriteScale - startScale) * t;
+
+              // Solve IK translation so avatar arrives ready next to first letter
+              const tipCanvas = projectToCanvas(getAvatarFingertipWorld(CONFIG.ARM_TIP));
+              const tipScreenNoTransX = halfW + ((tipCanvas ? tipCanvas.x : halfW) - halfW) * curScale;
+              const tipScreenNoTransY = halfH + ((tipCanvas ? tipCanvas.y : (halfH + 60)) - halfH) * curScale;
+
+              const targetTx = cStart.x - tipScreenNoTransX;
+              const targetTy = cStart.y - tipScreenNoTransY;
 
               const startX = 0;
               const startY = -curVh * 0.45;
-              const startScale = 0.10;
 
-              curAvatarX = startX + (targetX - startX) * t;
-              curAvatarY = startY + (targetY - startY) * t;
-              const curScale = startScale + (homeKf.scale - startScale) * t;
-              const curRoll = -0.08 * Math.sin(Math.PI * t);
+              curAvatarX = startX + (targetTx - startX) * t;
+              curAvatarY = startY + (targetTy - startY) * t;
+              const curRoll = -0.06 * Math.sin(Math.PI * t);
 
               if (avatarStage) {
                 avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
@@ -1657,8 +1731,13 @@
               setDesiredLookTarget(cStart.x, cStart.y, 0.15);
               activePenX = cStart.x;
               activePenY = cStart.y;
+              targetPenX = cStart.x;
+              targetPenY = cStart.y;
+              lastAvatarX = curAvatarX;
+              lastAvatarY = curAvatarY;
+              lastAvatarScale = curScale;
             }
-            // Phase 3: Avatar writes all 8 letters
+            // Phase 3: Avatar writes all 8 letters with the hand
             else if (virtualTime >= T_WRITE_START && virtualTime < T_WRITE_END) {
               if (avatarStage) avatarStage.style.opacity = '1';
 
@@ -1695,8 +1774,8 @@
                   isPenWriting = true;
                   const uStroke = letterTime / 0.20;
                   const { pen, drawn } = getStrokePathAt(s1, uStroke);
-                  activePenX = pen.x;
-                  activePenY = pen.y;
+                  targetPenX = pen.x;
+                  targetPenY = pen.y;
 
                   offMaskCtx.save();
                   offMaskCtx.beginPath();
@@ -1718,15 +1797,15 @@
                   const fromP = s1.points[s1.points.length - 1];
                   const toP = s2.points[0];
                   const arc = curVh * 0.04;
-                  activePenX = fromP.x + (toP.x - fromP.x) * hopU;
-                  activePenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
+                  targetPenX = fromP.x + (toP.x - fromP.x) * hopU;
+                  targetPenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
                 } else if (letterTime >= 0.26 && letterTime < 0.39) {
                   // Stroke 2: stem
                   isPenWriting = true;
                   const uStroke = (letterTime - 0.26) / 0.13;
                   const { pen, drawn } = getStrokePathAt(s2, uStroke);
-                  activePenX = pen.x;
-                  activePenY = pen.y;
+                  targetPenX = pen.x;
+                  targetPenY = pen.y;
 
                   offMaskCtx.save();
                   offMaskCtx.beginPath();
@@ -1755,8 +1834,8 @@
                   const fromP = s2.points[s2.points.length - 1];
                   const toP = nextL ? nextL.strokes[0].points[0] : fromP;
                   const arc = curVh * 0.04;
-                  activePenX = fromP.x + (toP.x - fromP.x) * hopU;
-                  activePenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
+                  targetPenX = fromP.x + (toP.x - fromP.x) * hopU;
+                  targetPenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
                 }
               } else {
                 // Single-stroke letters: write 0..0.37s, then air hop 0.37..0.45s
@@ -1767,8 +1846,8 @@
                   isPenWriting = true;
                   const uStroke = letterTime / writeLimit;
                   const { pen, drawn } = getStrokePathAt(stroke, uStroke);
-                  activePenX = pen.x;
-                  activePenY = pen.y;
+                  targetPenX = pen.x;
+                  targetPenY = pen.y;
 
                   offMaskCtx.save();
                   offMaskCtx.beginPath();
@@ -1797,27 +1876,58 @@
                   const fromP = stroke.points[stroke.points.length - 1];
                   const toP = nextL ? nextL.strokes[0].points[0] : fromP;
                   const arc = curVh * 0.04;
-                  activePenX = fromP.x + (toP.x - fromP.x) * hopU;
-                  activePenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
+                  targetPenX = fromP.x + (toP.x - fromP.x) * hopU;
+                  targetPenY = fromP.y + (toP.y - fromP.y) * hopU - arc * Math.sin(Math.PI * hopU);
                 }
               }
 
-              // Avatar follows pen with smooth lag (~0.1 lerp)
-              const targetX = (activePenX - (isMobile ? 3 : 4) * (curVw / 100)) - halfW;
-              const targetY = (activePenY - (isMobile ? 19 : 26) * (curVh / 100)) - halfH;
+              // IK-lite: solve stage translation so the avatar's fingertip lands exactly on target
+              const curWriteScale = isMobile ? (CONFIG.WRITE_SCALE * 0.82) : CONFIG.WRITE_SCALE;
+              const tipCanvas = projectToCanvas(getAvatarFingertipWorld(CONFIG.ARM_TIP));
 
-              const lerpSpeed = Math.min(1, dtSec * 10.0);
-              curAvatarX += (targetX - curAvatarX) * lerpSpeed;
-              curAvatarY += (targetY - curAvatarY) * lerpSpeed;
+              if (tipCanvas) {
+                const tipScreenNoTransX = halfW + (tipCanvas.x - halfW) * curWriteScale;
+                const tipScreenNoTransY = halfH + (tipCanvas.y - halfH) * curWriteScale;
 
-              const curRoll = 0.04 * Math.sin(virtualTime * 4.0);
+                const desiredTx = targetPenX - tipScreenNoTransX;
+                const desiredTy = targetPenY - tipScreenNoTransY;
+
+                // Smooth with lerp factor 0.35
+                curAvatarX += (desiredTx - curAvatarX) * 0.35;
+                curAvatarY += (desiredTy - curAvatarY) * 0.35;
+
+                let actualTipX = tipScreenNoTransX + curAvatarX;
+                let actualTipY = tipScreenNoTransY + curAvatarY;
+
+                // Snap if error exceeds 10px so pen dot always sits on the hand
+                const errDist = Math.hypot(targetPenX - actualTipX, targetPenY - actualTipY);
+                if (errDist > 10) {
+                  curAvatarX = desiredTx;
+                  curAvatarY = desiredTy;
+                  actualTipX = targetPenX;
+                  actualTipY = targetPenY;
+                }
+
+                activePenX = actualTipX;
+                activePenY = actualTipY;
+              } else {
+                activePenX = targetPenX;
+                activePenY = targetPenY;
+                curAvatarX = targetPenX - halfW;
+                curAvatarY = targetPenY - halfH;
+              }
+
+              lastAvatarX = curAvatarX;
+              lastAvatarY = curAvatarY;
+              lastAvatarScale = curWriteScale;
+
               if (avatarStage) {
-                avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+                avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${curWriteScale.toFixed(3)}) rotate(0rad)`;
               }
 
               setDesiredLookTarget(activePenX, activePenY, 0.08);
             }
-            // Phase 4: Settle. Avatar glides to CONFIG.HOME_AVATAR, title shimmers
+            // Phase 4: Settle & Glide Down. Title glides to ~71vh, avatar glides up to HOME_AVATAR
             else if (virtualTime >= T_WRITE_END && virtualTime < T_SETTLE_END) {
               // Ensure all cells are fully filled
               for (let k = 0; k < 8; k++) {
@@ -1830,22 +1940,52 @@
                 }
               }
 
-              const u = (virtualTime - T_WRITE_END) / (T_SETTLE_END - T_WRITE_END);
-              const t = smoothstep(u);
+              // Crossfade canvas -> DOM glyphs (250ms) immediately when writing completes
+              if (!settleCrossfadeStarted) {
+                settleCrossfadeStarted = true;
+                spans.forEach((sp) => {
+                  sp.classList.add('intro-revealed');
+                  sp.style.opacity = '1';
+                });
+                if (introCanvas) {
+                  introCanvas.style.transition = 'opacity 0.25s ease';
+                  introCanvas.style.opacity = '0';
+                  setTimeout(() => {
+                    if (introCanvas && !isIntroActive) introCanvas.style.display = 'none';
+                  }, 260);
+                }
+              }
 
-              const lastL = letterData[7];
-              const fromX = (lastL.strokes[0].points[lastL.strokes[0].points.length - 1].x - (isMobile ? 3 : 4) * (curVw / 100)) - halfW;
-              const fromY = (lastL.strokes[0].points[lastL.strokes[0].points.length - 1].y - (isMobile ? 19 : 26) * (curVh / 100)) - halfH;
+              const u = (virtualTime - T_WRITE_END) / (T_SETTLE_END - T_WRITE_END); // 0.9s duration
+              const t = easeInOutCubic(Math.min(1, Math.max(0, u)));
+
+              // Animate title wrapper transform to 0 over 0.9s
+              const curDeltaX = introDeltaX * (1 - t);
+              const curDeltaY = introDeltaY * (1 - t);
+              if (titleEl) {
+                if (Math.abs(curDeltaX) > 0.05 || Math.abs(curDeltaY) > 0.05) {
+                  titleEl.style.transform = `translate(calc(-50% + ${curDeltaX.toFixed(2)}px), calc(-50% + ${curDeltaY.toFixed(2)}px))`;
+                } else {
+                  titleEl.style.transform = 'translate(-50%, -50%)';
+                }
+              }
+
+              // Animate avatar to CONFIG.HOME_AVATAR
+              const fromX = lastAvatarX;
+              const fromY = lastAvatarY;
+              const fromScale = lastAvatarScale;
 
               const toX = homeKf.x;
               const toY = homeKf.y;
+              const toScale = homeKf.scale;
 
               curAvatarX = fromX + (toX - fromX) * t;
               curAvatarY = fromY + (toY - fromY) * t;
+              const curScale = fromScale + (toScale - fromScale) * t;
               const curRoll = 0.04 * Math.sin(Math.PI * t) * (toX >= fromX ? 1 : -1);
 
               if (avatarStage) {
-                avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${homeKf.scale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+                avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
               }
 
               if (!handoverLookSet) {
@@ -1853,7 +1993,7 @@
                 setDesiredLookTarget(halfW, halfH, 0.8);
               }
 
-              if (!homePoseSet && u > 0.1) {
+              if (!homePoseSet && u > 0.05) {
                 homePoseSet = true;
                 if (floatAnimation) {
                   floatAnimation.transitionTo('float', 0.9);
@@ -2028,6 +2168,68 @@
             }
 
             // Debug overlays if enabled
+            if (debugShowIntroPoints) {
+              introCtx.save();
+              // 1. Viewport Center Lines
+              introCtx.strokeStyle = 'rgba(255, 255, 0, 0.45)';
+              introCtx.lineWidth = 1;
+              introCtx.setLineDash([4, 4]);
+              introCtx.beginPath();
+              introCtx.moveTo(halfW, 0);
+              introCtx.lineTo(halfW, curVh);
+              introCtx.moveTo(0, halfH);
+              introCtx.lineTo(curVw, halfH);
+              introCtx.stroke();
+              introCtx.setLineDash([]);
+              introCtx.fillStyle = '#ffff00';
+              introCtx.font = '11px monospace';
+              introCtx.fillText('VIEWPORT CENTER (50vw, 50vh)', halfW + 6, halfH - 8);
+
+              // 2. Ink bounds & Ink center
+              const tInkLeft = Math.min(...letterData.map((l) => l.inkLeft));
+              const tInkRight = Math.max(...letterData.map((l) => l.inkRight));
+              const tInkTop = Math.min(...letterData.map((l) => l.inkTop));
+              const tInkBottom = Math.max(...letterData.map((l) => l.inkBottom));
+              const midInkX = (tInkLeft + tInkRight) * 0.5;
+
+              introCtx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+              introCtx.strokeRect(tInkLeft, tInkTop, tInkRight - tInkLeft, tInkBottom - tInkTop);
+              introCtx.strokeStyle = '#00ff88';
+              introCtx.beginPath();
+              introCtx.moveTo(midInkX, tInkTop - 12);
+              introCtx.lineTo(midInkX, tInkBottom + 12);
+              introCtx.stroke();
+              introCtx.fillStyle = '#00ff88';
+              introCtx.fillText(`INK CENTER: ${midInkX.toFixed(1)}px (diff: ${(midInkX - halfW).toFixed(1)}px)`, tInkLeft, tInkTop - 14);
+
+              letterData.forEach((ld) => {
+                introCtx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+                introCtx.strokeRect(ld.inkLeft, ld.inkTop, ld.inkWidth, ld.inkHeight);
+              });
+
+              // 3. Target point
+              introCtx.fillStyle = '#ff8800';
+              introCtx.beginPath();
+              introCtx.arc(targetPenX, targetPenY, 5, 0, Math.PI * 2);
+              introCtx.fill();
+              introCtx.fillText('TARGET', targetPenX + 8, targetPenY - 4);
+
+              // 4. Computed fingertip
+              introCtx.fillStyle = '#ff00ff';
+              introCtx.beginPath();
+              introCtx.arc(activePenX, activePenY, 6, 0, Math.PI * 2);
+              introCtx.fill();
+              introCtx.fillText(`FINGERTIP [${CONFIG.PEN_ARM}] (tip=${CONFIG.ARM_TIP})`, activePenX + 8, activePenY + 12);
+
+              // Line between target and fingertip
+              introCtx.strokeStyle = '#ff0055';
+              introCtx.beginPath();
+              introCtx.moveTo(activePenX, activePenY);
+              introCtx.lineTo(targetPenX, targetPenY);
+              introCtx.stroke();
+              introCtx.restore();
+            }
+
             if (debugShowWaypointsMask) {
               letterData.forEach((ld) => {
                 introCtx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
@@ -2206,7 +2408,7 @@
 
     // 7. Title float & letter wave + scrub
     const heroTitle = document.getElementById('hero-title');
-    if (heroTitle) {
+    if (heroTitle && !isIntroActive) {
       if (fDisplay <= 0.6) {
         const p = fDisplay / 0.6;
         const s = 1 + 0.18 * p;
@@ -2343,6 +2545,98 @@
     }
   }
 
+  // ==========================================================================
+  // AVATAR MATERIAL & AURA ENGINE (3D Emissive luminous skin + Silhouette aura)
+  // ==========================================================================
+  let skinMaterialsConfigured = false;
+
+  function applyAvatarMaterialSettings() {
+    if (!skinViewer || !skinViewer.playerObject) return;
+    try {
+      skinViewer.playerObject.traverse((node) => {
+        if (node.isMesh && node.material) {
+          const mats = Array.isArray(node.material) ? node.material : [node.material];
+          mats.forEach((mat) => {
+            if (mat && mat.emissive) {
+              if (typeof mat.emissive.set === 'function') {
+                mat.emissive.set(CONFIG.AVATAR_EMISSIVE);
+              }
+              mat.emissiveIntensity = CONFIG.AVATAR_EMISSIVE_INTENSITY;
+              mat.needsUpdate = true;
+            }
+          });
+        }
+      });
+      if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
+      if (skinViewer.cameraLight) skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
+    } catch (err) {
+      console.warn('[Avatar] Error applying emissive material settings:', err);
+    }
+  }
+
+  function updateAvatarAura() {
+    const canvas = document.getElementById('avatar-canvas');
+    const fallbackAura = document.getElementById('avatar-aura-fallback');
+    if (!canvas) return;
+
+    const strength = (typeof CONFIG.AURA === 'number') ? Math.max(0, Math.min(1, CONFIG.AURA)) : 1.0;
+
+    if (qualityTier === 'low') {
+      canvas.style.filter = 'none';
+      if (fallbackAura) {
+        fallbackAura.style.display = strength > 0.05 ? 'block' : 'none';
+        fallbackAura.style.opacity = (strength * 0.18).toFixed(3);
+      }
+      return;
+    }
+
+    if (fallbackAura) fallbackAura.style.display = 'none';
+
+    if (strength <= 0.01) {
+      canvas.style.filter = 'none';
+    } else {
+      const a1 = (0.26 * strength).toFixed(3);
+      const a2 = (0.13 * strength).toFixed(3);
+      canvas.style.filter = `drop-shadow(0 0 14px rgba(94, 168, 255, ${a1})) drop-shadow(0 0 40px rgba(139, 108, 255, ${a2}))`;
+    }
+  }
+
+  function getAvatarFingertipWorld(tipDistance = CONFIG.ARM_TIP) {
+    if (!skinViewer || !skinViewer.playerObject || !skinViewer.playerObject.skin || !skinViewer.camera) {
+      return null;
+    }
+    const skin = skinViewer.playerObject.skin;
+    const arm = (CONFIG.PEN_ARM === 'right') ? skin.rightArm : skin.leftArm;
+    if (!arm) return null;
+
+    try {
+      skinViewer.playerObject.updateMatrixWorld(true);
+      const Vector3 = skinViewer.camera.position.constructor;
+      const localTip = new Vector3(0, -tipDistance, 0);
+      const worldTip = localTip.clone();
+      arm.localToWorld(worldTip);
+      return worldTip;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function projectToCanvas(worldPoint) {
+    if (!worldPoint || !skinViewer || !skinViewer.camera) return null;
+    try {
+      const p = worldPoint.clone();
+      p.project(skinViewer.camera);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      return {
+        x: (p.x * 0.5 + 0.5) * w,
+        y: (-p.y * 0.5 + 0.5) * h
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   function initAvatar() {
     const canvas = document.getElementById('avatar-canvas');
     const fallbackImg = document.getElementById('avatar-fallback');
@@ -2398,14 +2692,25 @@
       skinViewer.animation = new FloatAnimation();
       floatAnimation = skinViewer.animation;
 
-      // Apply light intensities from CONFIG
+      // Apply light intensities and 3D emissive material luminosity
       if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
       if (skinViewer.cameraLight) skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
+      applyAvatarMaterialSettings();
+      updateAvatarAura();
 
-      // Ensure CSS filter variables and haze opacity match CONFIG
-      document.documentElement.style.setProperty('--avatar-contrast', CONFIG.AVATAR_CONTRAST);
-      document.documentElement.style.setProperty('--avatar-brightness', CONFIG.AVATAR_BRIGHTNESS);
-      document.documentElement.style.setProperty('--avatar-haze-opacity', CONFIG.HAZE_OPACITY);
+      if (skinViewer.loadSkin) {
+        const origLoadSkin = skinViewer.loadSkin.bind(skinViewer);
+        skinViewer.loadSkin = function (...args) {
+          const res = origLoadSkin(...args);
+          if (res && typeof res.then === 'function') {
+            res.then(() => {
+              applyAvatarMaterialSettings();
+              updateAvatarAura();
+            }).catch(() => {});
+          }
+          return res;
+        };
+      }
 
       // Initial rotation facing front (ROT_OFFSET = 0)
       if (skinViewer.playerObject) {
@@ -2424,6 +2729,16 @@
         const nowSec = now / 1000;
         const dt = Math.min(0.1, (now - lastRenderTime) / 1000);
         lastRenderTime = now;
+
+        // Apply emissive materials once meshes become ready
+        if (!skinMaterialsConfigured && skinViewer.playerObject) {
+          let hasMeshes = false;
+          skinViewer.playerObject.traverse((n) => { if (n.isMesh) hasMeshes = true; });
+          if (hasMeshes) {
+            applyAvatarMaterialSettings();
+            skinMaterialsConfigured = true;
+          }
+        }
 
         // 1. Run scroll-driven flight & keyframe interpolation
         runFrameFlightTick(nowSec, dt);
@@ -3847,20 +4162,32 @@
           <input type="range" id="slider-haze" min="0" max="1.0" step="0.05" value="${CONFIG.HAZE_OPACITY}">
         </label>
         <label class="debug-row">
-          <span>Contrast: <b id="val-contrast">${CONFIG.AVATAR_CONTRAST.toFixed(2)}</b></span>
-          <input type="range" id="slider-contrast" min="0.4" max="1.6" step="0.02" value="${CONFIG.AVATAR_CONTRAST}">
-        </label>
-        <label class="debug-row">
-          <span>Brightness: <b id="val-brightness">${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)}</b></span>
-          <input type="range" id="slider-brightness" min="0.8" max="2.5" step="0.05" value="${CONFIG.AVATAR_BRIGHTNESS}">
-        </label>
-        <label class="debug-row">
           <span>Global Light: <b id="val-glight">${CONFIG.GLOBAL_LIGHT.toFixed(1)}</b></span>
           <input type="range" id="slider-glight" min="0" max="8.0" step="0.1" value="${CONFIG.GLOBAL_LIGHT}">
         </label>
         <label class="debug-row">
           <span>Camera Light: <b id="val-clight">${CONFIG.CAMERA_LIGHT.toFixed(1)}</b></span>
           <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
+        </label>
+        <label class="debug-row">
+          <span>Emissive Color: <b id="val-emissive-col">${CONFIG.AVATAR_EMISSIVE}</b></span>
+          <input type="color" id="picker-emissive" value="${CONFIG.AVATAR_EMISSIVE}">
+        </label>
+        <label class="debug-row">
+          <span>Emissive Int: <b id="val-emissive-int">${CONFIG.AVATAR_EMISSIVE_INTENSITY.toFixed(2)}</b></span>
+          <input type="range" id="slider-emissive-int" min="0" max="3.0" step="0.05" value="${CONFIG.AVATAR_EMISSIVE_INTENSITY}">
+        </label>
+        <label class="debug-row">
+          <span>Aura Glow: <b id="val-aura">${CONFIG.AURA.toFixed(2)}</b></span>
+          <input type="range" id="slider-aura" min="0" max="1.0" step="0.05" value="${CONFIG.AURA}">
+        </label>
+        <label class="debug-row">
+          <span>Arm Tip: <b id="val-arm-tip">${CONFIG.ARM_TIP.toFixed(1)}</b></span>
+          <input type="range" id="slider-arm-tip" min="4" max="16" step="0.5" value="${CONFIG.ARM_TIP}">
+        </label>
+        <label class="debug-row">
+          <span>Write Scale: <b id="val-write-scale">${CONFIG.WRITE_SCALE.toFixed(2)}</b></span>
+          <input type="range" id="slider-write-scale" min="0.25" max="0.75" step="0.01" value="${CONFIG.WRITE_SCALE}">
         </label>
         <label class="debug-row">
           <span>Home Scale: <b id="val-home-scale">${CONFIG.HOME_AVATAR.scale.toFixed(2)}</b></span>
@@ -3909,6 +4236,11 @@
           <button id="toggle-show-waypoints" class="debug-toggle-btn cursor-pointer">[ SHOW WAYPOINTS: OFF ]</button>
         </div>
 
+        <div class="debug-toggles-row">
+          <button id="toggle-intro-debug" class="debug-toggle-btn cursor-pointer">[ INTRO DEBUG: OFF ]</button>
+          <button id="toggle-pen-arm" class="debug-toggle-btn cursor-pointer">[ PEN ARM: ${CONFIG.PEN_ARM} ]</button>
+        </div>
+
         <label class="debug-row">
           <span>Force Pose:</span>
           <select id="debug-pose-select" class="debug-select cursor-pointer">
@@ -3945,10 +4277,18 @@
     const sliderBob = panel.querySelector('#slider-bob');
     const sliderBlend = panel.querySelector('#slider-blend');
     const sliderHaze = panel.querySelector('#slider-haze');
-    const sliderContrast = panel.querySelector('#slider-contrast');
-    const sliderBrightness = panel.querySelector('#slider-brightness');
     const sliderGLight = panel.querySelector('#slider-glight');
     const sliderCLight = panel.querySelector('#slider-clight');
+    const pickerEmissive = panel.querySelector('#picker-emissive');
+    const valEmissiveCol = panel.querySelector('#val-emissive-col');
+    const sliderEmissiveInt = panel.querySelector('#slider-emissive-int');
+    const valEmissiveInt = panel.querySelector('#val-emissive-int');
+    const sliderAura = panel.querySelector('#slider-aura');
+    const valAura = panel.querySelector('#val-aura');
+    const sliderArmTip = panel.querySelector('#slider-arm-tip');
+    const valArmTip = panel.querySelector('#val-arm-tip');
+    const sliderWriteScale = panel.querySelector('#slider-write-scale');
+    const valWriteScale = panel.querySelector('#val-write-scale');
     const sliderHomeScale = panel.querySelector('#slider-home-scale');
     const sliderHomeY = panel.querySelector('#slider-home-y');
     const sliderArcX = panel.querySelector('#slider-arc-x');
@@ -3965,8 +4305,6 @@
     const valBob = panel.querySelector('#val-bob');
     const valBlend = panel.querySelector('#val-blend');
     const valHaze = panel.querySelector('#val-haze');
-    const valContrast = panel.querySelector('#val-contrast');
-    const valBrightness = panel.querySelector('#val-brightness');
     const valGLight = panel.querySelector('#val-glight');
     const valCLight = panel.querySelector('#val-clight');
     const valHomeScale = panel.querySelector('#val-home-scale');
@@ -3982,6 +4320,8 @@
     const togglePitch = panel.querySelector('#toggle-pitch');
     const toggleOverlayGlyphs = panel.querySelector('#toggle-overlay-glyphs');
     const toggleShowWaypoints = panel.querySelector('#toggle-show-waypoints');
+    const toggleIntroDebug = panel.querySelector('#toggle-intro-debug');
+    const togglePenArm = panel.querySelector('#toggle-pen-arm');
     const poseSelect = panel.querySelector('#debug-pose-select');
     const codeOutput = panel.querySelector('#debug-code-output');
     const copyBtn = panel.querySelector('#debug-copy-btn');
@@ -3993,12 +4333,14 @@ AVATAR_Y_OFFSET: ${CONFIG.AVATAR_Y_OFFSET},
 ROT_OFFSET: ${(CONFIG.ROT_OFFSET / Math.PI).toFixed(2)} * Math.PI, // ${(CONFIG.ROT_OFFSET).toFixed(3)} rad
 FLOAT_BOB: ${CONFIG.FLOAT_BOB.toFixed(1)},
 POSE_BLEND: ${CONFIG.POSE_BLEND.toFixed(1)},
-AVATAR_CONTRAST: ${CONFIG.AVATAR_CONTRAST.toFixed(2)},
-AVATAR_BRIGHTNESS: ${CONFIG.AVATAR_BRIGHTNESS.toFixed(2)},
-HEAD_YAW_SIGN: ${CONFIG.HEAD_YAW_SIGN},
-HEAD_PITCH_SIGN: ${CONFIG.HEAD_PITCH_SIGN},
 GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
 CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)},
+AVATAR_EMISSIVE: '${CONFIG.AVATAR_EMISSIVE}',
+AVATAR_EMISSIVE_INTENSITY: ${CONFIG.AVATAR_EMISSIVE_INTENSITY.toFixed(2)},
+AURA: ${CONFIG.AURA.toFixed(2)},
+ARM_TIP: ${CONFIG.ARM_TIP.toFixed(1)},
+WRITE_SCALE: ${CONFIG.WRITE_SCALE.toFixed(2)},
+PEN_ARM: '${CONFIG.PEN_ARM}',
 HOME_AVATAR: { x: ${CONFIG.HOME_AVATAR.x}, y: ${CONFIG.HOME_AVATAR.y}, scale: ${CONFIG.HOME_AVATAR.scale.toFixed(2)}, yaw: ${CONFIG.HOME_AVATAR.yaw} },
 AUDIO_VOLUME: ${CONFIG.AUDIO_VOLUME},
 AUDIO_GAIN: ${CONFIG.AUDIO_GAIN},
@@ -4054,19 +4396,63 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       updateConfigReadout();
     });
 
-    sliderContrast.addEventListener('input', (e) => {
-      CONFIG.AVATAR_CONTRAST = parseFloat(e.target.value);
-      valContrast.textContent = CONFIG.AVATAR_CONTRAST.toFixed(2);
-      document.documentElement.style.setProperty('--avatar-contrast', CONFIG.AVATAR_CONTRAST);
-      updateConfigReadout();
-    });
+    if (pickerEmissive) {
+      pickerEmissive.addEventListener('input', (e) => {
+        CONFIG.AVATAR_EMISSIVE = e.target.value;
+        if (valEmissiveCol) valEmissiveCol.textContent = CONFIG.AVATAR_EMISSIVE;
+        applyAvatarMaterialSettings();
+        updateConfigReadout();
+      });
+    }
 
-    sliderBrightness.addEventListener('input', (e) => {
-      CONFIG.AVATAR_BRIGHTNESS = parseFloat(e.target.value);
-      valBrightness.textContent = CONFIG.AVATAR_BRIGHTNESS.toFixed(2);
-      document.documentElement.style.setProperty('--avatar-brightness', CONFIG.AVATAR_BRIGHTNESS);
-      updateConfigReadout();
-    });
+    if (sliderEmissiveInt) {
+      sliderEmissiveInt.addEventListener('input', (e) => {
+        CONFIG.AVATAR_EMISSIVE_INTENSITY = parseFloat(e.target.value);
+        if (valEmissiveInt) valEmissiveInt.textContent = CONFIG.AVATAR_EMISSIVE_INTENSITY.toFixed(2);
+        applyAvatarMaterialSettings();
+        updateConfigReadout();
+      });
+    }
+
+    if (sliderAura) {
+      sliderAura.addEventListener('input', (e) => {
+        CONFIG.AURA = parseFloat(e.target.value);
+        if (valAura) valAura.textContent = CONFIG.AURA.toFixed(2);
+        updateAvatarAura();
+        updateConfigReadout();
+      });
+    }
+
+    if (sliderArmTip) {
+      sliderArmTip.addEventListener('input', (e) => {
+        CONFIG.ARM_TIP = parseFloat(e.target.value);
+        if (valArmTip) valArmTip.textContent = CONFIG.ARM_TIP.toFixed(1);
+        updateConfigReadout();
+      });
+    }
+
+    if (sliderWriteScale) {
+      sliderWriteScale.addEventListener('input', (e) => {
+        CONFIG.WRITE_SCALE = parseFloat(e.target.value);
+        if (valWriteScale) valWriteScale.textContent = CONFIG.WRITE_SCALE.toFixed(2);
+        updateConfigReadout();
+      });
+    }
+
+    if (toggleIntroDebug) {
+      toggleIntroDebug.addEventListener('click', () => {
+        debugShowIntroPoints = !debugShowIntroPoints;
+        toggleIntroDebug.textContent = `[ INTRO DEBUG: ${debugShowIntroPoints ? 'ON' : 'OFF'} ]`;
+      });
+    }
+
+    if (togglePenArm) {
+      togglePenArm.addEventListener('click', () => {
+        CONFIG.PEN_ARM = (CONFIG.PEN_ARM === 'left') ? 'right' : 'left';
+        togglePenArm.textContent = `[ PEN ARM: ${CONFIG.PEN_ARM} ]`;
+        updateConfigReadout();
+      });
+    }
 
     sliderGLight.addEventListener('input', (e) => {
       CONFIG.GLOBAL_LIGHT = parseFloat(e.target.value);

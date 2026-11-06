@@ -46,10 +46,6 @@
   --dur: 0.5s;
   --dur-slow: 0.9s;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Avatar Canvas display filters */
-  --avatar-contrast: 0.92;
-  --avatar-brightness: 1.25;
 }
 
 /* ==========================================================================
@@ -159,18 +155,18 @@ html, body {
   z-index: 0;
 }
 
-/* 2D Intro Writing Canvas */
+/* 2D Intro Writing Canvas (Z-Index 7: Above avatar stage during intro) */
 .intro-canvas {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 5;
+  z-index: 7;
   transition: opacity var(--dur-fast) ease;
 }
 
-/* Avatar Fullscreen Stage (Z-Index 6: Above canvas & title) */
+/* Avatar Fullscreen Stage (Z-Index 6) */
 .avatar-stage {
   position: fixed;
   inset: 0;
@@ -200,13 +196,26 @@ html, body {
   will-change: transform;
 }
 
+/* Low-tier static fallback aura */
+.avatar-aura-fallback {
+  position: absolute;
+  width: min(45vh, 45vw);
+  height: min(65vh, 65vw);
+  border-radius: 50% !important;
+  background: radial-gradient(ellipse at center, rgba(94, 168, 255, 0.18) 0%, rgba(139, 108, 255, 0.08) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  display: none;
+  transform: translate3d(0, 0, 0);
+}
+
 .avatar-canvas {
   width: 100vw;
   height: 100vh;
   display: block;
   position: relative;
   z-index: 1;
-  filter: contrast(var(--avatar-contrast)) brightness(var(--avatar-brightness));
+  filter: none;
 }
 
 .avatar-fallback {
@@ -214,7 +223,7 @@ html, body {
   width: auto;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: contrast(var(--avatar-contrast)) brightness(var(--avatar-brightness));
+  filter: none;
 }
 
 /* Giant Faint Background Words (Stroke 1px --line, no fill, opacity 0.07) */
