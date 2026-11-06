@@ -1,8 +1,21 @@
 /* ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. */
 
 /* ==========================================================================
-   PORTFOLIO COODZ_10 - UNIFIED DESIGN SYSTEM
-   One cohesive style across home, chi_sono, esperienze, contatti, and detail view.
+   PORTFOLIO COODZ_10 - MINIMAL CYBERPUNK DESIGN SYSTEM
+   Organized by:
+   1. TOKENS (Variables in :root)
+   2. BASE & RESET
+   3. LAYOUT & SCROLL CONTAINER (Vertical Budgets & Z-Index Layering)
+   4. COMPONENTS (Typography, Meta, Hairlines, Tabs, Bracket Buttons, Rows)
+   5. NAVIGATION & AUDIO
+   6. SECTION 1: HOME
+   7. SECTION 2: CHI_SONO (About Me)
+   8. SECTION 3: ESPERIENZE (Experiences & Detail View)
+   9. SECTION 4: CONTATTI (Contact)
+   10. PROOFS MODAL & GATE SCREEN
+   11. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
+   12. RESPONSIVE DESIGN (Desktop 1920x1080 / 1366x768, Mobile <= 768px / 390px)
+   13. DEBUG HELPER PANEL
    ========================================================================== */
 
 /* ==========================================================================
@@ -20,14 +33,14 @@
   --accent-gradient: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 50%, #c4b5ff 100%);
 
   /* Typography */
-  --font-title: 'Space Grotesk', -apple-system, sans-serif;
+  --font-title: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   --fs-display: clamp(2.8rem, 8.5vw, 8.5rem);
-  --fs-h1: clamp(2.2rem, 4.4vw, 3.4rem);
-  --fs-h2: clamp(1.1rem, 1.6vw, 1.35rem);
-  --fs-body: clamp(0.95rem, 1.05vw, 1.05rem);
-  --fs-lead: clamp(1.05rem, 1.3vw, 1.25rem);
+  --fs-h1: clamp(2.0rem, 3.8vw, 3.2rem);
+  --fs-h2: clamp(1.1rem, 1.5vw, 1.35rem);
+  --fs-body: clamp(0.92rem, 1.0vw, 1.02rem);
+  --fs-lead: clamp(1.05rem, 1.25vw, 1.2rem);
   --fs-mono: 0.75rem;
 
   /* Spacing scale */
@@ -49,7 +62,7 @@
 }
 
 /* ==========================================================================
-   2. BASE & RESET (Radius 0, 1px Borders, No Glows/Shadows/Filters)
+   2. BASE & RESET (Radius 0, No Boxes, No Glows/Shadows/Filters)
    ========================================================================== */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -86,7 +99,7 @@ html, body {
 }
 
 /* ==========================================================================
-   3. LAYOUT & SCROLL CONTAINER
+   3. LAYOUT & SCROLL CONTAINER (Content z-index: 10 > Avatar stage z-index: 6)
    ========================================================================== */
 .scroll-container {
   height: 100vh;
@@ -97,7 +110,7 @@ html, body {
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   position: relative;
-  z-index: 2;
+  z-index: 10; /* Strictly above avatar-stage (z-index 6) */
 }
 
 .scroll-container::-webkit-scrollbar {
@@ -166,7 +179,7 @@ html, body {
   transition: opacity var(--dur-fast) ease;
 }
 
-/* Avatar Fullscreen Stage (Z-Index 6) */
+/* Avatar Fullscreen Stage (Z-Index 6: Below content container z-index 10) */
 .avatar-stage {
   position: fixed;
   inset: 0;
@@ -226,7 +239,7 @@ html, body {
   filter: none;
 }
 
-/* Giant Faint Background Words (Stroke 1px --line, no fill, opacity 0.07) */
+/* Giant Faint Background Words (Stroke 1px --line, no fill, opacity 0.05) */
 .section-bg-word {
   position: absolute;
   top: 50%;
@@ -239,7 +252,7 @@ html, body {
   line-height: 1;
   color: transparent;
   -webkit-text-stroke: 1px var(--line);
-  opacity: 0.07;
+  opacity: 0.05;
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -254,7 +267,7 @@ html, body {
 }
 
 /* ==========================================================================
-   4. UNIFIED COMPONENTS (.section-head, .panel, .chip, .btn, .row-link, .lead, .divider)
+   4. COMPONENTS (Minimal Design - Zero Boxes, Hairline Dividers Only)
    ========================================================================== */
 
 /* Section Head Component */
@@ -262,7 +275,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  margin-bottom: var(--s5);
 }
 
 .section-head--center {
@@ -292,91 +304,185 @@ html, body {
   line-height: 1.1;
 }
 
-/* Lead Paragraph Component */
+/* Lead Paragraph (Weight 400 not bold, clamp size, max 36ch, color --text) */
 .lead {
   font-size: var(--fs-lead);
-  font-weight: 500;
-  color: var(--text);
-  line-height: 1.7;
-  max-width: 60ch;
-}
-
-/* Panel Component */
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  padding: var(--s5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  transition: border-color var(--dur-fast) ease;
-}
-
-.panel:hover {
-  border-color: var(--line-strong);
-}
-
-.panel__header {
-  font-family: var(--font-mono);
-  font-size: var(--fs-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-}
-
-.panel__num {
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.panel__tag {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.panel__body {
-  font-size: var(--fs-body);
   font-weight: 400;
-  line-height: 1.7;
-  color: var(--muted);
-  max-width: 60ch;
+  color: var(--text);
+  line-height: 1.65;
+  text-wrap: pretty;
+  max-width: 36ch;
 }
 
-/* Chip Component */
-.chip {
-  font-family: var(--font-mono);
+/* Single Mono Metadata Line (HANDLE · RUOLO · STATO) */
+.about-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
   font-size: var(--fs-mono);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  background: transparent;
+  margin-top: 4px;
+}
+
+.meta-item {
   display: inline-flex;
   align-items: center;
-  gap: var(--s2);
-  white-space: nowrap;
-  user-select: none;
-  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  gap: 6px;
 }
 
-.chip--active {
-  border-color: var(--line-strong);
-  color: var(--accent);
+.meta-label {
+  color: var(--muted);
 }
 
-.chip__val {
+.meta-val {
   color: var(--text);
 }
 
-.chip--active .chip__val {
+.meta-sep {
+  color: var(--line);
+  user-select: none;
+  font-weight: 300;
+  margin: 0 4px;
+}
+
+.meta-status {
+  color: var(--text);
+}
+
+/* Stacked Hairline Items in Right Column of Chi Sono */
+.about-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: clamp(14px, 2.2vh, 24px) 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+
+.about-item:first-child {
+  padding-top: 0;
+}
+
+.about-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.about-item__header {
+  font-size: var(--fs-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+.item-num {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.item-title {
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.about-item__body {
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 42ch;
+}
+
+/* Status Indicator Tag (Plain mono text with dot: ● ATTIVO / ○ DIMESSO) */
+.status-indicator-tag {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  user-select: none;
+  background: transparent;
+  border: none;
+}
+
+.status-dot-accent {
+  color: var(--accent);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.status-dot-muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.status--active {
+  color: var(--text);
+}
+
+.status--dimesso {
+  color: var(--muted);
+}
+
+/* Category Filter Tabs (Plain mono text, animated 1px underline, no boxes) */
+.exp-category-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.filter-tab {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 6px 2px;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--dur-fast) ease;
+}
+
+.filter-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s var(--ease);
+}
+
+.filter-tab:hover {
+  color: var(--text);
+}
+
+.filter-tab.active {
   color: var(--accent);
 }
 
-/* Button Component (Strict Bracket Style [ ... ], AGENTS.md Rule 4) */
+.filter-tab.active::after {
+  transform: scaleX(1);
+}
+
+/* Bracket Buttons [ ... ] (Text only, no box, animated underline, AGENTS.md Rule 4) */
 .btn {
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
@@ -391,58 +497,38 @@ html, body {
   justify-content: center;
   white-space: nowrap;
   user-select: none;
-  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+  padding: 6px 2px;
+  position: relative;
+  transition: color var(--dur-fast) ease;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s var(--ease);
 }
 
 .btn--primary {
-  border: 1px solid var(--line);
-  padding: 10px 18px;
-  color: var(--text);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn--primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent-gradient);
-  opacity: 0.25;
-  transform: translateX(-101%);
-  transition: transform 0.35s var(--ease);
-  z-index: 0;
-}
-
-.btn--primary:hover::before {
-  transform: translateX(0);
+  color: var(--accent);
 }
 
 .btn--primary:hover {
-  border-color: var(--line-strong);
   color: #fff;
 }
 
-.btn--primary > * {
-  position: relative;
-  z-index: 1;
+.btn--primary:hover::after {
+  transform: scaleX(1);
 }
 
 .btn--secondary {
-  border: none;
-  padding: 10px 4px;
   color: var(--muted);
-  position: relative;
-}
-
-.btn--secondary::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 0;
-  width: 0%;
-  height: 1px;
-  background: var(--accent);
-  transition: width 0.3s var(--ease);
 }
 
 .btn--secondary:hover {
@@ -450,43 +536,26 @@ html, body {
 }
 
 .btn--secondary:hover::after {
-  width: 100%;
+  transform: scaleX(1);
 }
 
-.btn--chip {
-  border: 1px solid var(--line);
-  padding: 6px 12px;
-  color: var(--muted);
-}
-
-.btn--chip:hover {
-  border-color: var(--line-strong);
-  color: var(--text);
-}
-
-.btn--chip.active {
-  border-color: var(--line-strong);
-  color: var(--accent);
-}
-
-/* Row-Link Component (Experiences list & Contact rows) */
+/* Experience Row Link (Hairline divider only, no box) */
 .row-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   border-bottom: 1px solid var(--line);
-  padding: var(--s4) var(--s2);
+  padding: clamp(14px, 1.8vh, 18px) var(--s2);
   text-decoration: none;
   color: var(--text);
   background: transparent;
-  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, padding-left var(--dur-fast) ease;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
 .row-link:hover {
   border-color: var(--line-strong);
   color: #fff;
-  padding-left: var(--s3);
 }
 
 .row-link__left {
@@ -496,7 +565,7 @@ html, body {
 }
 
 .row-link__index {
-  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-size: clamp(1.1rem, 1.8vw, 1.35rem);
   font-weight: 700;
   color: var(--muted);
   opacity: 0.6;
@@ -519,7 +588,7 @@ html, body {
 .row-link__right {
   display: flex;
   align-items: center;
-  gap: var(--s3);
+  gap: var(--s4);
 }
 
 .row-link__arrow {
@@ -529,6 +598,51 @@ html, body {
 }
 
 .row-link:hover .row-link__arrow {
+  transform: translateX(4px);
+  color: var(--accent);
+}
+
+/* Contact Rows (Name left, arrow right, hairline below; hover shifts name 6px & slides arrow) */
+.contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-bottom: 1px solid var(--line);
+  padding: clamp(14px, 2.0vh, 20px) var(--s2);
+  text-decoration: none;
+  color: var(--text);
+  background: transparent;
+  transition: border-color var(--dur-fast) ease;
+}
+
+.contact-row:hover {
+  border-color: var(--line-strong);
+}
+
+.contact-row__name {
+  font-family: var(--font-title);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  transition: transform 0.25s var(--ease), color 0.2s ease;
+  will-change: transform;
+}
+
+.contact-row:hover .contact-row__name {
+  transform: translateX(6px);
+  color: #fff;
+}
+
+.contact-row__arrow {
+  font-size: 1.15rem;
+  color: var(--muted);
+  transition: transform 0.25s var(--ease), color 0.2s ease;
+  will-change: transform;
+}
+
+.contact-row:hover .contact-row__arrow {
   transform: translateX(4px);
   color: var(--accent);
 }
@@ -854,89 +968,135 @@ html, body {
 }
 
 /* ==========================================================================
-   7. SECTION 2: CHI_SONO (Head Centered Above Avatar, Left/Right Columns)
+   7. SECTION 2: CHI_SONO (Header Zone 6-24vh, Columns in Avatar Band 26-88vh)
    ========================================================================== */
 .section-about {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: clamp(64px, 11vh, 100px);
-  padding-bottom: var(--s6);
+  padding: 0 var(--page-pad);
+  position: relative;
 }
 
 .about-block {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Zone: 6vh to 24vh */
+.about-head {
+  position: absolute;
+  top: 6vh;
+  height: 18vh;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.chips-row {
-  display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: var(--s2);
-  margin-bottom: var(--s5);
+  text-align: center;
+  gap: clamp(4px, 0.8vh, 8px);
+  z-index: 2;
 }
 
+/* Balanced 2-Column Grid Aligned with Avatar Band (26vh to 88vh) */
 .about-grid {
+  position: absolute;
+  top: 26vh;
+  bottom: 8vh;
+  left: 0;
+  right: 0;
   display: grid;
-  grid-template-columns: minmax(280px, 420px) 1fr minmax(280px, 420px);
-  gap: var(--s5);
-  width: 100%;
+  grid-template-columns: minmax(260px, 28vw) 1fr minmax(260px, 28vw);
   align-items: start;
+  gap: var(--s4);
+  z-index: 2;
 }
 
 .about-col {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
 }
 
-.about-col .lead {
-  margin-bottom: var(--s2);
+.about-col--left {
+  align-items: flex-start;
+  padding-top: var(--s2);
 }
 
 .about-avatar-spacer {
-  min-height: 200px;
   pointer-events: none;
+}
+
+.about-col--right {
+  display: flex;
+  flex-direction: column;
 }
 
 /* ==========================================================================
    8. SECTION 3: ESPERIENZE & DETAIL VIEW
-   (Head Centered Above Avatar on Left Column; Cards/Detail on Right Column)
+   (Header strictly above avatar in left column 6-24vh; Avatar in band 26-88vh)
    ========================================================================== */
 .section-experiences {
   align-items: center;
   justify-content: center;
-  padding-top: clamp(64px, 10vh, 90px);
-  padding-bottom: var(--s6);
+  padding: 0 var(--page-pad);
+  position: relative;
 }
 
 .experiences-block {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
+  height: 100vh;
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(280px, 380px) 1fr;
+  grid-template-columns: minmax(280px, 32vw) 1fr;
   gap: clamp(32px, 5vw, 64px);
   align-items: start;
 }
 
+/* Left Column: Header at 6vh-24vh, Spacer below for avatar band 26vh-88vh */
 .experiences-head-col {
+  position: relative;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
+  z-index: 2;
 }
 
-.experiences-content-col {
+.experiences-head-col .section-head {
+  position: absolute;
+  top: 6vh;
+  height: 18vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.experiences-avatar-spacer {
+  position: absolute;
+  top: 26vh;
+  bottom: 8vh;
   width: 100%;
-  max-height: calc(100vh - 12rem);
+  pointer-events: none;
+}
+
+/* Right Column: Filter Tabs + Experience List / Detail View */
+.experiences-content-col {
+  position: absolute;
+  top: 6vh;
+  bottom: 6vh;
+  right: 0;
+  left: calc(minmax(280px, 32vw) + clamp(32px, 5vw, 64px));
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
   padding-right: var(--s2);
+  z-index: 2;
 }
 
 .experiences-content-col::-webkit-scrollbar {
@@ -972,15 +1132,8 @@ html, body {
   display: flex;
 }
 
-.exp-category-tabs {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  margin-bottom: var(--s4);
-}
-
 .exp-group {
-  margin-bottom: var(--s5);
+  margin-bottom: var(--s6);
 }
 
 .exp-group.group-hidden {
@@ -990,13 +1143,14 @@ html, body {
 .exp-group-header {
   border-bottom: 1px solid var(--line);
   padding-bottom: var(--s2);
-  margin-bottom: var(--s3);
+  margin-bottom: var(--s2);
 }
 
 .exp-group-tag {
   font-size: var(--fs-mono);
   letter-spacing: 0.14em;
   color: var(--accent);
+  font-weight: 600;
 }
 
 .cards-list {
@@ -1004,11 +1158,12 @@ html, body {
   flex-direction: column;
 }
 
-/* Detail View Layout */
+/* Minimal Experience Detail View */
 .experience-detail-view {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
+  gap: var(--s5);
+  padding-bottom: var(--s6);
 }
 
 .detail-top-nav {
@@ -1051,17 +1206,51 @@ html, body {
   line-height: 1.1;
 }
 
+.detail-role {
+  font-size: var(--fs-mono);
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .detail-header-right {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s2);
+  gap: var(--s3);
   align-items: center;
+}
+
+.detail-stars {
+  font-size: var(--fs-mono);
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+
+.detail-period {
+  font-size: var(--fs-mono);
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .detail-body {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
+  gap: var(--s5);
+}
+
+.detail-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--fs-mono);
+  color: var(--text);
+  letter-spacing: 0.1em;
+}
+
+.detail-notice-tag {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .detail-review-section {
@@ -1086,7 +1275,23 @@ html, body {
 .detail-pros-cons-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s4);
+  gap: var(--s6);
+}
+
+.detail-pros-col, .detail-cons-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.detail-group-tag {
+  font-size: var(--fs-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: var(--s2);
 }
 
 .detail-list {
@@ -1101,6 +1306,8 @@ html, body {
   display: flex;
   align-items: baseline;
   gap: var(--s2);
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 .detail-list .bullet {
@@ -1112,22 +1319,40 @@ html, body {
 }
 
 /* ==========================================================================
-   9. SECTION 4: CONTATTI (Head Above Smaller Avatar, 3 Rows, Footer Line)
+   9. SECTION 4: CONTATTI (Header 6-24vh, Avatar 26-58vh, Rows 62-86vh, Footer 93vh)
    ========================================================================== */
 .section-contact {
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding-top: clamp(64px, 11vh, 96px);
-  padding-bottom: var(--s5);
+  justify-content: flex-start;
+  padding: 0 var(--page-pad);
+  position: relative;
 }
 
 .contact-block {
   width: 100%;
   max-width: 680px;
+  height: 100vh;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Header Zone: 6vh to 24vh */
+.contact-head {
+  position: absolute;
+  top: 6vh;
+  height: 18vh;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(4px, 0.8vh, 8px);
+  z-index: 2;
 }
 
 .contact-sub {
@@ -1135,28 +1360,43 @@ html, body {
   color: var(--muted);
   text-align: center;
   max-width: 52ch;
-  margin-top: var(--s2);
 }
 
+/* Avatar Clearance Spacer in Band 26vh to 58vh */
 .contact-avatar-spacer {
-  height: clamp(140px, 22vh, 220px);
+  position: absolute;
+  top: 26vh;
+  height: 32vh;
+  width: 100%;
   pointer-events: none;
 }
 
+/* 3 Contact Rows Zone: 62vh to 86vh, Max 560px Wide, Centered */
 .contact-rows-wrap {
+  position: absolute;
+  top: 62vh;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
+  max-width: 560px;
   border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  margin-bottom: var(--s6);
+  z-index: 2;
 }
 
+/* Footer Line at ~93vh */
 .footer-line {
+  position: absolute;
+  top: 93vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-size: var(--fs-mono);
   color: var(--muted);
   letter-spacing: 0.14em;
   text-align: center;
-  padding-top: var(--s4);
+  white-space: nowrap;
+  z-index: 2;
 }
 
 /* ==========================================================================
@@ -1234,7 +1474,7 @@ html, body {
 .proofs-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(5, 6, 15, 0.85);
+  background: rgba(5, 6, 15, 0.88);
 }
 
 .proofs-card {
@@ -1242,8 +1482,8 @@ html, body {
   z-index: 1;
   width: 90%;
   max-width: 560px;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
   padding: var(--s5);
 }
 
@@ -1269,21 +1509,65 @@ html, body {
   overflow-y: auto;
 }
 
+.proof-link-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s3) var(--s2);
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--text);
+  font-size: var(--fs-mono);
+}
+
+.proof-link-item:hover {
+  border-color: var(--line-strong);
+  color: var(--accent);
+}
+
 /* ==========================================================================
-   11. REVEAL ANIMATIONS (Standard Reveal: opacity 0 + translateY(20px) -> 0)
+   11. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
    ========================================================================== */
 .section-block {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(16px);
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
   will-change: opacity, transform;
   position: relative;
-  z-index: 3;
+  z-index: 10;
 }
 
 .snap-section.section-active .section-block {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Stagger child elements in active section */
+.snap-section.section-active .section-head {
+  animation: revealItem 0.45s var(--ease) forwards;
+  animation-delay: 0ms;
+}
+.snap-section.section-active .about-meta,
+.snap-section.section-active .exp-category-tabs {
+  animation: revealItem 0.45s var(--ease) forwards;
+  animation-delay: 90ms;
+}
+.snap-section.section-active .about-col--left,
+.snap-section.section-active .exp-group:nth-of-type(1),
+.snap-section.section-active .contact-rows-wrap {
+  animation: revealItem 0.45s var(--ease) forwards;
+  animation-delay: 180ms;
+}
+.snap-section.section-active .about-col--right,
+.snap-section.section-active .exp-group:nth-of-type(2),
+.snap-section.section-active .footer-line {
+  animation: revealItem 0.45s var(--ease) forwards;
+  animation-delay: 270ms;
+}
+
+@keyframes revealItem {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Scroll Lock During Intro */
@@ -1329,6 +1613,8 @@ html, body {
   .about-grid {
     grid-template-columns: 1fr;
     gap: var(--s4);
+    position: static;
+    margin-top: 24vh;
   }
   .about-avatar-spacer {
     display: none;
@@ -1336,6 +1622,11 @@ html, body {
   .experiences-block {
     grid-template-columns: 1fr;
     gap: var(--s4);
+  }
+  .experiences-content-col {
+    position: static;
+    margin-top: 24vh;
+    left: 0;
   }
 }
 
@@ -1358,8 +1649,7 @@ html, body {
   }
 
   .snap-section {
-    padding-top: 30vh;
-    padding-bottom: var(--s5);
+    padding: 0 var(--page-pad);
     align-items: flex-start;
     overflow-y: auto;
   }
@@ -1368,6 +1658,7 @@ html, body {
     padding: 0 !important;
     align-items: center !important;
     justify-content: center !important;
+    overflow: hidden;
   }
 
   .hero-title {
@@ -1404,6 +1695,63 @@ html, body {
     left: 2%;
   }
 
+  /* Mobile Section Flow: Header -> ~30vh Avatar Band -> Content Column */
+  .about-block, .experiences-block, .contact-block {
+    height: auto;
+    min-height: 100vh;
+    padding-top: 6vh;
+    padding-bottom: var(--s7);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .about-head, .experiences-head-col .section-head, .contact-head {
+    position: static;
+    height: auto;
+    margin-bottom: var(--s3);
+  }
+
+  .about-avatar-spacer, .experiences-avatar-spacer, .contact-avatar-spacer {
+    display: block;
+    position: static;
+    height: 30vh;
+    min-height: 180px;
+  }
+
+  .about-grid {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s5);
+    margin: 0;
+  }
+
+  .experiences-content-col {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .contact-rows-wrap {
+    position: static;
+    transform: none;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .footer-line {
+    position: static;
+    transform: none;
+    margin-top: var(--s6);
+    padding-bottom: var(--s5);
+  }
+
   .detail-pros-cons-grid {
     grid-template-columns: 1fr;
   }
@@ -1411,14 +1759,6 @@ html, body {
   .detail-header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .experiences-content-col {
-    max-height: none;
-  }
-
-  .contact-avatar-spacer {
-    height: clamp(80px, 14vh, 120px);
   }
 }
 
@@ -1448,7 +1788,7 @@ html, body {
 }
 
 /* ==========================================================================
-   DEBUG HELPER PANEL (?debug parameter only)
+   13. DEBUG HELPER PANEL (?debug parameter only)
    ========================================================================== */
 .avatar-debug-panel {
   position: fixed;

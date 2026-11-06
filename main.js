@@ -82,9 +82,9 @@
     // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
     AVATAR_KEYFRAMES: [
       { id: 'home',       x: 0,   y: -17, scale: 0.62, scaleMobile: 0.46, yaw: 0.1,  roll: 0, xMobile: 0, yMobile: -17 },
-      { id: 'chi_sono',   x: 0,   y: 6,   scale: 0.62, scaleMobile: 0.42, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -14 },
-      { id: 'esperienze', x: -24, y: 6,   scale: 0.66, scaleMobile: 0.42, yaw: 0.50, roll: 0, xMobile: 0, yMobile: -14 },
-      { id: 'contatti',   x: 0,   y: -8,  scale: 0.48, scaleMobile: 0.38, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -14 }
+      { id: 'chi_sono',   x: 0,   y: 7,   scale: 0.56, scaleMobile: 0.36, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -15 },
+      { id: 'esperienze', x: -25, y: 8,   scale: 0.50, scaleMobile: 0.36, yaw: 0.45, roll: 0, xMobile: 0, yMobile: -15 },
+      { id: 'contatti',   x: 0,   y: -8,  scale: 0.35, scaleMobile: 0.30, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -18 }
     ],
     FLIGHT_ARC_X: 9,           // Extra arc horizontal offset in vw
     FLIGHT_ARC_Y: 4,           // Extra arc vertical lift in vh
@@ -144,15 +144,15 @@
       expGroupMinecraft: '[ MINECRAFT ]',
       expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
-      expRedisStatus: '[ Stato: Attivo ]',
+      expRedisStatus: 'ATTIVO',
       expElysianRole: 'SS Verified',
-      expElysianStatus: '[ Stato: Attivo ]',
+      expElysianStatus: 'ATTIVO',
       expSyndicateRole: 'Support Team',
-      expSyndicateStatus: '[ Stato: Attivo ]',
+      expSyndicateStatus: 'ATTIVO',
       expMetaRole: 'Helper ★★★★☆',
-      expMetaStatus: '[ Stato: Dimesso ]',
+      expMetaStatus: 'DIMESSO',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
-      expPixyStatus: '[ Stato: Dimesso ]',
+      expPixyStatus: 'DIMESSO',
       viewDossier: '[ VEDI SCHEDA ]',
       contactTag: 'LOG_ENTRY_02 // CONTATTI',
       contactTitle: 'Parliamo',
@@ -205,15 +205,15 @@
       expGroupMinecraft: '[ MINECRAFT ]',
       expGroupDiscord: '[ DISCORD // DS ]',
       expRedisRole: 'Helper',
-      expRedisStatus: '[ Status: Active ]',
+      expRedisStatus: 'ACTIVE',
       expElysianRole: 'SS Verified',
-      expElysianStatus: '[ Status: Active ]',
+      expElysianStatus: 'ACTIVE',
       expSyndicateRole: 'Support Team',
-      expSyndicateStatus: '[ Status: Active ]',
+      expSyndicateStatus: 'ACTIVE',
       expMetaRole: 'Helper ★★★★☆',
-      expMetaStatus: '[ Status: Resign ]',
+      expMetaStatus: 'RESIGNED',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
-      expPixyStatus: '[ Status: Resign ]',
+      expPixyStatus: 'RESIGNED',
       viewDossier: '[ VIEW DOSSIER ]',
       contactTag: 'LOG_ENTRY_02 // CONTACT',
       contactTitle: "Let's Talk",
@@ -612,7 +612,7 @@
       if (activeSectionId === 'home') return;
 
       if (activeSectionId === 'chi_sono') {
-        const steps = ['.section-head', '.chips-row', '.lead', '.panel'];
+        const steps = ['.section-head', '.about-meta', '.lead', '.about-item'];
         currentReadingIndex = (currentReadingIndex + 1) % steps.length;
         const sel = steps[currentReadingIndex];
         const el = document.querySelector(`#chi_sono ${sel}`);
@@ -624,7 +624,7 @@
         }
       } else if (activeSectionId === 'esperienze' || activeSectionId === 'esperienze-detail') {
         if (activeDetailId) {
-          const steps = ['.detail-title', '.detail-paragraphs', '.detail-pros-cons-grid', '.panel'];
+          const steps = ['.detail-title', '.detail-paragraphs', '.detail-pros-cons-grid', '.detail-list'];
           currentReadingIndex = (currentReadingIndex + 1) % steps.length;
           const el = document.querySelector(`#experience-detail-view ${steps[currentReadingIndex]}`);
           if (el) {
@@ -651,7 +651,7 @@
         }
       } else if (activeSectionId === 'contatti') {
         if (!hoveredContactRow) {
-          const rows = document.querySelectorAll('#contatti .row-link, #contatti .contact-row');
+          const rows = document.querySelectorAll('#contatti .contact-row');
           const count = rows.length + 2;
           currentReadingIndex = (currentReadingIndex + 1) % count;
           if (currentReadingIndex === 0) {
@@ -3234,17 +3234,17 @@
       prosConsHtml = `
         <div class="detail-pros-cons-grid">
           ${exp.strengths ? `
-            <div class="panel">
-              <div class="panel__header mono"><span class="panel__tag">[ ${exp.strengthsTitle[currentLang].toUpperCase()} ]</span></div>
-              <ul class="panel__body detail-list mono">
+            <div class="detail-pros-col">
+              <div class="detail-group-tag mono"><span class="item-num">01 — </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
+              <ul class="detail-list mono">
                 ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
           ${exp.weaknesses ? `
-            <div class="panel">
-              <div class="panel__header mono"><span class="panel__tag">[ ${exp.weaknessesTitle[currentLang].toUpperCase()} ]</span></div>
-              <ul class="panel__body detail-list mono">
+            <div class="detail-cons-col">
+              <div class="detail-group-tag mono"><span class="item-num">02 — </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
+              <ul class="detail-list mono">
                 ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
@@ -3268,9 +3268,10 @@
     let noticeHtml = '';
     if (exp.inProgress) {
       noticeHtml = `
-        <div class="panel detail-notice-panel">
-          <div class="panel__header mono"><span class="chip chip--active">${exp.noticeTag[currentLang]}</span></div>
-          <p class="panel__body">${exp.noticeText[currentLang]}</p>
+        <div class="detail-notice mono">
+          <span class="status-dot-accent">●</span>
+          <span class="detail-notice-tag">[ ${exp.noticeTag[currentLang]} ]</span>
+          <span class="detail-notice-text">${exp.noticeText[currentLang]}</span>
         </div>
       `;
     }
@@ -3288,12 +3289,15 @@
             <span class="detail-index mono">${exp.index}</span>
             <h2 class="detail-title">${exp.title}</h2>
           </div>
-          <p class="detail-role mono"><span class="chip">${exp.role[currentLang]}</span></p>
+          <p class="detail-role mono">${exp.role[currentLang]}</p>
         </div>
         <div class="detail-header-right mono">
-          ${exp.stars ? `<span class="chip">${exp.stars}</span>` : ''}
-          <span class="chip ${exp.inProgress ? 'chip--active' : ''}">${exp.status[currentLang]}</span>
-          <span class="chip chip--active">${exp.period[currentLang]}</span>
+          ${exp.stars ? `<span class="detail-stars">${exp.stars}</span>` : ''}
+          <span class="status-indicator-tag ${exp.inProgress ? 'status--active' : 'status--dimesso'}">
+            <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}">${exp.inProgress ? '●' : '○'}</span>
+            <span>${exp.inProgress ? (currentLang === 'it' ? 'ATTIVO' : 'ACTIVE') : (currentLang === 'it' ? 'DIMESSO' : 'RESIGNED')}</span>
+          </span>
+          <span class="detail-period">${exp.period[currentLang]}</span>
         </div>
       </div>
 
@@ -3451,7 +3455,7 @@
 
   function initExperienceCards() {
     // Experience Category Filter Tabs (Tutto / Minecraft / Discord)
-    const tabBtns = document.querySelectorAll('.exp-tab-btn');
+    const tabBtns = document.querySelectorAll('.filter-tab, .exp-tab-btn, [data-filter]');
     const expGroups = document.querySelectorAll('.exp-group');
 
     tabBtns.forEach((btn) => {
