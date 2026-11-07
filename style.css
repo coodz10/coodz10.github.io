@@ -1,21 +1,22 @@
 /* ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. */
 
 /* ==========================================================================
-   PORTFOLIO COODZ_10 - MINIMAL CYBERPUNK DESIGN SYSTEM
+   PORTFOLIO COODZ_10 - MINIMAL CYBERPUNK DESIGN SYSTEM & LAYOUT ENGINE
    Organized by:
    1. TOKENS (Variables in :root)
    2. BASE & RESET
    3. LAYOUT & SCROLL CONTAINER (Vertical Budgets & Z-Index Layering)
    4. COMPONENTS (Typography, Meta, Hairlines, Tabs, Bracket Buttons, Rows)
-   5. NAVIGATION & AUDIO
-   6. SECTION 1: HOME
-   7. SECTION 2: CHI_SONO (About Me)
-   8. SECTION 3: ESPERIENZE (Experiences & Detail View)
-   9. SECTION 4: CONTATTI (Contact)
+   5. NAVIGATION & AUDIO (High-contrast top controls)
+   6. SECTION 1: HOME (Slot above title, visual ink centering)
+   7. SECTION 2: CHI_SONO (Symmetric 3-column Grid, Left: lead+01, Center: slot, Right: 02+03)
+   8. SECTION 3: ESPERIENZE (CSS Grid: Slot col 36vw with header above | gutter | list col)
+   9. SECTION 4: CONTATTI (Single centered column max 560px, header -> slot -> rows -> footer)
    10. PROOFS MODAL & GATE SCREEN
-   11. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
-   12. RESPONSIVE DESIGN (Desktop 1920x1080 / 1366x768, Mobile <= 768px / 390px)
-   13. DEBUG HELPER PANEL
+   11. GIANT BACKGROUND WORDS (Stroke only, opacity tunable, horizontal drift)
+   12. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
+   13. RESPONSIVE DESIGN (Desktop 1920x1080 / 1366x768, Mobile <= 768px / 390px)
+   14. DEBUG & LAYOUT AUDIT PANEL
    ========================================================================== */
 
 /* ==========================================================================
@@ -31,6 +32,10 @@
   --muted: #7c83a8;
   --accent: #5ea8ff;
   --accent-gradient: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 50%, #c4b5ff 100%);
+
+  /* Layout Variables */
+  --gutter: clamp(24px, 3vw, 56px);
+  --bg-word-opacity: 1;
 
   /* Typography */
   --font-title: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -239,31 +244,12 @@ html, body {
   filter: none;
 }
 
-/* Giant Faint Background Words (Stroke 1px --line, no fill, opacity 0.05) */
-.section-bg-word {
-  position: absolute;
-  top: 50%;
-  left: 4%;
-  transform: translateY(-50%);
-  font-family: var(--font-title);
-  font-size: clamp(4rem, 14vw, 13rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1px var(--line);
-  opacity: 0.05;
+/* Avatar Slots: Take physical space in the section CSS grid, text never overlaps */
+.avatar-slot {
   pointer-events: none;
-  user-select: none;
-  z-index: 0;
-  white-space: nowrap;
-}
-
-#contatti .section-bg-word,
-.section-contact .section-bg-word {
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  text-align: center;
+  background: transparent;
+  display: block;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
@@ -304,10 +290,11 @@ html, body {
   line-height: 1.1;
 }
 
-/* Lead Paragraph (Weight 400 not bold, clamp size, max 36ch, color --text) */
+/* Lead Paragraph (Explicit weight 400 not bold, clamp size, max 36ch, color --text) */
 .lead {
-  font-size: var(--fs-lead);
-  font-weight: 400;
+  font-family: var(--font-title);
+  font-size: clamp(1.05rem, 1.25vw, 1.2rem);
+  font-weight: 400 !important;
   color: var(--text);
   line-height: 1.65;
   text-wrap: pretty;
@@ -352,7 +339,7 @@ html, body {
   color: var(--text);
 }
 
-/* Stacked Hairline Items in Right Column of Chi Sono */
+/* Stacked Hairline Items in Chi Sono */
 .about-item {
   display: flex;
   flex-direction: column;
@@ -656,7 +643,7 @@ html, body {
 }
 
 /* ==========================================================================
-   5. NAVIGATION & AUDIO
+   5. NAVIGATION & AUDIO (High-contrast, readable controls)
    ========================================================================== */
 .nav-bar {
   position: fixed;
@@ -739,6 +726,31 @@ html, body {
   transition: transform var(--dur) var(--ease), width var(--dur) var(--ease);
   pointer-events: none;
   will-change: transform, width;
+}
+
+/* Top-Right Controls: Bright & High-Contrast (>= 4.5:1 ratio) */
+.nav-right .nav-btn,
+.nav-right button {
+  color: var(--text) !important;
+  opacity: 0.9 !important;
+  background: transparent !important;
+  border: none !important;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.14em;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  user-select: none;
+}
+
+.nav-right .nav-btn:hover,
+.nav-right button:hover {
+  color: #fff !important;
+  opacity: 1 !important;
 }
 
 .audio-label-desktop {
@@ -827,26 +839,52 @@ html, body {
 }
 
 /* ==========================================================================
-   6. SECTION 1: HOME
+   6. SECTION 1: HOME (Slot above title, visual ink centering)
    ========================================================================== */
 .section-home {
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  padding: 0 !important;
+  justify-content: center;
+  padding: 0 var(--page-pad);
   position: relative;
   overflow: hidden;
 }
 
-/* Centered "coodz_10" Title around 71vh (Reserved Accent Gradient) */
+.home-grid {
+  width: 100%;
+  max-width: 1200px;
+  height: 100vh;
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: 1fr auto auto auto;
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+  padding-top: 6vh;
+  padding-bottom: 4vh;
+  position: relative;
+  z-index: 10;
+}
+
+.home-avatar-slot {
+  width: min(60vw, 480px);
+  height: 100%;
+  max-height: 48vh;
+  min-height: 36vh;
+  justify-self: center;
+  align-self: center;
+}
+
+/* Centered "coodz_10" Title (Reserved Accent Gradient, visual ink centering) */
 .hero-title {
-  position: absolute;
-  top: 71vh;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 68vw;
-  max-width: 75vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-inline: auto;
+  width: fit-content;
+  max-width: 80vw;
   font-family: var(--font-title);
   font-size: var(--fs-display);
   font-weight: 800;
@@ -861,9 +899,8 @@ html, body {
   -webkit-text-fill-color: transparent;
   cursor: default;
   user-select: none;
-  margin: 0;
+  margin: 0 auto;
   padding: 0;
-  z-index: 4;
   will-change: transform, opacity;
   transition: opacity var(--dur) ease;
 }
@@ -888,17 +925,19 @@ html, body {
   will-change: transform, opacity;
 }
 
-/* Subtitle under title around ~81vh */
+.hero-title .ch:last-child {
+  letter-spacing: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Subtitle under title (true ink centering with compensated margin) */
 .hero-subtitle-wrap {
-  position: absolute;
-  top: 81vh;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  margin-inline: auto;
   gap: var(--s3);
-  z-index: 4;
+  margin-top: var(--s4);
   transition: opacity var(--dur) ease;
 }
 
@@ -907,6 +946,7 @@ html, body {
   font-size: clamp(0.7rem, 1.1vw, 0.92rem);
   color: var(--muted);
   letter-spacing: 0.5em;
+  margin-right: -0.5em; /* Compensate trailing letter-spacing for true ink centering */
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -925,17 +965,14 @@ html, body {
   background: linear-gradient(90deg, var(--line), transparent);
 }
 
-/* Bottom Actions at ~92vh */
+/* Bottom Actions centered */
 .home-bottom-actions {
-  position: absolute;
-  top: 92vh;
-  left: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-inline: auto;
   gap: var(--s2);
-  z-index: 5;
+  margin-top: var(--s4);
   pointer-events: auto;
   transition: opacity var(--dur) ease;
 }
@@ -968,9 +1005,11 @@ html, body {
 }
 
 /* ==========================================================================
-   7. SECTION 2: CHI_SONO (Header Zone 6-24vh, Columns in Avatar Band 26-88vh)
+   7. SECTION 2: CHI_SONO (Symmetric 3-column CSS Grid: Left | Slot | Right)
    ========================================================================== */
 .section-about {
+  min-height: 100vh;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
@@ -980,67 +1019,71 @@ html, body {
 
 .about-block {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1400px;
   height: 100vh;
-  position: relative;
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 10;
 }
 
-/* Header Zone: 6vh to 24vh */
+/* Header Zone: 6vh to 24vh, Centered above middle column */
 .about-head {
-  position: absolute;
-  top: 6vh;
   height: 18vh;
-  left: 0;
-  right: 0;
+  min-height: 110px;
+  margin-top: 6vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   gap: clamp(4px, 0.8vh, 8px);
-  z-index: 2;
 }
 
-/* Balanced 2-Column Grid Aligned with Avatar Band (26vh to 88vh) */
+/* Symmetric 3-column Grid Aligned with Content Band (26vh to 88vh) */
 .about-grid {
-  position: absolute;
-  top: 26vh;
-  bottom: 8vh;
-  left: 0;
-  right: 0;
+  --avatar-col: clamp(260px, 26vw, 520px);
+  --gutter: clamp(24px, 3vw, 56px);
   display: grid;
-  grid-template-columns: minmax(260px, 28vw) 1fr minmax(260px, 28vw);
+  grid-template-columns: minmax(0, 1fr) var(--avatar-col) minmax(0, 1fr);
+  column-gap: var(--gutter);
   align-items: start;
-  gap: var(--s4);
-  z-index: 2;
+  height: 62vh; /* Band: 26vh to 88vh */
+  max-height: 62vh;
+  margin-top: 2vh;
 }
 
 .about-col {
   display: flex;
   flex-direction: column;
+  gap: clamp(14px, 2.0vh, 24px);
+  max-width: 30vw;
+  width: 100%;
 }
 
 .about-col--left {
-  align-items: flex-start;
-  padding-top: var(--s2);
-}
-
-.about-avatar-spacer {
-  pointer-events: none;
+  justify-self: end;
 }
 
 .about-col--right {
-  display: flex;
-  flex-direction: column;
+  justify-self: start;
+}
+
+.about-avatar-slot {
+  width: 100%;
+  height: 100%;
+  min-height: 50vh;
+  max-height: 60vh;
+  align-self: stretch;
 }
 
 /* ==========================================================================
-   8. SECTION 3: ESPERIENZE & DETAIL VIEW
-   (Header strictly above avatar in left column 6-24vh; Avatar in band 26-88vh)
+   8. SECTION 3: ESPERIENZE (CSS Grid: Slot col 36vw with header | gutter | list col)
    ========================================================================== */
 .section-experiences {
+  min-height: 100vh;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 var(--page-pad);
@@ -1049,54 +1092,53 @@ html, body {
 
 .experiences-block {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1400px;
   height: 100vh;
-  position: relative;
+  margin-inline: auto;
   display: grid;
-  grid-template-columns: minmax(280px, 32vw) 1fr;
-  gap: clamp(32px, 5vw, 64px);
+  grid-template-columns: 36vw 1fr;
+  column-gap: var(--gutter, clamp(24px, 3vw, 56px));
   align-items: start;
+  padding-top: 6vh;
+  padding-bottom: 6vh;
+  position: relative;
+  z-index: 10;
 }
 
-/* Left Column: Header at 6vh-24vh, Spacer below for avatar band 26vh-88vh */
+/* Left Column: Header centered above slot column + Slot below */
 .experiences-head-col {
-  position: relative;
-  height: 100vh;
+  height: 88vh;
   display: flex;
   flex-direction: column;
-  z-index: 2;
+  align-items: center;
 }
 
-.experiences-head-col .section-head {
-  position: absolute;
-  top: 6vh;
+.experiences-head-col .exp-head {
   height: 18vh;
+  min-height: 110px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: 100%;
 }
 
-.experiences-avatar-spacer {
-  position: absolute;
-  top: 26vh;
-  bottom: 8vh;
+.exp-avatar-slot {
   width: 100%;
-  pointer-events: none;
+  flex: 1;
+  min-height: 48vh;
+  max-height: 64vh;
 }
 
 /* Right Column: Filter Tabs + Experience List / Detail View */
 .experiences-content-col {
-  position: absolute;
-  top: 6vh;
-  bottom: 6vh;
-  right: 0;
-  left: calc(minmax(280px, 32vw) + clamp(32px, 5vw, 64px));
+  height: 88vh;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
   padding-right: var(--s2);
-  z-index: 2;
 }
 
 .experiences-content-col::-webkit-scrollbar {
@@ -1319,40 +1361,41 @@ html, body {
 }
 
 /* ==========================================================================
-   9. SECTION 4: CONTATTI (Header 6-24vh, Avatar 26-58vh, Rows 62-86vh, Footer 93vh)
+   9. SECTION 4: CONTATTI (Single centered column max-width 560px, all centered)
    ========================================================================== */
 .section-contact {
-  flex-direction: column;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: flex-start;
   padding: 0 var(--page-pad);
   position: relative;
 }
 
 .contact-block {
   width: 100%;
-  max-width: 680px;
+  max-width: 560px;
   height: 100vh;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
   align-items: center;
+  justify-items: center;
+  text-align: center;
+  padding-top: 6vh;
+  padding-bottom: 4vh;
+  position: relative;
+  z-index: 10;
 }
 
 /* Header Zone: 6vh to 24vh */
 .contact-head {
-  position: absolute;
-  top: 6vh;
-  height: 18vh;
-  left: 0;
-  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
-  gap: clamp(4px, 0.8vh, 8px);
-  z-index: 2;
+  gap: var(--s2);
+  width: 100%;
 }
 
 .contact-sub {
@@ -1362,41 +1405,35 @@ html, body {
   max-width: 52ch;
 }
 
-/* Avatar Clearance Spacer in Band 26vh to 58vh */
-.contact-avatar-spacer {
-  position: absolute;
-  top: 26vh;
-  height: 32vh;
+/* Avatar Slot between Header and Rows (min-height 24vh, flex 1) */
+.contact-avatar-slot {
   width: 100%;
-  pointer-events: none;
+  max-width: 380px;
+  min-height: 24vh;
+  height: 100%;
+  max-height: 34vh;
+  justify-self: center;
+  align-self: center;
 }
 
-/* 3 Contact Rows Zone: 62vh to 86vh, Max 560px Wide, Centered */
+/* 3 Contact Rows: max 560px wide, centered */
 .contact-rows-wrap {
-  position: absolute;
-  top: 62vh;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
   max-width: 560px;
   border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  z-index: 2;
+  align-items: stretch;
 }
 
-/* Footer Line at ~93vh */
+/* Footer Line: Centered */
 .footer-line {
-  position: absolute;
-  top: 93vh;
-  left: 50%;
-  transform: translate(-50%, -50%);
   font-size: var(--fs-mono);
   color: var(--muted);
   letter-spacing: 0.14em;
   text-align: center;
-  white-space: nowrap;
-  z-index: 2;
+  width: 100%;
+  padding-top: var(--s5);
 }
 
 /* ==========================================================================
@@ -1526,7 +1563,46 @@ html, body {
 }
 
 /* ==========================================================================
-   11. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
+   11. GIANT BACKGROUND WORDS (Stroke only, clearly visible, horizontal drift)
+   ========================================================================== */
+.section-bg-word {
+  position: absolute;
+  top: 52vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 88vw;
+  text-align: center;
+  font-family: var(--font-title);
+  font-size: clamp(3.5rem, 13vw, 11rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: rgba(196, 181, 255, 0.025);
+  -webkit-text-stroke: 1.5px rgba(196, 181, 255, 0.22);
+  opacity: var(--bg-word-opacity, 1);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  white-space: nowrap;
+  animation: bgWordDrift 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes bgWordDrift {
+  0% { transform: translate(-50%, -50%) translateX(-1.5vw); }
+  50% { transform: translate(-50%, -50%) translateX(1.5vw); }
+  100% { transform: translate(-50%, -50%) translateX(-1.5vw); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-bg-word {
+    animation: none !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}
+
+/* ==========================================================================
+   12. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
    ========================================================================== */
 .section-block {
   opacity: 0;
@@ -1543,21 +1619,26 @@ html, body {
 }
 
 /* Stagger child elements in active section */
-.snap-section.section-active .section-head {
+.snap-section.section-active .about-head,
+.snap-section.section-active .exp-head,
+.snap-section.section-active .contact-head {
   animation: revealItem 0.45s var(--ease) forwards;
   animation-delay: 0ms;
 }
+
 .snap-section.section-active .about-meta,
 .snap-section.section-active .exp-category-tabs {
   animation: revealItem 0.45s var(--ease) forwards;
   animation-delay: 90ms;
 }
+
 .snap-section.section-active .about-col--left,
 .snap-section.section-active .exp-group:nth-of-type(1),
 .snap-section.section-active .contact-rows-wrap {
   animation: revealItem 0.45s var(--ease) forwards;
   animation-delay: 180ms;
 }
+
 .snap-section.section-active .about-col--right,
 .snap-section.section-active .exp-group:nth-of-type(2),
 .snap-section.section-active .footer-line {
@@ -1607,26 +1688,44 @@ html, body {
 }
 
 /* ==========================================================================
-   12. RESPONSIVE DESIGN (1920x1080, 1366x768, 768px, 390px)
+   13. RESPONSIVE DESIGN (1920x1080, 1366x768, 768px, 390px)
    ========================================================================== */
-@media (max-width: 1024px) {
-  .about-grid {
-    grid-template-columns: 1fr;
-    gap: var(--s4);
-    position: static;
-    margin-top: 24vh;
+@media (max-height: 800px) and (min-width: 769px) {
+  .about-head {
+    margin-top: 4vh;
+    height: 16vh;
   }
-  .about-avatar-spacer {
-    display: none;
+  .about-grid {
+    margin-top: 1vh;
+    height: 66vh;
+  }
+  .about-col {
+    gap: 12px;
+  }
+  .about-item {
+    padding: 10px 0;
+  }
+  .lead {
+    font-size: clamp(0.92rem, 1.4vh, 1.05rem);
+    line-height: 1.5;
+  }
+  .about-item__body {
+    font-size: clamp(0.80rem, 1.25vh, 0.88rem);
+    line-height: 1.5;
   }
   .experiences-block {
-    grid-template-columns: 1fr;
-    gap: var(--s4);
+    padding-top: 4vh;
+    padding-bottom: 4vh;
   }
-  .experiences-content-col {
-    position: static;
-    margin-top: 24vh;
-    left: 0;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .about-grid {
+    --avatar-col: clamp(220px, 24vw, 360px);
+    --gutter: 20px;
+  }
+  .about-col {
+    max-width: 32vw;
   }
 }
 
@@ -1662,24 +1761,21 @@ html, body {
   }
 
   .hero-title {
-    top: 71vh;
-    width: 88vw;
     max-width: 92vw;
     font-size: clamp(2.2rem, 12vw, 4.8rem);
   }
 
   .hero-subtitle-wrap {
-    top: 81vh;
     gap: var(--s2);
   }
 
   .hero-subtitle {
     letter-spacing: 0.3em;
+    margin-right: -0.3em;
     font-size: 0.68rem;
   }
 
   .home-bottom-actions {
-    top: 90vh;
     gap: var(--s2);
     width: 100%;
   }
@@ -1692,11 +1788,10 @@ html, body {
 
   .section-bg-word {
     font-size: clamp(3rem, 18vw, 6.5rem);
-    left: 2%;
   }
 
-  /* Mobile Section Flow: Header -> ~30vh Avatar Band -> Content Column */
-  .about-block, .experiences-block, .contact-block {
+  /* Mobile Flow: Header -> ~30vh Avatar Slot -> Content Column */
+  .about-block, .experiences-block, .contact-block, .home-grid {
     height: auto;
     min-height: 100vh;
     padding-top: 6vh;
@@ -1706,50 +1801,50 @@ html, body {
     align-items: stretch;
   }
 
-  .about-head, .experiences-head-col .section-head, .contact-head {
-    position: static;
+  .about-head, .experiences-head-col .exp-head, .contact-head {
     height: auto;
+    margin-top: 0;
     margin-bottom: var(--s3);
   }
 
-  .about-avatar-spacer, .experiences-avatar-spacer, .contact-avatar-spacer {
+  .about-avatar-slot, .exp-avatar-slot, .contact-avatar-slot, .home-avatar-slot {
     display: block;
-    position: static;
     height: 30vh;
     min-height: 180px;
+    max-height: 30vh;
+    margin-inline: auto;
+    width: 100%;
+    max-width: 320px;
   }
 
   .about-grid {
-    position: static;
     display: flex;
     flex-direction: column;
     gap: var(--s5);
-    margin: 0;
+    height: auto;
+    max-height: none;
+    margin-top: 0;
+  }
+
+  .about-col {
+    max-width: 100%;
+    justify-self: stretch;
+  }
+
+  .experiences-head-col {
+    height: auto;
   }
 
   .experiences-content-col {
-    position: static;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
+    height: auto;
     max-height: none;
     overflow: visible;
     padding-right: 0;
+    margin-top: var(--s4);
   }
 
   .contact-rows-wrap {
-    position: static;
-    transform: none;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  .footer-line {
-    position: static;
-    transform: none;
-    margin-top: var(--s6);
-    padding-bottom: var(--s5);
+    margin-top: var(--s4);
   }
 
   .detail-pros-cons-grid {
@@ -1788,7 +1883,7 @@ html, body {
 }
 
 /* ==========================================================================
-   13. DEBUG HELPER PANEL (?debug parameter only)
+   14. DEBUG & LAYOUT AUDIT PANEL (?debug and ?layout parameters)
    ========================================================================== */
 .avatar-debug-panel {
   position: fixed;

@@ -26,6 +26,8 @@
     AVATAR_ZOOM_DESKTOP: 0.92, // Desktop camera zoom (~74vh tall, clearly below navbar)
     AVATAR_ZOOM_MOBILE: 0.52,  // Mobile camera zoom (fully visible, proportioned)
     AVATAR_Y_OFFSET: -25,      // Vertical stage nudge in px (top of head ~10vh, feet ~84vh)
+    AVATAR_BASE_HEIGHT_PX_AT_ZOOM: 0, // Visual height of avatar at scale 1 (measured once via 3D bounding box)
+    BG_WORD_OPACITY: 1.0,      // Opacity multiplier for stroke-only giant background words
 
     // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180° to back)
     ROT_OFFSET: 0,             // Rotation offset (0 = face toward camera; Math.PI = back)
@@ -457,10 +459,10 @@
     },
     fly: {
       body: { x: 0.35, y: 0, z: 0 },
-      leftArm: { x: -1.5, y: 0, z: -0.15 },
-      rightArm: { x: -1.5, y: 0, z: 0.15 },
-      leftLeg: { x: -0.25, y: 0, z: -0.04 },
-      rightLeg: { x: -0.25, y: 0, z: 0.04 }
+      leftArm: { x: -1.5, y: 0, z: -0.25 },
+      rightArm: { x: -1.5, y: 0, z: 0.25 },
+      leftLeg: { x: -0.25, y: 0, z: -0.05 },
+      rightLeg: { x: -0.25, y: 0, z: 0.05 }
     },
     write: {
       body: { x: 0.35, y: 0.08, z: 0 },
@@ -471,8 +473,8 @@
     },
     place: {
       body: { x: 0.15, y: 0.08, z: 0 },
-      leftArm: { x: -0.3, y: 0, z: -0.2 },
-      rightArm: { x: -0.85, y: -0.2, z: 0.05 },
+      leftArm: { x: -0.3, y: 0, z: -0.22 },
+      rightArm: { x: -0.85, y: -0.2, z: 0.22 },
       leftLeg: { x: -0.12, y: 0, z: -0.04 },
       rightLeg: { x: 0.10, y: 0, z: 0.04 }
     },
@@ -485,33 +487,92 @@
     },
     reach: {
       body: { x: 0.03, y: 0.08, z: 0 },
-      leftArm: { x: 0.1, y: 0, z: -0.15 },
-      rightArm: { x: -1.2, y: -0.1, z: -0.2 },
-      leftLeg: { x: 0.1, y: 0, z: -0.03 },
+      leftArm: { x: 0.1, y: 0, z: -0.18 },
+      rightArm: { x: -1.2, y: -0.1, z: 0.25 },
+      leftLeg: { x: 0.1, y: 0, z: -0.04 },
       rightLeg: { x: -0.12, y: 0, z: 0.04 }
     },
     rest: {
       body: { x: 0.05, y: 0, z: 0 },
-      leftArm: { x: 0.04, y: 0, z: -0.1 },
-      rightArm: { x: 0.04, y: 0, z: 0.1 },
-      leftLeg: { x: 0.12, y: 0, z: -0.02 },
-      rightLeg: { x: -0.08, y: 0, z: 0.02 }
+      leftArm: { x: 0.04, y: 0, z: -0.15 },
+      rightArm: { x: 0.04, y: 0, z: 0.15 },
+      leftLeg: { x: 0.12, y: 0, z: -0.04 },
+      rightLeg: { x: -0.08, y: 0, z: 0.04 }
     },
     point: {
       body: { x: 0.02, y: 0.2, z: 0 },
-      leftArm: { x: 0.08, y: 0, z: -0.15 },
-      rightArm: { x: -1.45, y: -0.3, z: 0.15 },
-      leftLeg: { x: -0.05, y: 0, z: -0.03 },
-      rightLeg: { x: 0.08, y: 0, z: 0.03 }
+      leftArm: { x: 0.08, y: 0, z: -0.18 },
+      rightArm: { x: -1.45, y: -0.3, z: 0.25 },
+      leftLeg: { x: -0.05, y: 0, z: -0.04 },
+      rightLeg: { x: 0.08, y: 0, z: 0.04 }
     },
     wave: {
       body: { x: 0, y: 0, z: 0 },
-      leftArm: { x: 0.08, y: 0, z: -0.15 },
-      rightArm: { x: -2.8, y: 0.2, z: -0.35 },
-      leftLeg: { x: -0.03, y: 0, z: -0.02 },
-      rightLeg: { x: 0.03, y: 0, z: 0.02 }
+      leftArm: { x: 0.08, y: 0, z: -0.18 },
+      rightArm: { x: -2.8, y: 0.2, z: 0.35 },
+      leftLeg: { x: -0.03, y: 0, z: -0.04 },
+      rightLeg: { x: 0.03, y: 0, z: 0.04 }
+    },
+    hold: {
+      body: { x: 0.04, y: 0, z: 0 },
+      leftArm: { x: -0.3, y: 0.1, z: -0.22 },
+      rightArm: { x: -0.3, y: -0.1, z: 0.22 },
+      leftLeg: { x: -0.04, y: 0, z: -0.04 },
+      rightLeg: { x: 0.04, y: 0, z: 0.04 }
     }
   };
+
+  /**
+   * Final constraint step in pose blender:
+   * - Hanging arms (|rot.x| < 0.6) outward |z| >= 0.07 rad (left <= -0.07, right >= +0.07)
+   * - Raised forward arms (rot.x <= -0.9) outward |z| >= 0.20 rad (left <= -0.20, right >= +0.20)
+   * - Legs outward |z| >= 0.02 rad each (left <= -0.02, right >= +0.02)
+   * - Head/body yaw/pitch within safe limits
+   */
+  function applyLimbConstraints(skin) {
+    if (!skin) return;
+
+    // Left arm: outward is negative z
+    if (skin.leftArm) {
+      const rx = skin.leftArm.rotation.x;
+      if (Math.abs(rx) < 0.6) {
+        if (skin.leftArm.rotation.z > -0.07) skin.leftArm.rotation.z = -0.07;
+      } else if (rx <= -0.9) {
+        if (skin.leftArm.rotation.z > -0.20) skin.leftArm.rotation.z = -0.20;
+      }
+    }
+
+    // Right arm: outward is positive z
+    if (skin.rightArm) {
+      const rx = skin.rightArm.rotation.x;
+      if (Math.abs(rx) < 0.6) {
+        if (skin.rightArm.rotation.z < 0.07) skin.rightArm.rotation.z = 0.07;
+      } else if (rx <= -0.9) {
+        if (skin.rightArm.rotation.z < 0.20) skin.rightArm.rotation.z = 0.20;
+      }
+    }
+
+    // Legs: outward is negative z for left, positive z for right
+    if (skin.leftLeg) {
+      if (skin.leftLeg.rotation.z > -0.02) skin.leftLeg.rotation.z = -0.02;
+    }
+    if (skin.rightLeg) {
+      if (skin.rightLeg.rotation.z < 0.02) skin.rightLeg.rotation.z = 0.02;
+    }
+
+    // Body safe limits
+    if (skin.body) {
+      skin.body.rotation.x = Math.max(-0.45, Math.min(0.45, skin.body.rotation.x));
+      skin.body.rotation.y = Math.max(-0.75, Math.min(0.75, skin.body.rotation.y));
+      skin.body.rotation.z = Math.max(-0.35, Math.min(0.35, skin.body.rotation.z));
+    }
+
+    // Head safe limits
+    if (skin.head) {
+      skin.head.rotation.x = Math.max(-0.45, Math.min(0.45, skin.head.rotation.x));
+      skin.head.rotation.y = Math.max(-0.65, Math.min(0.65, skin.head.rotation.y));
+    }
+  }
 
   function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
@@ -946,6 +1007,9 @@
 
       // 5. Drive Head inside FloatAnimation
       this.updateHeadLook(player);
+
+      // 6. Enforce 3D Limb Non-Self-Intersection & Safe Angular Constraints
+      applyLimbConstraints(skin);
     }
 
     updateHeadLook(player) {
@@ -1250,7 +1314,7 @@
         introCanvas.style.display = 'none';
       }
       if (titleEl) {
-        titleEl.style.transform = 'translate(-50%, -50%)';
+        titleEl.style.transform = '';
       }
       if (gateScreen) {
         gateScreen.classList.add('faded-out');
@@ -1492,7 +1556,7 @@
           let introDeltaY = introCenterY - finalCenterY;
           let introDeltaX = 0;
 
-          titleEl.style.transform = `translate(calc(-50% + ${introDeltaX}px), calc(-50% + ${introDeltaY.toFixed(2)}px))`;
+          titleEl.style.transform = `translate3d(${introDeltaX.toFixed(2)}px, ${introDeltaY.toFixed(2)}px, 0)`;
 
           const charTexts = ['c', 'o', 'o', 'd', 'z', '_', '1', '0'];
           const rawMetrics = spans.map((span, idx) => {
@@ -1536,7 +1600,7 @@
 
           introDeltaX += horizontalCorr;
           introDeltaY += verticalCorr;
-          titleEl.style.transform = `translate(calc(-50% + ${introDeltaX.toFixed(2)}px), calc(-50% + ${introDeltaY.toFixed(2)}px))`;
+          titleEl.style.transform = `translate3d(${introDeltaX.toFixed(2)}px, ${introDeltaY.toFixed(2)}px, 0)`;
 
           // Shift metrics by corrections to align offscreen canvas with DOM
           const letterData = rawMetrics.map((m) => {
@@ -1964,9 +2028,9 @@
               const curDeltaY = introDeltaY * (1 - t);
               if (titleEl) {
                 if (Math.abs(curDeltaX) > 0.05 || Math.abs(curDeltaY) > 0.05) {
-                  titleEl.style.transform = `translate(calc(-50% + ${curDeltaX.toFixed(2)}px), calc(-50% + ${curDeltaY.toFixed(2)}px))`;
+                  titleEl.style.transform = `translate3d(${curDeltaX.toFixed(2)}px, ${curDeltaY.toFixed(2)}px, 0)`;
                 } else {
-                  titleEl.style.transform = 'translate(-50%, -50%)';
+                  titleEl.style.transform = '';
                 }
               }
 
@@ -2277,6 +2341,130 @@
     }
   }
 
+  const cachedSlotKeyframes = {
+    home: null,
+    chi_sono: null,
+    esperienze: null,
+    contatti: null
+  };
+
+  /**
+   * Measure the avatar's height at scale 1 once by projecting the 3D meshes
+   * with the active camera and storing it in CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM.
+   */
+  function measureAvatarBaseHeight() {
+    if (!skinViewer || !skinViewer.camera || !skinViewer.playerObject) {
+      if (!CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM) {
+        CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM = window.innerHeight * (isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP) * 0.82;
+      }
+      return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
+    }
+
+    try {
+      skinViewer.playerObject.updateMatrixWorld(true);
+      const Vector3 = skinViewer.camera.position.constructor;
+
+      let minY = Infinity;
+      let maxY = -Infinity;
+
+      skinViewer.playerObject.traverse((node) => {
+        if (node.isMesh && node.geometry) {
+          if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+          const geomBox = node.geometry.boundingBox;
+          if (geomBox) {
+            const corners = [
+              new Vector3(geomBox.min.x, geomBox.min.y, geomBox.min.z),
+              new Vector3(geomBox.min.x, geomBox.max.y, geomBox.min.z),
+              new Vector3(geomBox.max.x, geomBox.min.y, geomBox.min.z),
+              new Vector3(geomBox.max.x, geomBox.max.y, geomBox.min.z),
+              new Vector3(geomBox.min.x, geomBox.min.y, geomBox.max.z),
+              new Vector3(geomBox.min.x, geomBox.max.y, geomBox.max.z),
+              new Vector3(geomBox.max.x, geomBox.min.y, geomBox.max.z),
+              new Vector3(geomBox.max.x, geomBox.max.y, geomBox.max.z)
+            ];
+            for (let i = 0; i < 8; i++) {
+              const c = corners[i];
+              c.applyMatrix4(node.matrixWorld);
+              const p = c.clone().project(skinViewer.camera);
+              const screenY = (-p.y * 0.5 + 0.5) * window.innerHeight;
+              if (screenY < minY) minY = screenY;
+              if (screenY > maxY) maxY = screenY;
+            }
+          }
+        }
+      });
+
+      if (minY !== Infinity && maxY !== -Infinity && maxY > minY) {
+        CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM = maxY - minY;
+        return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
+      }
+    } catch (e) {
+      console.warn('[Avatar] Failed to measure base height:', e);
+    }
+
+    CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM = window.innerHeight * (isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP) * 0.82;
+    return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
+  }
+
+  /**
+   * Derive avatar keyframes (x, y, scale) directly from .avatar-slot elements
+   * in each section's CSS grid relative to section to avoid scroll offset errors.
+   */
+  function computeSlotKeyframes() {
+    updateCachedDimensions();
+    const baseH = measureAvatarBaseHeight();
+    const baseW = baseH * 0.65;
+    const vw = cachedWindowWidth;
+    const vh = cachedWindowHeight;
+    const viewportCenterX = vw * 0.5;
+    const viewportCenterY = vh * 0.5;
+
+    const sections = [
+      { id: 'home', el: document.getElementById('home'), slotSelector: '.home-avatar-slot' },
+      { id: 'chi_sono', el: document.getElementById('chi_sono'), slotSelector: '.about-avatar-slot' },
+      { id: 'esperienze', el: document.getElementById('esperienze'), slotSelector: '.exp-avatar-slot' },
+      { id: 'contatti', el: document.getElementById('contatti'), slotSelector: '.contact-avatar-slot' }
+    ];
+
+    sections.forEach(({ id, el, slotSelector }) => {
+      if (!el) return;
+      const slot = el.querySelector(slotSelector) || el.querySelector('.avatar-slot');
+      if (!slot) return;
+
+      const secRect = el.getBoundingClientRect();
+      const slotRect = slot.getBoundingClientRect();
+
+      const slotRelLeft = slotRect.left - secRect.left;
+      const slotRelTop = slotRect.top - secRect.top;
+
+      const slotCenterX = slotRelLeft + slotRect.width * 0.5;
+      const slotCenterY = slotRelTop + slotRect.height * 0.5;
+
+      const targetX = slotCenterX - viewportCenterX;
+      const targetY = slotCenterY - viewportCenterY;
+
+      let scale = 0.5;
+      if (baseH > 0 && slotRect.height > 0) {
+        const scaleH = (slotRect.height * 0.96) / baseH;
+        const scaleW = (slotRect.width > 0) ? (slotRect.width / baseW) : scaleH;
+        scale = Math.min(scaleH, scaleW);
+      }
+      scale = Math.max(0.20, Math.min(1.15, scale));
+
+      cachedSlotKeyframes[id] = {
+        x: targetX,
+        y: targetY,
+        scale: scale,
+        slotRect: {
+          left: slotRelLeft,
+          top: slotRelTop,
+          width: slotRect.width,
+          height: slotRect.height
+        }
+      };
+    });
+  }
+
   function smoothstep(x) {
     const c = Math.max(0, Math.min(1, x));
     return c * c * (3 - 2 * c);
@@ -2284,18 +2472,35 @@
 
   function resolveKeyframe(kf) {
     const isMob = cachedWindowWidth <= 768;
-    const kfXVal = isMob && kf.xMobile !== undefined ? kf.xMobile : kf.x;
-    const kfYVal = isMob && kf.yMobile !== undefined ? kf.yMobile : kf.y;
-    const kfX = (kfXVal / 100) * cachedWindowWidth;
-    const kfY = (kfYVal / 100) * cachedWindowHeight + (CONFIG.AVATAR_Y_OFFSET || 0);
-    const kfScale = isMob ? (kf.scaleMobile || kf.scale * 0.8) : kf.scale;
+    const cached = cachedSlotKeyframes[kf.id];
+
+    let kfX = 0;
+    let kfY = 0;
+    let kfScale = isMob ? (kf.scaleMobile || kf.scale * 0.8) : kf.scale;
+
+    if (cached) {
+      kfX = cached.x;
+      kfY = cached.y;
+      kfScale = cached.scale;
+    } else {
+      const kfXVal = isMob && kf.xMobile !== undefined ? kf.xMobile : kf.x;
+      const kfYVal = isMob && kf.yMobile !== undefined ? kf.yMobile : kf.y;
+      kfX = (kfXVal / 100) * cachedWindowWidth;
+      kfY = (kfYVal / 100) * cachedWindowHeight + (CONFIG.AVATAR_Y_OFFSET || 0);
+    }
+
     return {
+      id: kf.id,
       x: kfX,
       y: kfY,
       scale: kfScale,
       yaw: isMob ? 0 : (kf.yaw || 0),
       roll: kf.roll || 0
     };
+  }
+
+  function applyBgWordOpacity() {
+    document.documentElement.style.setProperty('--bg-word-opacity', CONFIG.BG_WORD_OPACITY);
   }
 
   function runFrameFlightTick(nowSec, dt) {
@@ -2436,7 +2641,7 @@
           chSpans.forEach((ch) => { ch.style.transform = ''; });
         }
 
-        heroTitle.style.transform = `translate(-50%, -50%) translate3d(0, ${bobTitlePx.toFixed(2)}px, 0) rotate(${rotTitleDeg.toFixed(2)}deg) scale(${s.toFixed(3)})`;
+        heroTitle.style.transform = `translate3d(0, ${bobTitlePx.toFixed(2)}px, 0) rotate(${rotTitleDeg.toFixed(2)}deg) scale(${s.toFixed(3)})`;
         heroTitle.style.opacity = op.toFixed(3);
         heroTitle.style.filter = `blur(${bl}px)`;
         heroTitle.style.pointerEvents = op < 0.1 ? 'none' : 'auto';
@@ -2543,6 +2748,9 @@
     if (stage) {
       stage.style.setProperty('--avatar-y', `${CONFIG.AVATAR_Y_OFFSET}px`);
     }
+
+    measureAvatarBaseHeight();
+    computeSlotKeyframes();
   }
 
   // ==========================================================================
@@ -2787,8 +2995,11 @@
         mouseInWindow = false;
       });
 
-      // Resize
+      // Resize & Orientation
       window.addEventListener('resize', updateViewerSize, { passive: true });
+      window.addEventListener('orientationchange', () => {
+        setTimeout(updateViewerSize, 120);
+      }, { passive: true });
 
       // Pause rendering when tab hidden
       document.addEventListener('visibilitychange', () => {
@@ -3620,9 +3831,13 @@
 
     // Re-anchor home avatar on language change & update cached dimensions
     updateCachedDimensions();
+    computeSlotKeyframes();
 
     // Update nav indicator position after text changes
-    setTimeout(() => updateNavIndicator(activeSectionId), 50);
+    setTimeout(() => {
+      updateNavIndicator(activeSectionId);
+      computeSlotKeyframes();
+    }, 50);
   }
 
   function initSectionObserver() {
@@ -4125,6 +4340,305 @@
   }
 
   // ==========================================================================
+  // 8b. LAYOUT AUDIT ENGINE (?layout query parameter & window.__layoutAudit)
+  // ==========================================================================
+  function runLayoutAudit(sectionId) {
+    updateCachedDimensions();
+    const vw = cachedWindowWidth;
+    const vh = cachedWindowHeight;
+    const viewportCenterX = vw * 0.5;
+    const viewportCenterY = vh * 0.5;
+
+    const baseH = measureAvatarBaseHeight();
+    const baseW = baseH * 0.65;
+
+    const sections = [
+      { id: 'home', el: document.getElementById('home'), slotSelector: '.home-avatar-slot' },
+      { id: 'chi_sono', el: document.getElementById('chi_sono'), slotSelector: '.about-avatar-slot' },
+      { id: 'esperienze', el: document.getElementById('esperienze'), slotSelector: '.exp-avatar-slot' },
+      { id: 'contatti', el: document.getElementById('contatti'), slotSelector: '.contact-avatar-slot' }
+    ];
+
+    const targetSections = sectionId ? sections.filter((s) => s.id === sectionId) : sections;
+    const auditResults = [];
+
+    targetSections.forEach(({ id, el, slotSelector }) => {
+      if (!el) return;
+      const secRect = el.getBoundingClientRect();
+      const slot = el.querySelector(slotSelector) || el.querySelector('.avatar-slot');
+      if (!slot) return;
+
+      const slotRect = slot.getBoundingClientRect();
+      const slotRelLeft = slotRect.left - secRect.left;
+      const slotRelTop = slotRect.top - secRect.top;
+
+      const kfIndex = sections.findIndex((s) => s.id === id);
+      const kf = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[kfIndex >= 0 ? kfIndex : 0]);
+
+      const avatarCenterX = viewportCenterX + kf.x;
+      const avatarCenterY = viewportCenterY + kf.y;
+      const avatarH = baseH * kf.scale;
+      const avatarW = baseW * kf.scale;
+
+      const avatarBox = {
+        left: avatarCenterX - avatarW * 0.5,
+        top: avatarCenterY - avatarH * 0.5,
+        right: avatarCenterX + avatarW * 0.5,
+        bottom: avatarCenterY + avatarH * 0.5,
+        width: avatarW,
+        height: avatarH
+      };
+
+      // Find visible text blocks within this section (excluding background words and avatar slot)
+      const textNodes = Array.from(el.querySelectorAll('h1, h2, h3, p, a, button, .section-head, .lead, .about-item, .exp-row, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot, .about-col-left, .about-col-right'))
+        .filter((node) => {
+          if (node.closest('.section-bg-word') || node.closest('.avatar-slot')) return false;
+          const r = node.getBoundingClientRect();
+          if (r.width <= 0 || r.height <= 0) return false;
+          const style = window.getComputedStyle(node);
+          return style.visibility !== 'hidden' && style.display !== 'none';
+        });
+
+      const overlaps = [];
+      textNodes.forEach((node) => {
+        // Skip pure container column wrappers
+        if (node.classList.contains('about-col-left') || node.classList.contains('about-col-right')) {
+          return;
+        }
+
+        const nr = node.getBoundingClientRect();
+        const nodeRel = {
+          left: nr.left - secRect.left,
+          top: nr.top - secRect.top,
+          right: nr.right - secRect.left,
+          bottom: nr.bottom - secRect.top,
+          width: nr.width,
+          height: nr.height
+        };
+
+        const overlapW = Math.max(0, Math.min(nodeRel.right, avatarBox.right) - Math.max(nodeRel.left, avatarBox.left));
+        const overlapH = Math.max(0, Math.min(nodeRel.bottom, avatarBox.bottom) - Math.max(nodeRel.top, avatarBox.top));
+
+        if (overlapW > 2 && overlapH > 2) {
+          overlaps.push({
+            element: `${node.tagName.toLowerCase()}${node.className ? '.' + String(node.className).trim().split(/\s+/).join('.') : ''}`,
+            overlapWidth: Math.round(overlapW * 10) / 10,
+            overlapHeight: Math.round(overlapH * 10) / 10,
+            box: nodeRel
+          });
+        }
+      });
+
+      // Centering error checks for intended centered elements
+      const centeringErrors = [];
+      const centeredSelectors = (id === 'home')
+        ? ['#hero-title', '.hero-subtitle', '.home-cta-row']
+        : (id === 'chi_sono')
+          ? ['.about-head']
+          : (id === 'contatti')
+            ? ['.contact-block', '.contact-head', '.contact-rows-wrap', '.contact-foot']
+            : [];
+
+      centeredSelectors.forEach((sel) => {
+        const cNode = el.querySelector(sel);
+        if (cNode) {
+          const cr = cNode.getBoundingClientRect();
+          const nodeCenterX = (cr.left - secRect.left) + cr.width * 0.5;
+          const contentCenterX = secRect.width * 0.5;
+          const err = Math.min(Math.abs(nodeCenterX - viewportCenterX), Math.abs(nodeCenterX - contentCenterX));
+          const roundedErr = Math.round(err * 10) / 10;
+          centeringErrors.push({
+            element: sel,
+            centerPx: Math.round(nodeCenterX * 10) / 10,
+            viewportCenterPx: Math.round(viewportCenterX * 10) / 10,
+            errorPx: roundedErr,
+            passes: roundedErr <= 2.0
+          });
+        }
+      });
+
+      const maxCenterErr = centeringErrors.length > 0 ? Math.max(...centeringErrors.map((c) => c.errorPx)) : 0;
+
+      auditResults.push({
+        section: id,
+        viewport: { width: vw, height: vh },
+        slot: {
+          x: Math.round(slotRelLeft),
+          y: Math.round(slotRelTop),
+          width: Math.round(slotRect.width),
+          height: Math.round(slotRect.height)
+        },
+        avatar: {
+          x: Math.round(avatarBox.left),
+          y: Math.round(avatarBox.top),
+          width: Math.round(avatarBox.width),
+          height: Math.round(avatarBox.height),
+          scale: Math.round(kf.scale * 1000) / 1000
+        },
+        overlaps,
+        centeringErrors,
+        hasOverlaps: overlaps.length > 0,
+        maxCenteringError: maxCenterErr,
+        passesAudit: overlaps.length === 0 && maxCenterErr <= 2.0
+      });
+    });
+
+    return sectionId ? auditResults[0] : auditResults;
+  }
+
+  // Expose layout audit function globally
+  window.__layoutAudit = runLayoutAudit;
+
+  function initLayoutAuditOverlay() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('layout')) return;
+
+    let auditCanvas = document.getElementById('layout-audit-canvas');
+    if (!auditCanvas) {
+      auditCanvas = document.createElement('canvas');
+      auditCanvas.id = 'layout-audit-canvas';
+      auditCanvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999999;';
+      document.body.appendChild(auditCanvas);
+    }
+
+    const ctx = auditCanvas.getContext('2d');
+
+    function renderAuditOverlay() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (auditCanvas.width !== vw || auditCanvas.height !== vh) {
+        auditCanvas.width = vw;
+        auditCanvas.height = vh;
+      }
+      ctx.clearRect(0, 0, vw, vh);
+
+      // Viewport Center Crosshair (Dashed)
+      ctx.save();
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(vw * 0.5, 0);
+      ctx.lineTo(vw * 0.5, vh);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.beginPath();
+      ctx.moveTo(0, vh * 0.5);
+      ctx.lineTo(vw, vh * 0.5);
+      ctx.stroke();
+      ctx.restore();
+
+      const activeEl = document.getElementById(activeSectionId) || document.getElementById('home');
+      if (activeEl) {
+        const secRect = activeEl.getBoundingClientRect();
+        const audit = runLayoutAudit(activeSectionId);
+        if (audit) {
+          // Slot Outline (BLUE)
+          const slot = activeEl.querySelector('.avatar-slot');
+          if (slot) {
+            const sr = slot.getBoundingClientRect();
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.08)';
+            ctx.strokeRect(sr.left, sr.top, sr.width, sr.height);
+            ctx.fillRect(sr.left, sr.top, sr.width, sr.height);
+            ctx.fillStyle = '#3b82f6';
+            ctx.font = '11px JetBrains Mono, monospace';
+            ctx.fillText(`[SLOT] ${Math.round(sr.width)}x${Math.round(sr.height)}px`, sr.left + 6, sr.top + 16);
+          }
+
+          // Avatar Visual Box (CYAN)
+          const baseH = measureAvatarBaseHeight();
+          const baseW = baseH * 0.65;
+          const kfIndex = ['home', 'chi_sono', 'esperienze', 'contatti'].indexOf(activeSectionId);
+          const kf = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[kfIndex >= 0 ? kfIndex : 0]);
+          const avW = baseW * kf.scale;
+          const avH = baseH * kf.scale;
+          const avLeft = vw * 0.5 + kf.x - avW * 0.5;
+          const avTop = vh * 0.5 + kf.y - avH * 0.5;
+
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 2;
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
+          ctx.strokeRect(avLeft, avTop, avW, avH);
+          ctx.fillRect(avLeft, avTop, avW, avH);
+          ctx.fillStyle = '#06b6d4';
+          ctx.font = '11px JetBrains Mono, monospace';
+          ctx.fillText(`[AVATAR] scale=${kf.scale.toFixed(2)} (${Math.round(avW)}x${Math.round(avH)}px)`, avLeft + 6, avTop + 16);
+
+          // Visible Text Blocks (GREEN)
+          const textNodes = Array.from(activeEl.querySelectorAll('h1, h2, h3, p, a, button, .lead, .about-item, .exp-row, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot'))
+            .filter((n) => !n.closest('.section-bg-word') && !n.closest('.avatar-slot'));
+          ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
+          ctx.lineWidth = 1;
+          textNodes.forEach((node) => {
+            const nr = node.getBoundingClientRect();
+            if (nr.width > 0 && nr.height > 0) {
+              ctx.strokeRect(nr.left, nr.top, nr.width, nr.height);
+            }
+          });
+
+          // Draw Overlaps (RED)
+          if (audit.overlaps && audit.overlaps.length > 0) {
+            audit.overlaps.forEach((ov) => {
+              const nodeRel = ov.box;
+              const screenLeft = nodeRel.left + secRect.left;
+              const screenTop = nodeRel.top + secRect.top;
+              const ovLeft = Math.max(screenLeft, avLeft);
+              const ovTop = Math.max(screenTop, avTop);
+              const ovW = Math.min(screenLeft + nodeRel.width, avLeft + avW) - ovLeft;
+              const ovH = Math.min(screenTop + nodeRel.height, avTop + avH) - ovTop;
+
+              if (ovW > 0 && ovH > 0) {
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                ctx.fillRect(ovLeft, ovTop, ovW, ovH);
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(ovLeft, ovTop, ovW, ovH);
+
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 11px JetBrains Mono, monospace';
+                ctx.fillText(`[OVERLAP ${Math.round(ov.overlapWidth)}x${Math.round(ov.overlapHeight)}px]`, ovLeft + 4, ovTop + 14);
+              }
+            });
+          }
+
+          // Centering Errors Display
+          if (audit.centeringErrors && audit.centeringErrors.length > 0) {
+            audit.centeringErrors.forEach((ce) => {
+              const cNode = activeEl.querySelector(ce.element);
+              if (cNode) {
+                const cr = cNode.getBoundingClientRect();
+                ctx.fillStyle = ce.passes ? '#22c55e' : '#ef4444';
+                ctx.font = '10px JetBrains Mono, monospace';
+                ctx.fillText(`[CENTER ERR: ${ce.errorPx}px]`, cr.right - 140, cr.top + 14);
+              }
+            });
+          }
+
+          // Top Info Banner
+          ctx.fillStyle = 'rgba(5, 6, 15, 0.88)';
+          ctx.fillRect(10, 10, 360, 52);
+          ctx.strokeStyle = audit.passesAudit ? '#22c55e' : '#ef4444';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(10, 10, 360, 52);
+          ctx.fillStyle = audit.passesAudit ? '#22c55e' : '#ef4444';
+          ctx.font = 'bold 11px JetBrains Mono, monospace';
+          ctx.fillText(`LAYOUT AUDIT: [${activeSectionId.toUpperCase()}] ${audit.passesAudit ? 'PASS' : 'FAIL'}`, 18, 28);
+          ctx.fillStyle = '#e8eaff';
+          ctx.font = '10px JetBrains Mono, monospace';
+          ctx.fillText(`Overlaps: ${audit.overlaps.length} | Max Center Err: ${audit.maxCenteringError}px`, 18, 46);
+        }
+      }
+
+      requestAnimationFrame(renderAuditOverlay);
+    }
+
+    requestAnimationFrame(renderAuditOverlay);
+  }
+
+  // ==========================================================================
   // 9. DEBUG HELPER PANEL (?debug query parameter only)
   // ==========================================================================
   function initDebugHelper() {
@@ -4221,6 +4735,10 @@
           <span>Warp Strength: <b id="val-warp">${CONFIG.WARP_STRENGTH.toFixed(0)}</b></span>
           <input type="range" id="slider-warp" min="5" max="80" step="1" value="${CONFIG.WARP_STRENGTH}">
         </label>
+        <label class="debug-row">
+          <span>Bg Word Opacity: <b id="val-bg-word">${CONFIG.BG_WORD_OPACITY.toFixed(2)}</b></span>
+          <input type="range" id="slider-bg-word" min="0" max="2.0" step="0.05" value="${CONFIG.BG_WORD_OPACITY}">
+        </label>
 
         <div class="debug-toggles-row">
           <button id="toggle-scrub-mode" class="debug-toggle-btn cursor-pointer">[ SCRUB: AUTO ]</button>
@@ -4257,8 +4775,13 @@
             <option value="rest">rest</option>
             <option value="point">point</option>
             <option value="wave">wave</option>
+            <option value="hold">hold</option>
           </select>
         </label>
+
+        <div class="debug-toggles-row">
+          <button id="btn-pose-test" class="debug-toggle-btn cursor-pointer">[ POSE TEST ]</button>
+        </div>
 
         <div style="border-top: 1px solid rgba(94, 168, 255, 0.25); margin: 0.75rem 0 0.5rem; padding-top: 0.5rem;">
           <div class="debug-row"><span>Float Amp: <b id="val-float-amp">0.00</b></span></div>
@@ -4327,6 +4850,9 @@
     const toggleIntroDebug = panel.querySelector('#toggle-intro-debug');
     const togglePenArm = panel.querySelector('#toggle-pen-arm');
     const poseSelect = panel.querySelector('#debug-pose-select');
+    const sliderBgWord = panel.querySelector('#slider-bg-word');
+    const valBgWord = panel.querySelector('#val-bg-word');
+    const btnPoseTest = panel.querySelector('#btn-pose-test');
     const codeOutput = panel.querySelector('#debug-code-output');
     const copyBtn = panel.querySelector('#debug-copy-btn');
 
@@ -4345,6 +4871,8 @@ AURA: ${CONFIG.AURA.toFixed(2)},
 ARM_TIP: ${CONFIG.ARM_TIP.toFixed(1)},
 WRITE_SCALE: ${CONFIG.WRITE_SCALE.toFixed(2)},
 PEN_ARM: '${CONFIG.PEN_ARM}',
+BG_WORD_OPACITY: ${CONFIG.BG_WORD_OPACITY.toFixed(2)},
+AVATAR_BASE_HEIGHT_PX_AT_ZOOM: ${CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM.toFixed(1)},
 HOME_AVATAR: { x: ${CONFIG.HOME_AVATAR.x}, y: ${CONFIG.HOME_AVATAR.y}, scale: ${CONFIG.HOME_AVATAR.scale.toFixed(2)}, yaw: ${CONFIG.HOME_AVATAR.yaw} },
 AUDIO_VOLUME: ${CONFIG.AUDIO_VOLUME},
 AUDIO_GAIN: ${CONFIG.AUDIO_GAIN},
@@ -4592,6 +5120,43 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       }
     });
 
+    if (sliderBgWord) {
+      sliderBgWord.addEventListener('input', (e) => {
+        CONFIG.BG_WORD_OPACITY = parseFloat(e.target.value);
+        if (valBgWord) valBgWord.textContent = CONFIG.BG_WORD_OPACITY.toFixed(2);
+        applyBgWordOpacity();
+        updateConfigReadout();
+      });
+    }
+
+    if (btnPoseTest) {
+      const poseList = Object.keys(POSES);
+      const yaws = [-0.65, 0, 0.65];
+      let pIdx = 0;
+      let yIdx = 0;
+      btnPoseTest.addEventListener('click', () => {
+        const poseName = poseList[pIdx];
+        const yawVal = yaws[yIdx];
+
+        if (floatAnimation) {
+          floatAnimation.forcedPose = poseName;
+          floatAnimation.transitionTo(poseName, 0.25);
+        }
+        targetPlayerRotY = yawVal;
+        if (skinViewer && skinViewer.playerObject) {
+          skinViewer.playerObject.rotation.y = yawVal + CONFIG.ROT_OFFSET;
+        }
+
+        btnPoseTest.textContent = `[ ${poseName.toUpperCase()} yaw:${yawVal > 0 ? '+' : ''}${yawVal.toFixed(2)} ]`;
+
+        yIdx++;
+        if (yIdx >= yaws.length) {
+          yIdx = 0;
+          pIdx = (pIdx + 1) % poseList.length;
+        }
+      });
+    }
+
     copyBtn.addEventListener('click', () => {
       if (navigator.clipboard) {
         navigator.clipboard.writeText(codeOutput.textContent).then(() => {
@@ -4643,6 +5208,7 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
     initAudio();
     initGateAndIntro();
     initTitleHoverScramble();
+    applyBgWordOpacity();
     initAvatar();
     initAvatarInteraction();
     initStars();
@@ -4653,6 +5219,13 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
     initKeyboardNav();
     initSectionObserver();
     initDebugHelper();
+    initLayoutAuditOverlay();
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        computeSlotKeyframes();
+      });
+    }
   });
 
 })();

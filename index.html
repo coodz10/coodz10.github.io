@@ -124,45 +124,49 @@
          SECTION 1: HOME
          ====================================================================== -->
     <section id="home" class="snap-section section-home">
-      <!-- Title coodz_10 centered around 71vh -->
-      <h1 id="hero-title" class="hero-title" aria-label="coodz_10">
-        <span class="ch">c</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">z</span><span class="ch">_</span><span class="ch">1</span><span class="ch">0</span>
-      </h1>
+      <div class="home-grid">
+        <!-- Avatar Slot above title -->
+        <div class="avatar-slot home-avatar-slot" aria-hidden="true"></div>
 
-      <!-- Subtitle centered around ~81vh -->
-      <div class="hero-subtitle-wrap mono">
-        <span class="sub-line sub-line-left" aria-hidden="true"></span>
-        <span class="hero-subtitle">MINECRAFT SCREENSHARER</span>
-        <span class="sub-line sub-line-right" aria-hidden="true"></span>
-      </div>
+        <!-- Title coodz_10 centered by INK/visual center -->
+        <h1 id="hero-title" class="hero-title" aria-label="coodz_10">
+          <span class="ch">c</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">z</span><span class="ch">_</span><span class="ch">1</span><span class="ch">0</span>
+        </h1>
 
-      <!-- Bottom Actions: Bracket buttons and scroll line -->
-      <div class="home-bottom-actions mono">
-        <div class="home-buttons-row">
-          <a href="#chi_sono" class="btn btn--primary mono" data-i18n="btnAbout">[ CHI SONO ]</a>
-          <a href="#esperienze" class="btn btn--secondary mono" data-i18n="btnExp">[ LE MIE ESPERIENZE ]</a>
+        <!-- Subtitle centered by INK center -->
+        <div class="hero-subtitle-wrap mono">
+          <span class="sub-line sub-line-left" aria-hidden="true"></span>
+          <span class="hero-subtitle">MINECRAFT SCREENSHARER</span>
+          <span class="sub-line sub-line-right" aria-hidden="true"></span>
         </div>
-        <div class="home-scroll-indicator" aria-hidden="true">
-          <div class="scroll-line"></div>
+
+        <!-- Bottom Actions: Bracket buttons and scroll line -->
+        <div class="home-bottom-actions mono">
+          <div class="home-buttons-row">
+            <a href="#chi_sono" class="btn btn--primary mono" data-i18n="btnAbout">[ CHI SONO ]</a>
+            <a href="#esperienze" class="btn btn--secondary mono" data-i18n="btnExp">[ LE MIE ESPERIENZE ]</a>
+          </div>
+          <div class="home-scroll-indicator" aria-hidden="true">
+            <div class="scroll-line"></div>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- ======================================================================
          SECTION 2: CHI_SONO (ABOUT ME)
-         Minimal design: Header zone 6vh-24vh, avatar center band 26vh-88vh,
-         left column = lead paragraph (~28vw), right column = 3 hairline items (~28vw).
+         Symmetric 3-column CSS Grid: Left column (lead + 01) | Slot | Right column (02 + 03)
          ====================================================================== -->
     <section id="chi_sono" class="snap-section section-about">
       <div class="section-bg-word mono" data-i18n="bgWordAbout" aria-hidden="true">CHI SONO</div>
       <div class="section-block about-block">
 
-        <!-- Section Head centered above avatar (6vh to 24vh) -->
-        <div class="section-head section-head--center about-head">
+        <!-- Header: Centered above middle column (6vh to 24vh) -->
+        <header class="section-head section-head--center about-head">
           <span class="section-head__tag mono" data-i18n="aboutTag">01 // CHI_SONO</span>
           <h1 class="section-head__title" data-i18n="aboutTitle">Chi Sono</h1>
           
-          <!-- Single mono metadata line under title (Fits inside header zone) -->
+          <!-- Single mono metadata line under title -->
           <div class="about-meta mono">
             <span class="meta-item"><span class="meta-label" data-i18n="aboutHandleLabel">HANDLE:</span> <span class="meta-val">coodz_10</span></span>
             <span class="meta-sep">·</span>
@@ -170,22 +174,15 @@
             <span class="meta-sep">·</span>
             <span class="meta-item meta-status"><span class="status-dot-accent">●</span> <span class="meta-label" data-i18n="aboutStatusLabel">STATO:</span> <span class="meta-val" data-i18n="aboutStatusVal">[ OPERATIVO ]</span></span>
           </div>
-        </div>
+        </header>
 
-        <!-- Balanced 2-column grid aligned with avatar band (26vh to 88vh) -->
+        <!-- Symmetric 3-column Grid: Left column | Avatar Slot | Right column -->
         <div class="about-grid">
-          <!-- Left Column: Lead paragraph (~28vw, max 36ch) -->
+          <!-- LEFT column: lead paragraph + item 01 (~30vw max) -->
           <div class="about-col about-col--left">
             <p class="lead" data-i18n="aboutIntro">
               Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.
             </p>
-          </div>
-
-          <!-- Central spacer where the centered avatar hovers -->
-          <div class="about-avatar-spacer" aria-hidden="true"></div>
-
-          <!-- Right Column: 3 stacked items separated by hairlines (~28vw, max 42ch) -->
-          <div class="about-col about-col--right">
             <div class="about-item">
               <div class="about-item__header mono">
                 <span class="item-num">01 — </span>
@@ -195,7 +192,13 @@
                 Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.
               </p>
             </div>
+          </div>
 
+          <!-- MIDDLE column: Avatar Slot -->
+          <div class="avatar-slot about-avatar-slot" aria-hidden="true"></div>
+
+          <!-- RIGHT column: item 02 + item 03 (~30vw max) -->
+          <div class="about-col about-col--right">
             <div class="about-item">
               <div class="about-item__header mono">
                 <span class="item-num">02 — </span>
@@ -223,22 +226,22 @@
 
     <!-- ======================================================================
          SECTION 3: ESPERIENZE (EXPERIENCES)
-         Header strictly above avatar in left column (6vh to 24vh, NOT covered).
-         Avatar in left column band 26vh-88vh; right column = filter tabs + hairline rows.
+         CSS Grid: [Slot column 36vw | gutter | List column]
+         Header centered above the slot column and fully visible (never covered).
          Minecraft servers ALWAYS FIRST per AGENTS.md Rule 1.
          ====================================================================== -->
     <section id="esperienze" class="snap-section section-experiences">
       <div class="section-bg-word mono" data-i18n="bgWordExp" aria-hidden="true">ESPERIENZE</div>
       <div class="section-block experiences-block">
 
-        <!-- Left Column: Section Head ABOVE avatar (6vh to 24vh) -->
+        <!-- Left Column: Header centered above slot column + Avatar Slot below -->
         <div class="experiences-head-col">
-          <div class="section-head section-head--left">
+          <header class="section-head section-head--center exp-head">
             <span class="section-head__tag mono" data-i18n="expTag">02 // ESPERIENZE</span>
             <h1 class="section-head__title" data-i18n="expTitle">Esperienze</h1>
-          </div>
-          <!-- Avatar clearance spacer in left column -->
-          <div class="experiences-avatar-spacer" aria-hidden="true"></div>
+          </header>
+          <!-- Avatar Slot directly under header in left column -->
+          <div class="avatar-slot exp-avatar-slot" aria-hidden="true"></div>
         </div>
 
         <!-- Right Column: Filter Tabs + Experience List / Detail View -->
@@ -353,25 +356,24 @@
 
     <!-- ======================================================================
          SECTION 4: CONTATTI (CONTACT)
-         Header zone 6vh-24vh; avatar centered in band 26vh-58vh;
-         contact rows 62vh-86vh max 560px wide; footer line at ~93vh.
-         Zero overlap between text and avatar.
+         A single centered column (max-width 560px, margin-inline auto) with grid rows:
+         Header -> Avatar Slot (min-height 24vh) -> Rows -> Footer line.
          ====================================================================== -->
     <section id="contatti" class="snap-section section-contact">
       <div class="section-bg-word mono" data-i18n="bgWordContact" aria-hidden="true">CONTATTI</div>
       <div class="section-block contact-block">
-        <div class="section-head section-head--center contact-head">
+        <header class="section-head section-head--center contact-head">
           <span class="section-head__tag mono" data-i18n="contactTag">03 // CONTATTI</span>
           <h1 class="section-head__title" data-i18n="contactTitle">Parliamo</h1>
           <p class="contact-sub mono" data-i18n="contactSub">
             Per collaborazioni, richieste di servizi o investigazioni di sicurezza.
           </p>
-        </div>
+        </header>
 
-        <!-- Clearance spacer for smaller avatar in center (26vh to 58vh) -->
-        <div class="contact-avatar-spacer" aria-hidden="true"></div>
+        <!-- Avatar Slot in center between header and rows -->
+        <div class="avatar-slot contact-avatar-slot" aria-hidden="true"></div>
 
-        <!-- 3 Contact Rows (62vh to 86vh, max 560px wide, centered) -->
+        <!-- 3 Contact Rows (max-width 560px, centered) -->
         <div class="contact-rows-wrap">
           <!-- Discord -->
           <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="contact-row">
@@ -392,10 +394,10 @@
           </a>
         </div>
 
-        <!-- Footer Line at about 93vh -->
-        <div class="footer-line mono" data-i18n="footerEnd">
+        <!-- Footer Line -->
+        <footer class="footer-line mono" data-i18n="footerEnd">
           END_TRANSMISSION // COODZ_10
-        </div>
+        </footer>
       </div>
     </section>
 
