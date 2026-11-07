@@ -232,6 +232,7 @@
       bgWordContact: 'CONTACT'
     }
   };
+  window.CONFIG = CONFIG;
 
   // ==========================================================================
   // COMPLETE EXPERIENCE DETAILS (Ported exactly from servers/*.html)
@@ -2056,6 +2057,13 @@
     return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
   }
 
+  const resolvedKeyframeSlots = [
+    { id: 'home', x: 0, y: 0, scale: 0.5, yaw: 0, roll: 0 },
+    { id: 'chi_sono', x: 0, y: 0, scale: 0.5, yaw: 0, roll: 0 },
+    { id: 'esperienze', x: 0, y: 0, scale: 0.5, yaw: 0, roll: 0 },
+    { id: 'contatti', x: 0, y: 0, scale: 0.5, yaw: 0, roll: 0 }
+  ];
+
   /**
    * Derive avatar keyframes (x, y, scale) directly from .avatar-slot elements
    * in each section's CSS grid relative to section to avoid scroll offset errors.
@@ -2113,6 +2121,32 @@
         }
       };
     });
+
+    const kfs = CONFIG.AVATAR_KEYFRAMES;
+    for (let i = 0; i < kfs.length; i++) {
+      const kf = kfs[i];
+      const isMob = cachedWindowWidth <= 768;
+      const cached = cachedSlotKeyframes[kf.id];
+      const targetObj = resolvedKeyframeSlots[i];
+      targetObj.id = kf.id;
+      if (cached) {
+        targetObj.x = cached.x;
+        targetObj.y = cached.y;
+        targetObj.scale = cached.scale;
+      } else {
+        const kfXVal = isMob && kf.xMobile !== undefined ? kf.xMobile : kf.x;
+        const kfYVal = isMob && kf.yMobile !== undefined ? kf.yMobile : kf.y;
+        targetObj.x = (kfXVal / 100) * cachedWindowWidth;
+        targetObj.y = (kfYVal / 100) * cachedWindowHeight + (CONFIG.AVATAR_Y_OFFSET || 0);
+        targetObj.scale = isMob ? (kf.scaleMobile || kf.scale * 0.8) : kf.scale;
+      }
+      targetObj.yaw = isMob ? 0 : (kf.yaw || 0);
+      targetObj.roll = kf.roll || 0;
+    }
+
+    if (window.AvatarDirector && typeof window.AvatarDirector.updateReadingRects === 'function') {
+      window.AvatarDirector.updateReadingRects();
+    }
   }
 
   function smoothstep(x) {
@@ -2188,8 +2222,8 @@
     const u = Math.min(1, Math.max(0, fDisplay - seg));
     const t = smoothstep(u);
 
-    const kfA = resolveKeyframe(kfs[seg]);
-    const kfB = resolveKeyframe(kfs[seg + 1]);
+    const kfA = resolvedKeyframeSlots[seg];
+    const kfB = resolvedKeyframeSlots[seg + 1];
 
     const baseX = kfA.x + (kfB.x - kfA.x) * t;
     const baseY = kfA.y + (kfB.y - kfA.y) * t;
@@ -2973,6 +3007,7 @@
     let startTime = performance.now();
 
     function renderStars(now) {
+      const starsT0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
       if (!document.hidden) {
         const elapsed = (now - startTime) / 1000;
         ctx.clearRect(0, 0, width, height);
@@ -3127,6 +3162,10 @@
         }
 
         ctx.globalAlpha = 1;
+      }
+
+      if (starsT0 > 0 && window.AvatarDebug && typeof window.AvatarDebug.recordMetric === 'function') {
+        window.AvatarDebug.recordMetric('starsCanvas', performance.now() - starsT0);
       }
 
       requestAnimationFrame(renderStars);
@@ -3293,6 +3332,9 @@
       setAvatarState('esperienze-detail');
       if (window.AvatarDirector) {
         window.AvatarDirector.onDetailOpen(key);
+        if (typeof window.AvatarDirector.updateReadingRects === 'function') {
+          window.AvatarDirector.updateReadingRects();
+        }
       }
     });
 
@@ -3328,6 +3370,9 @@
       setAvatarState('esperienze');
       if (window.AvatarDirector) {
         window.AvatarDirector.onDetailClose();
+        if (typeof window.AvatarDirector.updateReadingRects === 'function') {
+          window.AvatarDirector.updateReadingRects();
+        }
       }
     });
 
@@ -3740,10 +3785,10 @@
         // Music reactive AnalyserNode for AvatarDirector
         try {
           const webAudioAnalyser = webAudioCtx.createAnalyser();
-          webAudioAnalyser.fftSize = 256;
+          webAudioAnalyser.fftSize = 128;
           webAudioCompressor.connect(webAudioAnalyser);
           if (window.AvatarDirector && typeof window.AvatarDirector.setAudioAnalyser === 'function') {
-            window.AvatarDirector.setAudioAnalyser(webAudioAnalyser, webAudioCtx);
+            window.AvatarDirector.setAudioAnalyser(webAudioAnalyser, webAudioCtx, audioEl);
           }
         } catch (e) {
           console.warn('[Web Audio] AnalyserNode setup error:', e);
@@ -4102,1024 +4147,6 @@
   }
 
   // ==========================================================================
-  // 8b. LAYOUT AUDIT ENGINE (?layout query parameter & window.__layoutAudit)
-  // ==========================================================================
-  function runLayoutAudit(sectionId) {
-    updateCachedDimensions();
-    const vw = cachedWindowWidth;
-    const vh = cachedWindowHeight;
-    const viewportCenterX = vw * 0.5;
-    const viewportCenterY = vh * 0.5;
-
-    const baseH = measureAvatarBaseHeight();
-    const baseW = baseH * 0.65;
-
-    const sections = [
-      { id: 'home', el: document.getElementById('home'), slotSelector: '.home-avatar-slot' },
-      { id: 'chi_sono', el: document.getElementById('chi_sono'), slotSelector: '.about-avatar-slot' },
-      { id: 'esperienze', el: document.getElementById('esperienze'), slotSelector: '.exp-avatar-slot' },
-      { id: 'contatti', el: document.getElementById('contatti'), slotSelector: '.contact-avatar-slot' }
-    ];
-
-    const targetSections = sectionId ? sections.filter((s) => s.id === sectionId) : sections;
-    const auditResults = [];
-
-    targetSections.forEach(({ id, el, slotSelector }) => {
-      if (!el) return;
-      const secRect = el.getBoundingClientRect();
-      const slot = el.querySelector(slotSelector) || el.querySelector('.avatar-slot');
-      if (!slot) return;
-
-      const slotRect = slot.getBoundingClientRect();
-      const slotRelLeft = slotRect.left - secRect.left;
-      const slotRelTop = slotRect.top - secRect.top;
-
-      const kfIndex = sections.findIndex((s) => s.id === id);
-      const kf = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[kfIndex >= 0 ? kfIndex : 0]);
-
-      const avatarCenterX = viewportCenterX + kf.x;
-      const avatarCenterY = viewportCenterY + kf.y;
-      const avatarH = baseH * kf.scale;
-      const avatarW = baseW * kf.scale;
-
-      const avatarBox = {
-        left: avatarCenterX - avatarW * 0.5,
-        top: avatarCenterY - avatarH * 0.5,
-        right: avatarCenterX + avatarW * 0.5,
-        bottom: avatarCenterY + avatarH * 0.5,
-        width: avatarW,
-        height: avatarH
-      };
-
-      // Find visible text blocks within this section (excluding background words and avatar slot)
-      const textNodes = Array.from(el.querySelectorAll('h1, h2, h3, p, a, button, .section-head, .lead, .about-item, .exp-row, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot, .about-col-left, .about-col-right'))
-        .filter((node) => {
-          if (node.closest('.section-bg-word') || node.closest('.avatar-slot')) return false;
-          const r = node.getBoundingClientRect();
-          if (r.width <= 0 || r.height <= 0) return false;
-          const style = window.getComputedStyle(node);
-          return style.visibility !== 'hidden' && style.display !== 'none';
-        });
-
-      const overlaps = [];
-      textNodes.forEach((node) => {
-        // Skip pure container column wrappers
-        if (node.classList.contains('about-col-left') || node.classList.contains('about-col-right')) {
-          return;
-        }
-
-        const nr = node.getBoundingClientRect();
-        const nodeRel = {
-          left: nr.left - secRect.left,
-          top: nr.top - secRect.top,
-          right: nr.right - secRect.left,
-          bottom: nr.bottom - secRect.top,
-          width: nr.width,
-          height: nr.height
-        };
-
-        const overlapW = Math.max(0, Math.min(nodeRel.right, avatarBox.right) - Math.max(nodeRel.left, avatarBox.left));
-        const overlapH = Math.max(0, Math.min(nodeRel.bottom, avatarBox.bottom) - Math.max(nodeRel.top, avatarBox.top));
-
-        if (overlapW > 2 && overlapH > 2) {
-          overlaps.push({
-            element: `${node.tagName.toLowerCase()}${node.className ? '.' + String(node.className).trim().split(/\s+/).join('.') : ''}`,
-            overlapWidth: Math.round(overlapW * 10) / 10,
-            overlapHeight: Math.round(overlapH * 10) / 10,
-            box: nodeRel
-          });
-        }
-      });
-
-      // Centering error checks for intended centered elements
-      const centeringErrors = [];
-      const centeredSelectors = (id === 'home')
-        ? ['#hero-title', '.hero-subtitle', '.home-cta-row']
-        : (id === 'chi_sono')
-          ? ['.about-head']
-          : (id === 'contatti')
-            ? ['.contact-block', '.contact-head', '.contact-rows-wrap', '.contact-foot']
-            : [];
-
-      centeredSelectors.forEach((sel) => {
-        const cNode = el.querySelector(sel);
-        if (cNode) {
-          const cr = cNode.getBoundingClientRect();
-          const nodeCenterX = (cr.left - secRect.left) + cr.width * 0.5;
-          const contentCenterX = secRect.width * 0.5;
-          const err = Math.min(Math.abs(nodeCenterX - viewportCenterX), Math.abs(nodeCenterX - contentCenterX));
-          const roundedErr = Math.round(err * 10) / 10;
-          centeringErrors.push({
-            element: sel,
-            centerPx: Math.round(nodeCenterX * 10) / 10,
-            viewportCenterPx: Math.round(viewportCenterX * 10) / 10,
-            errorPx: roundedErr,
-            passes: roundedErr <= 2.0
-          });
-        }
-      });
-
-      const maxCenterErr = centeringErrors.length > 0 ? Math.max(...centeringErrors.map((c) => c.errorPx)) : 0;
-
-      auditResults.push({
-        section: id,
-        viewport: { width: vw, height: vh },
-        slot: {
-          x: Math.round(slotRelLeft),
-          y: Math.round(slotRelTop),
-          width: Math.round(slotRect.width),
-          height: Math.round(slotRect.height)
-        },
-        avatar: {
-          x: Math.round(avatarBox.left),
-          y: Math.round(avatarBox.top),
-          width: Math.round(avatarBox.width),
-          height: Math.round(avatarBox.height),
-          scale: Math.round(kf.scale * 1000) / 1000
-        },
-        overlaps,
-        centeringErrors,
-        hasOverlaps: overlaps.length > 0,
-        maxCenteringError: maxCenterErr,
-        passesAudit: overlaps.length === 0 && maxCenterErr <= 2.0
-      });
-    });
-
-    return sectionId ? auditResults[0] : auditResults;
-  }
-
-  // Expose layout audit function globally
-  window.__layoutAudit = runLayoutAudit;
-
-  function initLayoutAuditOverlay() {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.has('layout')) return;
-
-    let auditCanvas = document.getElementById('layout-audit-canvas');
-    if (!auditCanvas) {
-      auditCanvas = document.createElement('canvas');
-      auditCanvas.id = 'layout-audit-canvas';
-      auditCanvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999999;';
-      document.body.appendChild(auditCanvas);
-    }
-
-    const ctx = auditCanvas.getContext('2d');
-
-    function renderAuditOverlay() {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      if (auditCanvas.width !== vw || auditCanvas.height !== vh) {
-        auditCanvas.width = vw;
-        auditCanvas.height = vh;
-      }
-      ctx.clearRect(0, 0, vw, vh);
-
-      // Viewport Center Crosshair (Dashed)
-      ctx.save();
-      ctx.setLineDash([6, 6]);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(vw * 0.5, 0);
-      ctx.lineTo(vw * 0.5, vh);
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-      ctx.beginPath();
-      ctx.moveTo(0, vh * 0.5);
-      ctx.lineTo(vw, vh * 0.5);
-      ctx.stroke();
-      ctx.restore();
-
-      const activeEl = document.getElementById(activeSectionId) || document.getElementById('home');
-      if (activeEl) {
-        const secRect = activeEl.getBoundingClientRect();
-        const audit = runLayoutAudit(activeSectionId);
-        if (audit) {
-          // Slot Outline (BLUE)
-          const slot = activeEl.querySelector('.avatar-slot');
-          if (slot) {
-            const sr = slot.getBoundingClientRect();
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 2;
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.08)';
-            ctx.strokeRect(sr.left, sr.top, sr.width, sr.height);
-            ctx.fillRect(sr.left, sr.top, sr.width, sr.height);
-            ctx.fillStyle = '#3b82f6';
-            ctx.font = '11px JetBrains Mono, monospace';
-            ctx.fillText(`[SLOT] ${Math.round(sr.width)}x${Math.round(sr.height)}px`, sr.left + 6, sr.top + 16);
-          }
-
-          // Avatar Visual Box (CYAN)
-          const baseH = measureAvatarBaseHeight();
-          const baseW = baseH * 0.65;
-          const kfIndex = ['home', 'chi_sono', 'esperienze', 'contatti'].indexOf(activeSectionId);
-          const kf = resolveKeyframe(CONFIG.AVATAR_KEYFRAMES[kfIndex >= 0 ? kfIndex : 0]);
-          const avW = baseW * kf.scale;
-          const avH = baseH * kf.scale;
-          const avLeft = vw * 0.5 + kf.x - avW * 0.5;
-          const avTop = vh * 0.5 + kf.y - avH * 0.5;
-
-          ctx.strokeStyle = '#06b6d4';
-          ctx.lineWidth = 2;
-          ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
-          ctx.strokeRect(avLeft, avTop, avW, avH);
-          ctx.fillRect(avLeft, avTop, avW, avH);
-          ctx.fillStyle = '#06b6d4';
-          ctx.font = '11px JetBrains Mono, monospace';
-          ctx.fillText(`[AVATAR] scale=${kf.scale.toFixed(2)} (${Math.round(avW)}x${Math.round(avH)}px)`, avLeft + 6, avTop + 16);
-
-          // Visible Text Blocks (GREEN)
-          const textNodes = Array.from(activeEl.querySelectorAll('h1, h2, h3, p, a, button, .lead, .about-item, .exp-row, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot'))
-            .filter((n) => !n.closest('.section-bg-word') && !n.closest('.avatar-slot'));
-          ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
-          ctx.lineWidth = 1;
-          textNodes.forEach((node) => {
-            const nr = node.getBoundingClientRect();
-            if (nr.width > 0 && nr.height > 0) {
-              ctx.strokeRect(nr.left, nr.top, nr.width, nr.height);
-            }
-          });
-
-          // Draw Overlaps (RED)
-          if (audit.overlaps && audit.overlaps.length > 0) {
-            audit.overlaps.forEach((ov) => {
-              const nodeRel = ov.box;
-              const screenLeft = nodeRel.left + secRect.left;
-              const screenTop = nodeRel.top + secRect.top;
-              const ovLeft = Math.max(screenLeft, avLeft);
-              const ovTop = Math.max(screenTop, avTop);
-              const ovW = Math.min(screenLeft + nodeRel.width, avLeft + avW) - ovLeft;
-              const ovH = Math.min(screenTop + nodeRel.height, avTop + avH) - ovTop;
-
-              if (ovW > 0 && ovH > 0) {
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
-                ctx.fillRect(ovLeft, ovTop, ovW, ovH);
-                ctx.strokeStyle = '#ef4444';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(ovLeft, ovTop, ovW, ovH);
-
-                ctx.fillStyle = '#ef4444';
-                ctx.font = 'bold 11px JetBrains Mono, monospace';
-                ctx.fillText(`[OVERLAP ${Math.round(ov.overlapWidth)}x${Math.round(ov.overlapHeight)}px]`, ovLeft + 4, ovTop + 14);
-              }
-            });
-          }
-
-          // Centering Errors Display
-          if (audit.centeringErrors && audit.centeringErrors.length > 0) {
-            audit.centeringErrors.forEach((ce) => {
-              const cNode = activeEl.querySelector(ce.element);
-              if (cNode) {
-                const cr = cNode.getBoundingClientRect();
-                ctx.fillStyle = ce.passes ? '#22c55e' : '#ef4444';
-                ctx.font = '10px JetBrains Mono, monospace';
-                ctx.fillText(`[CENTER ERR: ${ce.errorPx}px]`, cr.right - 140, cr.top + 14);
-              }
-            });
-          }
-
-          // Top Info Banner
-          ctx.fillStyle = 'rgba(5, 6, 15, 0.88)';
-          ctx.fillRect(10, 10, 360, 52);
-          ctx.strokeStyle = audit.passesAudit ? '#22c55e' : '#ef4444';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(10, 10, 360, 52);
-          ctx.fillStyle = audit.passesAudit ? '#22c55e' : '#ef4444';
-          ctx.font = 'bold 11px JetBrains Mono, monospace';
-          ctx.fillText(`LAYOUT AUDIT: [${activeSectionId.toUpperCase()}] ${audit.passesAudit ? 'PASS' : 'FAIL'}`, 18, 28);
-          ctx.fillStyle = '#e8eaff';
-          ctx.font = '10px JetBrains Mono, monospace';
-          ctx.fillText(`Overlaps: ${audit.overlaps.length} | Max Center Err: ${audit.maxCenteringError}px`, 18, 46);
-        }
-      }
-
-      requestAnimationFrame(renderAuditOverlay);
-    }
-
-    requestAnimationFrame(renderAuditOverlay);
-  }
-
-  // ==========================================================================
-  // 9. DEBUG HELPER PANEL (?debug query parameter only)
-  // ==========================================================================
-  function initDebugHelper() {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.has('debug')) return;
-
-    const panel = document.createElement('div');
-    panel.id = 'avatar-debug-panel';
-    panel.className = 'avatar-debug-panel mono';
-
-    panel.innerHTML = `
-      <div class="debug-header">
-        <span class="debug-title">[ AVATAR DEBUG ]</span>
-        <button id="debug-copy-btn" class="debug-btn cursor-pointer" title="Copy to clipboard">[ COPY ]</button>
-      </div>
-      <div class="debug-controls">
-        <label class="debug-row">
-          <span>Zoom: <b id="val-zoom">${CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2)}</b></span>
-          <input type="range" id="slider-zoom" min="0.2" max="1.5" step="0.01" value="${CONFIG.AVATAR_ZOOM_DESKTOP}">
-        </label>
-        <label class="debug-row">
-          <span>Y Offset: <b id="val-y">${CONFIG.AVATAR_Y_OFFSET}px</b></span>
-          <input type="range" id="slider-y" min="-200" max="200" step="1" value="${CONFIG.AVATAR_Y_OFFSET}">
-        </label>
-        <label class="debug-row">
-          <span>Rot Offset: <b id="val-rot">${CONFIG.ROT_OFFSET.toFixed(2)} rad</b></span>
-          <input type="range" id="slider-rot" min="0" max="6.28" step="0.02" value="${CONFIG.ROT_OFFSET}">
-        </label>
-        <label class="debug-row">
-          <span>Float Bob: <b id="val-bob">${CONFIG.FLOAT_BOB.toFixed(1)}vh</b></span>
-          <input type="range" id="slider-bob" min="0" max="3.0" step="0.1" value="${CONFIG.FLOAT_BOB}">
-        </label>
-        <label class="debug-row">
-          <span>Pose Blend: <b id="val-blend">${CONFIG.POSE_BLEND.toFixed(1)}s</b></span>
-          <input type="range" id="slider-blend" min="0.5" max="4.0" step="0.1" value="${CONFIG.POSE_BLEND}">
-        </label>
-        <label class="debug-row">
-          <span>Haze Opacity: <b id="val-haze">${CONFIG.HAZE_OPACITY.toFixed(2)}</b></span>
-          <input type="range" id="slider-haze" min="0" max="1.0" step="0.05" value="${CONFIG.HAZE_OPACITY}">
-        </label>
-        <label class="debug-row">
-          <span>Global Light: <b id="val-glight">${CONFIG.GLOBAL_LIGHT.toFixed(1)}</b></span>
-          <input type="range" id="slider-glight" min="0" max="8.0" step="0.1" value="${CONFIG.GLOBAL_LIGHT}">
-        </label>
-        <label class="debug-row">
-          <span>Camera Light: <b id="val-clight">${CONFIG.CAMERA_LIGHT.toFixed(1)}</b></span>
-          <input type="range" id="slider-clight" min="0" max="5.0" step="0.1" value="${CONFIG.CAMERA_LIGHT}">
-        </label>
-        <label class="debug-row">
-          <span>Emissive Color: <b id="val-emissive-col">${CONFIG.AVATAR_EMISSIVE}</b></span>
-          <input type="color" id="picker-emissive" value="${CONFIG.AVATAR_EMISSIVE}">
-        </label>
-        <label class="debug-row">
-          <span>Emissive Int: <b id="val-emissive-int">${CONFIG.AVATAR_EMISSIVE_INTENSITY.toFixed(2)}</b></span>
-          <input type="range" id="slider-emissive-int" min="0" max="3.0" step="0.05" value="${CONFIG.AVATAR_EMISSIVE_INTENSITY}">
-        </label>
-        <label class="debug-row">
-          <span>Aura Glow: <b id="val-aura">${CONFIG.AURA.toFixed(2)}</b></span>
-          <input type="range" id="slider-aura" min="0" max="1.0" step="0.05" value="${CONFIG.AURA}">
-        </label>
-        <label class="debug-row">
-          <span>Arm Tip: <b id="val-arm-tip">${CONFIG.ARM_TIP.toFixed(1)}</b></span>
-          <input type="range" id="slider-arm-tip" min="4" max="16" step="0.5" value="${CONFIG.ARM_TIP}">
-        </label>
-        <label class="debug-row">
-          <span>Write Scale: <b id="val-write-scale">${CONFIG.WRITE_SCALE.toFixed(2)}</b></span>
-          <input type="range" id="slider-write-scale" min="0.25" max="0.75" step="0.01" value="${CONFIG.WRITE_SCALE}">
-        </label>
-        <label class="debug-row">
-          <span>Home Scale: <b id="val-home-scale">${CONFIG.HOME_AVATAR.scale.toFixed(2)}</b></span>
-          <input type="range" id="slider-home-scale" min="0.2" max="0.85" step="0.02" value="${CONFIG.HOME_AVATAR.scale}">
-        </label>
-        <label class="debug-row">
-          <span>Home Y: <b id="val-home-y">${CONFIG.HOME_AVATAR.y}vh</b></span>
-          <input type="range" id="slider-home-y" min="-35" max="0" step="1" value="${CONFIG.HOME_AVATAR.y}">
-        </label>
-        <label class="debug-row">
-          <span>Flight Arc X: <b id="val-arc-x">${CONFIG.FLIGHT_ARC_X.toFixed(1)}vw</b></span>
-          <input type="range" id="slider-arc-x" min="0" max="25" step="0.5" value="${CONFIG.FLIGHT_ARC_X}">
-        </label>
-        <label class="debug-row">
-          <span>Flight Arc Y: <b id="val-arc-y">${CONFIG.FLIGHT_ARC_Y.toFixed(1)}vh</b></span>
-          <input type="range" id="slider-arc-y" min="0" max="20" step="0.5" value="${CONFIG.FLIGHT_ARC_Y}">
-        </label>
-        <label class="debug-row">
-          <span>Flight Swoop: <b id="val-swoop">${CONFIG.FLIGHT_SWOOP.toFixed(2)}</b></span>
-          <input type="range" id="slider-swoop" min="0" max="0.4" step="0.01" value="${CONFIG.FLIGHT_SWOOP}">
-        </label>
-        <label class="debug-row">
-          <span>Flight Roll: <b id="val-roll">${CONFIG.FLIGHT_ROLL.toFixed(2)} rad</b></span>
-          <input type="range" id="slider-roll" min="0" max="0.5" step="0.01" value="${CONFIG.FLIGHT_ROLL}">
-        </label>
-        <label class="debug-row">
-          <span>Warp Strength: <b id="val-warp">${CONFIG.WARP_STRENGTH.toFixed(0)}</b></span>
-          <input type="range" id="slider-warp" min="5" max="80" step="1" value="${CONFIG.WARP_STRENGTH}">
-        </label>
-        <label class="debug-row">
-          <span>Bg Word Opacity: <b id="val-bg-word">${CONFIG.BG_WORD_OPACITY.toFixed(2)}</b></span>
-          <input type="range" id="slider-bg-word" min="0" max="2.0" step="0.05" value="${CONFIG.BG_WORD_OPACITY}">
-        </label>
-
-        <div class="debug-toggles-row">
-          <button id="toggle-scrub-mode" class="debug-toggle-btn cursor-pointer">[ SCRUB: AUTO ]</button>
-        </div>
-        <label class="debug-row">
-          <span>Manual f: <b id="val-scrub">${fDisplay.toFixed(2)}</b></span>
-          <input type="range" id="slider-scrub" min="0" max="3" step="0.01" value="${fDisplay.toFixed(2)}">
-        </label>
-
-        <div class="debug-toggles-row">
-          <button id="toggle-yaw" class="debug-toggle-btn cursor-pointer">[ YAW: ${CONFIG.HEAD_YAW_SIGN > 0 ? '+1' : '-1'} ]</button>
-          <button id="toggle-pitch" class="debug-toggle-btn cursor-pointer">[ PITCH: ${CONFIG.HEAD_PITCH_SIGN > 0 ? '+1' : '-1'} ]</button>
-        </div>
-
-        <div class="debug-toggles-row">
-          <button id="toggle-overlay-glyphs" class="debug-toggle-btn cursor-pointer">[ OVERLAY DOM GLYPHS: OFF ]</button>
-          <button id="toggle-show-waypoints" class="debug-toggle-btn cursor-pointer">[ SHOW WAYPOINTS: OFF ]</button>
-        </div>
-
-        <div class="debug-toggles-row">
-          <button id="toggle-intro-debug" class="debug-toggle-btn cursor-pointer">[ INTRO DEBUG: OFF ]</button>
-          <button id="toggle-pen-arm" class="debug-toggle-btn cursor-pointer">[ PEN ARM: ${CONFIG.PEN_ARM} ]</button>
-        </div>
-
-        <label class="debug-row">
-          <span>Rig Speed: <b id="val-slowmo">1.00x</b></span>
-          <input type="range" id="slider-slowmo" min="0.1" max="1.0" step="0.05" value="1.0">
-        </label>
-
-        <label class="debug-row">
-          <span>Pose Tester:</span>
-          <select id="debug-pose-select" class="debug-select cursor-pointer">
-            <option value="auto">[ AUTO / SECTION ]</option>
-            <option value="neutral">neutral</option>
-            <option value="float">float</option>
-            <option value="rest">rest</option>
-            <option value="open">open</option>
-            <option value="reach">reach</option>
-            <option value="wave">wave</option>
-            <option value="fly">fly</option>
-            <option value="write">write</option>
-            <option value="tilt">tilt</option>
-            <option value="point">point</option>
-            <option value="hold">hold</option>
-            <option value="place">place</option>
-            <option value="gesture:wave">[ GESTURE: wave ]</option>
-          </select>
-        </label>
-
-        <div class="debug-toggles-row">
-          <button id="btn-yaw-neg" class="debug-toggle-btn cursor-pointer">[ YAW -0.65 ]</button>
-          <button id="btn-yaw-zero" class="debug-toggle-btn cursor-pointer">[ YAW 0 ]</button>
-          <button id="btn-yaw-pos" class="debug-toggle-btn cursor-pointer">[ YAW +0.65 ]</button>
-        </div>
-
-        <div class="debug-toggles-row">
-          <button id="toggle-tint-collision" class="debug-toggle-btn cursor-pointer">[ TINT COLLISIONS: OFF ]</button>
-          <button id="btn-rig-validate" class="debug-toggle-btn cursor-pointer">[ RUN VALIDATE() ]</button>
-        </div>
-
-        <div class="debug-toggles-row">
-          <button id="btn-pose-test" class="debug-toggle-btn cursor-pointer">[ POSE CYCLE ]</button>
-        </div>
-
-        <div style="border-top: 1px solid rgba(94, 168, 255, 0.25); margin: 0.75rem 0 0.5rem; padding-top: 0.5rem;">
-          <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.25rem;">[ AVATAR DIRECTOR GESTURES & INTENTS ]</div>
-          <div class="debug-toggles-row" style="flex-wrap: wrap; gap: 0.25rem;">
-            <button id="btn-g-wave" class="debug-toggle-btn cursor-pointer">[ WAVE ]</button>
-            <button id="btn-g-point" class="debug-toggle-btn cursor-pointer">[ POINT ]</button>
-            <button id="btn-g-present" class="debug-toggle-btn cursor-pointer">[ PRESENT ]</button>
-            <button id="btn-g-nod" class="debug-toggle-btn cursor-pointer">[ NOD ]</button>
-            <button id="btn-g-tilt" class="debug-toggle-btn cursor-pointer">[ TILT ]</button>
-            <button id="btn-g-lookaround" class="debug-toggle-btn cursor-pointer">[ LOOK-AROUND ]</button>
-            <button id="btn-g-stretch" class="debug-toggle-btn cursor-pointer">[ STRETCH ]</button>
-            <button id="btn-g-settle" class="debug-toggle-btn cursor-pointer">[ SETTLE ]</button>
-            <button id="btn-g-spin" class="debug-toggle-btn cursor-pointer">[ SPIN ]</button>
-          </div>
-          <div class="debug-toggles-row" style="margin-top: 0.35rem;">
-            <button id="toggle-debug-rays" class="debug-toggle-btn cursor-pointer">[ DEBUG RAYS: OFF ]</button>
-            <button id="btn-run-autotest" class="debug-toggle-btn cursor-pointer" style="color: #44ff88; border-color: #44ff88;">[ RUN ?AUTOTEST ]</button>
-          </div>
-          <pre id="val-director-status" style="font-size: 0.65rem; line-height: 1.35; background: rgba(5,6,15,0.7); padding: 0.4rem; border: 1px solid var(--line); margin: 0.25rem 0 0.5rem; white-space: pre-wrap; color: #7cf0ff;"></pre>
-        </div>
-
-        <div style="border-top: 1px solid rgba(94, 168, 255, 0.25); margin: 0.75rem 0 0.5rem; padding-top: 0.5rem;">
-          <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.25rem;">[ LIVE RIG JOINTS & ROOT ]</div>
-          <pre id="val-rig-dofs" style="font-size: 0.65rem; line-height: 1.35; background: rgba(5,6,15,0.7); padding: 0.4rem; border: 1px solid var(--line); margin: 0.25rem 0 0.5rem; white-space: pre-wrap; color: #a4b3e6;"></pre>
-          <div class="debug-row"><span>Float Amp: <b id="val-float-amp">0.00</b></span></div>
-          <div class="debug-row"><span>Current Pose: <b id="val-current-pose">float</b></span></div>
-          <div class="debug-row"><span>Audio State: <b id="val-audio-state">PAUSED</b></span></div>
-          <div class="debug-row"><span>Audio Vol: <b id="val-audio-vol">0.00</b></span></div>
-          <div class="debug-row"><span>Audio Muted: <b id="val-audio-muted">false</b></span></div>
-          <div class="debug-row"><span>Track Index: <b id="val-audio-track">0</b></span></div>
-          <div class="debug-row"><span>Audio Error: <b id="val-audio-err" style="font-size: 0.65rem; color: #ff8b8b;">none</b></span></div>
-        </div>
-      </div>
-      <pre id="debug-code-output" class="debug-output"></pre>
-    `;
-
-    document.body.appendChild(panel);
-
-    const sliderZoom = panel.querySelector('#slider-zoom');
-    const sliderY = panel.querySelector('#slider-y');
-    const sliderRot = panel.querySelector('#slider-rot');
-    const sliderBob = panel.querySelector('#slider-bob');
-    const sliderBlend = panel.querySelector('#slider-blend');
-    const sliderHaze = panel.querySelector('#slider-haze');
-    const sliderGLight = panel.querySelector('#slider-glight');
-    const sliderCLight = panel.querySelector('#slider-clight');
-    const pickerEmissive = panel.querySelector('#picker-emissive');
-    const valEmissiveCol = panel.querySelector('#val-emissive-col');
-    const sliderEmissiveInt = panel.querySelector('#slider-emissive-int');
-    const valEmissiveInt = panel.querySelector('#val-emissive-int');
-    const sliderAura = panel.querySelector('#slider-aura');
-    const valAura = panel.querySelector('#val-aura');
-    const sliderArmTip = panel.querySelector('#slider-arm-tip');
-    const valArmTip = panel.querySelector('#val-arm-tip');
-    const sliderWriteScale = panel.querySelector('#slider-write-scale');
-    const valWriteScale = panel.querySelector('#val-write-scale');
-    const sliderHomeScale = panel.querySelector('#slider-home-scale');
-    const sliderHomeY = panel.querySelector('#slider-home-y');
-    const sliderArcX = panel.querySelector('#slider-arc-x');
-    const sliderArcY = panel.querySelector('#slider-arc-y');
-    const sliderSwoop = panel.querySelector('#slider-swoop');
-    const sliderRoll = panel.querySelector('#slider-roll');
-    const sliderWarp = panel.querySelector('#slider-warp');
-    const toggleScrubMode = panel.querySelector('#toggle-scrub-mode');
-    const sliderScrub = panel.querySelector('#slider-scrub');
-
-    const valZoom = panel.querySelector('#val-zoom');
-    const valY = panel.querySelector('#val-y');
-    const valRot = panel.querySelector('#val-rot');
-    const valBob = panel.querySelector('#val-bob');
-    const valBlend = panel.querySelector('#val-blend');
-    const valHaze = panel.querySelector('#val-haze');
-    const valGLight = panel.querySelector('#val-glight');
-    const valCLight = panel.querySelector('#val-clight');
-    const valHomeScale = panel.querySelector('#val-home-scale');
-    const valHomeY = panel.querySelector('#val-home-y');
-    const valArcX = panel.querySelector('#val-arc-x');
-    const valArcY = panel.querySelector('#val-arc-y');
-    const valSwoop = panel.querySelector('#val-swoop');
-    const valRoll = panel.querySelector('#val-roll');
-    const valWarp = panel.querySelector('#val-warp');
-    const valScrub = panel.querySelector('#val-scrub');
-
-    const toggleYaw = panel.querySelector('#toggle-yaw');
-    const togglePitch = panel.querySelector('#toggle-pitch');
-    const toggleOverlayGlyphs = panel.querySelector('#toggle-overlay-glyphs');
-    const toggleShowWaypoints = panel.querySelector('#toggle-show-waypoints');
-    const toggleIntroDebug = panel.querySelector('#toggle-intro-debug');
-    const togglePenArm = panel.querySelector('#toggle-pen-arm');
-    const poseSelect = panel.querySelector('#debug-pose-select');
-    const sliderBgWord = panel.querySelector('#slider-bg-word');
-    const valBgWord = panel.querySelector('#val-bg-word');
-    const btnPoseTest = panel.querySelector('#btn-pose-test');
-    const codeOutput = panel.querySelector('#debug-code-output');
-    const copyBtn = panel.querySelector('#debug-copy-btn');
-
-    function updateConfigReadout() {
-      const code = `// COPY INTO CONFIG:
-AVATAR_ZOOM_DESKTOP: ${CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2)},
-AVATAR_Y_OFFSET: ${CONFIG.AVATAR_Y_OFFSET},
-ROT_OFFSET: ${(CONFIG.ROT_OFFSET / Math.PI).toFixed(2)} * Math.PI, // ${(CONFIG.ROT_OFFSET).toFixed(3)} rad
-FLOAT_BOB: ${CONFIG.FLOAT_BOB.toFixed(1)},
-POSE_BLEND: ${CONFIG.POSE_BLEND.toFixed(1)},
-GLOBAL_LIGHT: ${CONFIG.GLOBAL_LIGHT.toFixed(1)},
-CAMERA_LIGHT: ${CONFIG.CAMERA_LIGHT.toFixed(1)},
-AVATAR_EMISSIVE: '${CONFIG.AVATAR_EMISSIVE}',
-AVATAR_EMISSIVE_INTENSITY: ${CONFIG.AVATAR_EMISSIVE_INTENSITY.toFixed(2)},
-AURA: ${CONFIG.AURA.toFixed(2)},
-ARM_TIP: ${CONFIG.ARM_TIP.toFixed(1)},
-WRITE_SCALE: ${CONFIG.WRITE_SCALE.toFixed(2)},
-PEN_ARM: '${CONFIG.PEN_ARM}',
-BG_WORD_OPACITY: ${CONFIG.BG_WORD_OPACITY.toFixed(2)},
-AVATAR_BASE_HEIGHT_PX_AT_ZOOM: ${CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM.toFixed(1)},
-HOME_AVATAR: { x: ${CONFIG.HOME_AVATAR.x}, y: ${CONFIG.HOME_AVATAR.y}, scale: ${CONFIG.HOME_AVATAR.scale.toFixed(2)}, yaw: ${CONFIG.HOME_AVATAR.yaw} },
-AUDIO_VOLUME: ${CONFIG.AUDIO_VOLUME},
-AUDIO_GAIN: ${CONFIG.AUDIO_GAIN},
-FLIGHT_ARC_X: ${CONFIG.FLIGHT_ARC_X.toFixed(1)},
-FLIGHT_ARC_Y: ${CONFIG.FLIGHT_ARC_Y.toFixed(1)},
-FLIGHT_SWOOP: ${CONFIG.FLIGHT_SWOOP.toFixed(2)},
-FLIGHT_ROLL: ${CONFIG.FLIGHT_ROLL.toFixed(2)},
-WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
-      codeOutput.textContent = code;
-    }
-
-    sliderZoom.addEventListener('input', (e) => {
-      CONFIG.AVATAR_ZOOM_DESKTOP = parseFloat(e.target.value);
-      valZoom.textContent = CONFIG.AVATAR_ZOOM_DESKTOP.toFixed(2);
-      if (skinViewer && !isMobile) {
-        skinViewer.zoom = CONFIG.AVATAR_ZOOM_DESKTOP;
-      }
-      updateConfigReadout();
-    });
-
-    sliderY.addEventListener('input', (e) => {
-      CONFIG.AVATAR_Y_OFFSET = parseInt(e.target.value, 10);
-      valY.textContent = CONFIG.AVATAR_Y_OFFSET + 'px';
-      const stage = document.getElementById('avatar-stage');
-      if (stage) {
-        stage.style.setProperty('--avatar-y', `${CONFIG.AVATAR_Y_OFFSET}px`);
-      }
-      updateConfigReadout();
-    });
-
-    sliderRot.addEventListener('input', (e) => {
-      CONFIG.ROT_OFFSET = parseFloat(e.target.value);
-      valRot.textContent = CONFIG.ROT_OFFSET.toFixed(2) + ' rad';
-      updateConfigReadout();
-    });
-
-    sliderBob.addEventListener('input', (e) => {
-      CONFIG.FLOAT_BOB = parseFloat(e.target.value);
-      valBob.textContent = CONFIG.FLOAT_BOB.toFixed(1) + 'vh';
-      updateConfigReadout();
-    });
-
-    sliderBlend.addEventListener('input', (e) => {
-      CONFIG.POSE_BLEND = parseFloat(e.target.value);
-      valBlend.textContent = CONFIG.POSE_BLEND.toFixed(1) + 's';
-      updateConfigReadout();
-    });
-
-    sliderHaze.addEventListener('input', (e) => {
-      CONFIG.HAZE_OPACITY = parseFloat(e.target.value);
-      valHaze.textContent = CONFIG.HAZE_OPACITY.toFixed(2);
-      document.documentElement.style.setProperty('--avatar-haze-opacity', CONFIG.HAZE_OPACITY);
-      updateConfigReadout();
-    });
-
-    if (pickerEmissive) {
-      pickerEmissive.addEventListener('input', (e) => {
-        CONFIG.AVATAR_EMISSIVE = e.target.value;
-        if (valEmissiveCol) valEmissiveCol.textContent = CONFIG.AVATAR_EMISSIVE;
-        applyAvatarMaterialSettings();
-        updateConfigReadout();
-      });
-    }
-
-    if (sliderEmissiveInt) {
-      sliderEmissiveInt.addEventListener('input', (e) => {
-        CONFIG.AVATAR_EMISSIVE_INTENSITY = parseFloat(e.target.value);
-        if (valEmissiveInt) valEmissiveInt.textContent = CONFIG.AVATAR_EMISSIVE_INTENSITY.toFixed(2);
-        applyAvatarMaterialSettings();
-        updateConfigReadout();
-      });
-    }
-
-    if (sliderAura) {
-      sliderAura.addEventListener('input', (e) => {
-        CONFIG.AURA = parseFloat(e.target.value);
-        if (valAura) valAura.textContent = CONFIG.AURA.toFixed(2);
-        updateAvatarAura();
-        updateConfigReadout();
-      });
-    }
-
-    if (sliderArmTip) {
-      sliderArmTip.addEventListener('input', (e) => {
-        CONFIG.ARM_TIP = parseFloat(e.target.value);
-        if (valArmTip) valArmTip.textContent = CONFIG.ARM_TIP.toFixed(1);
-        updateConfigReadout();
-      });
-    }
-
-    if (sliderWriteScale) {
-      sliderWriteScale.addEventListener('input', (e) => {
-        CONFIG.WRITE_SCALE = parseFloat(e.target.value);
-        if (valWriteScale) valWriteScale.textContent = CONFIG.WRITE_SCALE.toFixed(2);
-        updateConfigReadout();
-      });
-    }
-
-    if (toggleIntroDebug) {
-      toggleIntroDebug.addEventListener('click', () => {
-        debugShowIntroPoints = !debugShowIntroPoints;
-        toggleIntroDebug.textContent = `[ INTRO DEBUG: ${debugShowIntroPoints ? 'ON' : 'OFF'} ]`;
-      });
-    }
-
-    if (togglePenArm) {
-      togglePenArm.addEventListener('click', () => {
-        CONFIG.PEN_ARM = (CONFIG.PEN_ARM === 'left') ? 'right' : 'left';
-        togglePenArm.textContent = `[ PEN ARM: ${CONFIG.PEN_ARM} ]`;
-        updateConfigReadout();
-      });
-    }
-
-    sliderGLight.addEventListener('input', (e) => {
-      CONFIG.GLOBAL_LIGHT = parseFloat(e.target.value);
-      valGLight.textContent = CONFIG.GLOBAL_LIGHT.toFixed(1);
-      if (skinViewer && skinViewer.globalLight) {
-        skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
-      }
-      updateConfigReadout();
-    });
-
-    sliderCLight.addEventListener('input', (e) => {
-      CONFIG.CAMERA_LIGHT = parseFloat(e.target.value);
-      valCLight.textContent = CONFIG.CAMERA_LIGHT.toFixed(1);
-      if (skinViewer && skinViewer.cameraLight) {
-        skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
-      }
-      updateConfigReadout();
-    });
-
-    toggleYaw.addEventListener('click', () => {
-      CONFIG.HEAD_YAW_SIGN *= -1;
-      toggleYaw.textContent = `[ YAW: ${CONFIG.HEAD_YAW_SIGN > 0 ? '+1' : '-1'} ]`;
-      updateConfigReadout();
-    });
-
-    togglePitch.addEventListener('click', () => {
-      CONFIG.HEAD_PITCH_SIGN *= -1;
-      togglePitch.textContent = `[ PITCH: ${CONFIG.HEAD_PITCH_SIGN > 0 ? '+1' : '-1'} ]`;
-      updateConfigReadout();
-    });
-
-    sliderHomeScale.addEventListener('input', (e) => {
-      CONFIG.HOME_AVATAR.scale = parseFloat(e.target.value);
-      CONFIG.AVATAR_KEYFRAMES[0].scale = CONFIG.HOME_AVATAR.scale;
-      valHomeScale.textContent = CONFIG.HOME_AVATAR.scale.toFixed(2);
-      updateConfigReadout();
-    });
-
-    sliderHomeY.addEventListener('input', (e) => {
-      CONFIG.HOME_AVATAR.y = parseFloat(e.target.value);
-      CONFIG.AVATAR_KEYFRAMES[0].y = CONFIG.HOME_AVATAR.y;
-      valHomeY.textContent = CONFIG.HOME_AVATAR.y + 'vh';
-      updateConfigReadout();
-    });
-
-    sliderArcX.addEventListener('input', (e) => {
-      CONFIG.FLIGHT_ARC_X = parseFloat(e.target.value);
-      valArcX.textContent = CONFIG.FLIGHT_ARC_X.toFixed(1) + 'vw';
-      updateConfigReadout();
-    });
-
-    sliderArcY.addEventListener('input', (e) => {
-      CONFIG.FLIGHT_ARC_Y = parseFloat(e.target.value);
-      valArcY.textContent = CONFIG.FLIGHT_ARC_Y.toFixed(1) + 'vh';
-      updateConfigReadout();
-    });
-
-    sliderSwoop.addEventListener('input', (e) => {
-      CONFIG.FLIGHT_SWOOP = parseFloat(e.target.value);
-      valSwoop.textContent = CONFIG.FLIGHT_SWOOP.toFixed(2);
-      updateConfigReadout();
-    });
-
-    sliderRoll.addEventListener('input', (e) => {
-      CONFIG.FLIGHT_ROLL = parseFloat(e.target.value);
-      valRoll.textContent = CONFIG.FLIGHT_ROLL.toFixed(2) + ' rad';
-      updateConfigReadout();
-    });
-
-    sliderWarp.addEventListener('input', (e) => {
-      CONFIG.WARP_STRENGTH = parseFloat(e.target.value);
-      valWarp.textContent = CONFIG.WARP_STRENGTH.toFixed(0);
-      updateConfigReadout();
-    });
-
-    toggleScrubMode.addEventListener('click', () => {
-      if (manualF === null) {
-        manualF = parseFloat(sliderScrub.value);
-        toggleScrubMode.textContent = '[ SCRUB: MANUAL ]';
-      } else {
-        manualF = null;
-        toggleScrubMode.textContent = '[ SCRUB: AUTO ]';
-      }
-    });
-
-    sliderScrub.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      valScrub.textContent = val.toFixed(2);
-      if (manualF !== null) {
-        manualF = val;
-      }
-    });
-
-    if (toggleOverlayGlyphs) {
-      toggleOverlayGlyphs.addEventListener('click', () => {
-        debugOverlayGlyphs = !debugOverlayGlyphs;
-        toggleOverlayGlyphs.textContent = `[ OVERLAY DOM GLYPHS: ${debugOverlayGlyphs ? 'ON' : 'OFF'} ]`;
-        const titleEl = document.getElementById('hero-title');
-        if (titleEl) {
-          const spans = titleEl.querySelectorAll('.ch');
-          spans.forEach((sp) => {
-            if (debugOverlayGlyphs) {
-              sp.style.setProperty('opacity', '0.6', 'important');
-              sp.style.setProperty('color', '#ff0055', 'important');
-            } else {
-              sp.style.removeProperty('color');
-              if (!isIntroActive) {
-                sp.style.opacity = '1';
-              }
-            }
-          });
-        }
-      });
-    }
-
-    if (toggleShowWaypoints) {
-      toggleShowWaypoints.addEventListener('click', () => {
-        debugShowWaypointsMask = !debugShowWaypointsMask;
-        toggleShowWaypoints.textContent = `[ SHOW WAYPOINTS: ${debugShowWaypointsMask ? 'ON' : 'OFF'} ]`;
-      });
-    }
-
-    const sliderSlowMo = panel.querySelector('#slider-slowmo');
-    const valSlowMo = panel.querySelector('#val-slowmo');
-    if (sliderSlowMo) {
-      sliderSlowMo.addEventListener('input', (e) => {
-        const factor = parseFloat(e.target.value);
-        if (valSlowMo) valSlowMo.textContent = `${factor.toFixed(2)}x`;
-        if (window.AvatarRig) window.AvatarRig.setSlowMo(factor);
-      });
-    }
-
-    poseSelect.addEventListener('change', (e) => {
-      const val = e.target.value;
-      if (val === 'auto') {
-        if (floatAnimation) {
-          floatAnimation.forcedPose = null;
-          floatAnimation.pickNextPose();
-        }
-      } else if (val.startsWith('gesture:')) {
-        const gName = val.split(':')[1];
-        if (window.AvatarRig) window.AvatarRig.triggerGesture(gName);
-      } else {
-        if (floatAnimation) {
-          floatAnimation.forcedPose = val;
-          floatAnimation.transitionTo(val, 0.8);
-        }
-      }
-    });
-
-    const btnYawNeg = panel.querySelector('#btn-yaw-neg');
-    const btnYawZero = panel.querySelector('#btn-yaw-zero');
-    const btnYawPos = panel.querySelector('#btn-yaw-pos');
-
-    function applyDebugYaw(yaw) {
-      targetPlayerRotY = yaw;
-      if (window.AvatarRig) {
-        window.AvatarRig.setRootYaw(yaw + CONFIG.ROT_OFFSET);
-      } else if (skinViewer && skinViewer.playerObject) {
-        skinViewer.playerObject.rotation.y = yaw + CONFIG.ROT_OFFSET;
-      }
-    }
-    if (btnYawNeg) btnYawNeg.addEventListener('click', () => applyDebugYaw(-0.65));
-    if (btnYawZero) btnYawZero.addEventListener('click', () => applyDebugYaw(0));
-    if (btnYawPos) btnYawPos.addEventListener('click', () => applyDebugYaw(0.65));
-
-    const toggleTintCollision = panel.querySelector('#toggle-tint-collision');
-    let tintCollisionsActive = false;
-    if (toggleTintCollision) {
-      toggleTintCollision.addEventListener('click', () => {
-        tintCollisionsActive = !tintCollisionsActive;
-        toggleTintCollision.textContent = `[ TINT COLLISIONS: ${tintCollisionsActive ? 'ON' : 'OFF'} ]`;
-        if (window.AvatarRig) {
-          window.AvatarRig.setTintCollisions(tintCollisionsActive);
-        }
-      });
-    }
-
-    const btnRigValidate = panel.querySelector('#btn-rig-validate');
-    if (btnRigValidate) {
-      btnRigValidate.addEventListener('click', () => {
-        if (window.AvatarRig && typeof window.AvatarRig.validate === 'function') {
-          btnRigValidate.textContent = '[ RUNNING... ]';
-          setTimeout(() => {
-            const res = window.AvatarRig.validate();
-            btnRigValidate.textContent = res.passes ? '[ VALIDATE: PASS ]' : '[ VALIDATE: FAIL ]';
-            setTimeout(() => (btnRigValidate.textContent = '[ RUN VALIDATE() ]'), 3000);
-          }, 50);
-        }
-      });
-    }
-
-    if (sliderBgWord) {
-      sliderBgWord.addEventListener('input', (e) => {
-        CONFIG.BG_WORD_OPACITY = parseFloat(e.target.value);
-        if (valBgWord) valBgWord.textContent = CONFIG.BG_WORD_OPACITY.toFixed(2);
-        applyBgWordOpacity();
-        updateConfigReadout();
-      });
-    }
-
-    if (btnPoseTest) {
-      const poseList = Object.keys(POSES);
-      const yaws = [-0.65, 0, 0.65];
-      let pIdx = 0;
-      let yIdx = 0;
-      btnPoseTest.addEventListener('click', () => {
-        const poseName = poseList[pIdx];
-        const yawVal = yaws[yIdx];
-
-        if (floatAnimation) {
-          floatAnimation.forcedPose = poseName;
-          floatAnimation.transitionTo(poseName, 0.25);
-        }
-        targetPlayerRotY = yawVal;
-        if (skinViewer && skinViewer.playerObject) {
-          skinViewer.playerObject.rotation.y = yawVal + CONFIG.ROT_OFFSET;
-        }
-
-        btnPoseTest.textContent = `[ ${poseName.toUpperCase()} yaw:${yawVal > 0 ? '+' : ''}${yawVal.toFixed(2)} ]`;
-
-        yIdx++;
-        if (yIdx >= yaws.length) {
-          yIdx = 0;
-          pIdx = (pIdx + 1) % poseList.length;
-        }
-      });
-    }
-
-    copyBtn.addEventListener('click', () => {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(codeOutput.textContent).then(() => {
-          copyBtn.textContent = '[ COPIED! ]';
-          setTimeout(() => (copyBtn.textContent = '[ COPY ]'), 1500);
-        });
-      }
-    });
-
-    // AvatarDirector debug buttons
-    const gButtons = [
-      { id: '#btn-g-wave', name: 'wave' },
-      { id: '#btn-g-point', name: 'point' },
-      { id: '#btn-g-present', name: 'present' },
-      { id: '#btn-g-nod', name: 'nod' },
-      { id: '#btn-g-tilt', name: 'tilt' },
-      { id: '#btn-g-lookaround', name: 'lookAround' },
-      { id: '#btn-g-stretch', name: 'stretch' },
-      { id: '#btn-g-settle', name: 'settle' },
-      { id: '#btn-g-spin', name: 'spin' }
-    ];
-    gButtons.forEach(({ id, name }) => {
-      const b = panel.querySelector(id);
-      if (b) {
-        b.addEventListener('click', () => {
-          if (window.AvatarDirector) window.AvatarDirector.triggerGesture(name, { force: true });
-        });
-      }
-    });
-
-    const toggleDebugRays = panel.querySelector('#toggle-debug-rays');
-    if (toggleDebugRays) {
-      toggleDebugRays.addEventListener('click', () => {
-        if (window.AvatarDirector) {
-          window.AvatarDirector.CONFIG.DEBUG_RAYS = !window.AvatarDirector.CONFIG.DEBUG_RAYS;
-          toggleDebugRays.textContent = `[ DEBUG RAYS: ${window.AvatarDirector.CONFIG.DEBUG_RAYS ? 'ON' : 'OFF'} ]`;
-          const c = document.getElementById('debug-director-canvas');
-          if (c) c.style.display = window.AvatarDirector.CONFIG.DEBUG_RAYS ? 'block' : 'none';
-        }
-      });
-    }
-
-    const btnRunAutotest = panel.querySelector('#btn-run-autotest');
-    if (btnRunAutotest) {
-      btnRunAutotest.addEventListener('click', () => {
-        if (window.AvatarDirector && typeof window.AvatarDirector.runAutoTest === 'function') {
-          window.AvatarDirector.runAutoTest();
-        }
-      });
-    }
-
-    const valFloatAmp = panel.querySelector('#val-float-amp');
-    const valCurrentPose = panel.querySelector('#val-current-pose');
-    const valAudioState = panel.querySelector('#val-audio-state');
-    const valAudioVol = panel.querySelector('#val-audio-vol');
-    const valAudioMuted = panel.querySelector('#val-audio-muted');
-    const valAudioTrack = panel.querySelector('#val-audio-track');
-    const valAudioErr = panel.querySelector('#val-audio-err');
-    const valRigDofs = panel.querySelector('#val-rig-dofs');
-
-    setInterval(() => {
-      if (valRigDofs && window.AvatarRig && typeof window.AvatarRig.getFormattedReadout === 'function') {
-        valRigDofs.textContent = window.AvatarRig.getFormattedReadout();
-      }
-      if (valFloatAmp) {
-        valFloatAmp.textContent = currentHomeFloatAmp.toFixed(2);
-      }
-      if (valCurrentPose) {
-        valCurrentPose.textContent = floatAnimation ? floatAnimation.currentPoseName : 'none';
-      }
-      const audio = document.getElementById('bg-audio');
-      if (audio) {
-        if (valAudioState) valAudioState.textContent = audio.paused ? 'PAUSED' : 'PLAYING';
-        if (valAudioVol) {
-          const gain = window.__coAudioDebug && window.__coAudioDebug.getMasterGain ? window.__coAudioDebug.getMasterGain() : null;
-          valAudioVol.textContent = (gain !== null) ? `${gain.toFixed(2)} (WebAudio)` : audio.volume.toFixed(2);
-        }
-        if (valAudioMuted) valAudioMuted.textContent = String(audio.muted);
-      }
-      if (window.__coAudioDebug && valAudioTrack) {
-        valAudioTrack.textContent = String(window.__coAudioDebug.getTrackIndex());
-      }
-      if (valAudioErr) {
-        valAudioErr.textContent = audioLastError || 'none';
-      }
-      const valDirectorStatus = panel.querySelector('#val-director-status');
-      if (valDirectorStatus && window.AvatarDirector && typeof window.AvatarDirector.getStatus === 'function') {
-        const s = window.AvatarDirector.getStatus();
-        const deg = (r) => ((r || 0) * 180 / Math.PI).toFixed(1) + '°';
-        valDirectorStatus.textContent = [
-          `SECTION: ${s.currentSectionId} | FLIGHT: ${s.isFlightActive ? 'ACTIVE' : 'OFF'}`,
-          `LOOK: ${s.lookMode} -> (${Math.round(s.targetScreen.x)}, ${Math.round(s.targetScreen.y)})`,
-          `HEAD: yaw:${deg(s.headAngles.yaw)} pitch:${deg(s.headAngles.pitch)} | BODY YAW: ${deg(s.bodyYaw)}`,
-          `GESTURES: [ ${s.activeGestures.length > 0 ? s.activeGestures.join(', ') : 'none'} ]`
-        ].join('\n');
-      }
-    }, 100);
-
-    updateConfigReadout();
-  }
-
-  // ==========================================================================
   // INITIALIZATION ON DOMContentLoaded
   // ==========================================================================
   document.addEventListener('DOMContentLoaded', () => {
@@ -5136,8 +4163,11 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
     initScrollProgress();
     initKeyboardNav();
     initSectionObserver();
-    initDebugHelper();
-    initLayoutAuditOverlay();
+
+    if (window.AvatarDebug) {
+      if (typeof window.AvatarDebug.initDebugHelper === 'function') window.AvatarDebug.initDebugHelper();
+      if (typeof window.AvatarDebug.initLayoutAuditOverlay === 'function') window.AvatarDebug.initLayoutAuditOverlay();
+    }
 
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(() => {

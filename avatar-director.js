@@ -95,6 +95,7 @@
   let camNormal = null;
   let localHit = null;
   let tempDir = null;
+  let scratchVecA = null;
 
   function initVectors() {
     if (V3) return;
@@ -109,6 +110,7 @@
       camNormal = new V3();
       localHit = new V3();
       tempDir = new V3();
+      scratchVecA = new V3();
     }
   }
 
@@ -198,22 +200,22 @@
   const directorOverrides = new Float32Array(DOF_COUNT);
   const directorWeights   = new Float32Array(DOF_COUNT);
 
-  // Debug visual overlay canvas
-  let debugOverlayCanvas = null;
-  let debugOverlayCtx = null;
+  // Reusable scratch vectors and result structs for zero per-frame allocations
+  const sharedDirResult = { x: 0, y: 0, z: 1 };
+  const sharedAimResult = { raise: 0, spread: 0.30, twist: 0 };
+  const sharedLookResult = { yaw: 0, pitch: 0, bodyYaw: 0 };
+  const hoverPointTarget = { x: 0, y: 0 };
+  const hoverPointContext = { pointTarget: hoverPointTarget };
 
-  // Autotest metrics recorder
-  const autotestMetrics = {
-    running: false,
-    startTime: 0,
-    collisions: 0,
-    maxJointSpeed: 0,
-    maxFrameJump: 0,
-    gestureCount: 0,
-    gesturesDuringFlight: 0,
-    unblendedPops: 0,
-    lastAngles: new Float32Array(DOF_COUNT),
-    stepLog: []
+  // Audio measurement state (20 Hz budget)
+  let audioSource = null;
+  let lastAudioTimeMs = 0;
+  let lastAudioCostMs = 0;
+
+  // Cached reading target coordinates (recomputed on resize/i18n/fonts)
+  const cachedReadingTargets = {
+    left: [],
+    right: []
   };
 
   // ==========================================================================
@@ -262,12 +264,18 @@
   function screenToModelDirection(screenPoint, jointObject) {
     initVectors();
     if (!V3 || !jointObject) {
-      return { x: 0, y: 0, z: 1 };
+      sharedDirResult.x = 0;
+      sharedDirResult.y = 0;
+      sharedDirResult.z = 1;
+      return sharedDirResult;
     }
 
     const skinViewer = window.skinViewer;
     if (!skinViewer || !skinViewer.camera) {
-      return { x: 0, y: 0, z: 1 };
+      sharedDirResult.x = 0;
+      sharedDirResult.y = 0;
+      sharedDirResult.z = 1;
+      return sharedDirResult;
     }
 
     const camera = skinViewer.camera;
@@ -315,21 +323,28 @@
     // 5. Plane intersection: (rayOrigin + t * rayDir - jointWorldPos) . camNormal = 0
     const denom = rayDir.dot(camNormal);
     if (Math.abs(denom) < 1e-6) {
-      return { x: 0, y: 0, z: 1 };
+      sharedDirResult.x = 0;
+      sharedDirResult.y = 0;
+      sharedDirResult.z = 1;
+      return sharedDirResult;
     }
 
-    const t = jointWorldPos.clone().sub(rayOrigin).dot(camNormal) / denom;
-    const worldHit = rayOrigin.clone().addScaledVector(rayDir, t);
+    scratchVecA.copy(jointWorldPos).sub(rayOrigin);
+    const t = scratchVecA.dot(camNormal) / denom;
+    scratchVecA.copy(rayOrigin).addScaledVector(rayDir, t);
 
     // 6. Transform worldHit to parent local space
     const parent = jointObject.parent || jointObject;
-    localHit.copy(worldHit);
+    localHit.copy(scratchVecA);
     parent.worldToLocal(localHit);
 
     // 7. Subtract joint local position and normalize
     tempDir.copy(localHit).sub(jointObject.position).normalize();
 
-    return { x: tempDir.x, y: tempDir.y, z: tempDir.z };
+    sharedDirResult.x = tempDir.x;
+    sharedDirResult.y = tempDir.y;
+    sharedDirResult.z = tempDir.z;
+    return sharedDirResult;
   }
 
   /**
@@ -341,10 +356,20 @@
    */
   function solveAimArm(side, screenPoint) {
     const player = getPlayerObject();
-    if (!player || !player.skin) return { raise: 0, spread: 0.12, twist: 0 };
+    if (!player || !player.skin) {
+      sharedAimResult.raise = 0;
+      sharedAimResult.spread = 0.12;
+      sharedAimResult.twist = 0;
+      return sharedAimResult;
+    }
 
     const jointObj = (side === 'left' || side === 'l') ? player.skin.leftArm : player.skin.rightArm;
-    if (!jointObj) return { raise: 0, spread: 0.12, twist: 0 };
+    if (!jointObj) {
+      sharedAimResult.raise = 0;
+      sharedAimResult.spread = 0.12;
+      sharedAimResult.twist = 0;
+      return sharedAimResult;
+    }
 
     const d = screenToModelDirection(screenPoint, jointObj);
     const sign = getOutwardSign(side);
@@ -363,11 +388,10 @@
     const clampedRaise = Math.max(-0.40, Math.min(2.70, rawRaise));
     const clampedSpread = Math.max(0.30, Math.min(1.30, rawSpread));
 
-    return {
-      raise: clampedRaise,
-      spread: clampedSpread,
-      twist: (side === 'right') ? -0.10 : 0.10
-    };
+    sharedAimResult.raise = clampedRaise;
+    sharedAimResult.spread = clampedSpread;
+    sharedAimResult.twist = (side === 'right') ? -0.10 : 0.10;
+    return sharedAimResult;
   }
 
   /**
@@ -380,7 +404,10 @@
   function solveLookAt(screenPoint, dt) {
     const player = getPlayerObject();
     if (!player || !player.skin || !player.skin.head) {
-      return { yaw: 0, pitch: 0, bodyYaw: 0 };
+      sharedLookResult.yaw = 0;
+      sharedLookResult.pitch = 0;
+      sharedLookResult.bodyYaw = 0;
+      return sharedLookResult;
     }
 
     const d = screenToModelDirection(screenPoint, player.skin.head);
@@ -415,11 +442,10 @@
     currentHeadYaw = netHeadYaw;
     currentHeadPitch = clampedPitch;
 
-    return {
-      yaw: netHeadYaw,
-      pitch: clampedPitch,
-      bodyYaw: currentBodyYaw
-    };
+    sharedLookResult.yaw = netHeadYaw;
+    sharedLookResult.pitch = clampedPitch;
+    sharedLookResult.bodyYaw = currentBodyYaw;
+    return sharedLookResult;
   }
 
   // ==========================================================================
@@ -850,7 +876,6 @@
 
     // Flight check: No gestures during flight!
     if (isFlightActive && !options.allowInFlight) {
-      autotestMetrics.gesturesDuringFlight++;
       return false;
     }
 
@@ -877,7 +902,6 @@
 
     activeGestures.push(instance);
     gestureHistory.set(name, nowSec);
-    autotestMetrics.gestureCount++;
 
     return true;
   }
@@ -950,28 +974,38 @@
 
     if (type === 'home-button') {
       lookMode = 'element';
-      lookTargetScreen = { x: centerX, y: centerY };
+      lookTargetScreen.x = centerX;
+      lookTargetScreen.y = centerY;
+      hoverPointTarget.x = centerX;
+      hoverPointTarget.y = centerY;
       triggerGesture('point', {
-        context: { pointTarget: { x: centerX, y: centerY } },
+        context: hoverPointContext,
         force: true
       });
     } else if (type === 'hero-title') {
       lookMode = 'element';
-      lookTargetScreen = { x: centerX, y: centerY };
+      lookTargetScreen.x = centerX;
+      lookTargetScreen.y = centerY;
     } else if (type === 'experience-row') {
       // Aim at left edge / number
       const leftTargetX = rect.left + Math.min(60, rect.width * 0.2);
       lookMode = 'element';
-      lookTargetScreen = { x: leftTargetX, y: centerY };
+      lookTargetScreen.x = leftTargetX;
+      lookTargetScreen.y = centerY;
+      hoverPointTarget.x = leftTargetX;
+      hoverPointTarget.y = centerY;
       triggerGesture('point', {
-        context: { pointTarget: { x: leftTargetX, y: centerY } },
+        context: hoverPointContext,
         force: true
       });
     } else if (type === 'contact-row') {
       lookMode = 'element';
-      lookTargetScreen = { x: centerX, y: centerY };
+      lookTargetScreen.x = centerX;
+      lookTargetScreen.y = centerY;
+      hoverPointTarget.x = centerX;
+      hoverPointTarget.y = centerY;
       triggerGesture('point', {
-        context: { pointTarget: { x: centerX, y: centerY } },
+        context: hoverPointContext,
         force: true
       });
     }
@@ -1078,6 +1112,37 @@
   // ==========================================================================
   // 5. READING GAZE & MUSIC SWAY
   // ==========================================================================
+  function updateReadingRects() {
+    cachedReadingTargets.left.length = 0;
+    cachedReadingTargets.right.length = 0;
+
+    const leftItems = document.querySelectorAll('#chi_sono .col-left p, #chi_sono .lead, #chi_sono .about-item');
+    for (let i = 0; i < leftItems.length; i++) {
+      const r = leftItems[i].getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) {
+        cachedReadingTargets.left.push({
+          left: r.left,
+          top: r.top,
+          width: r.width,
+          height: r.height
+        });
+      }
+    }
+
+    const rightItems = document.querySelectorAll('#chi_sono .col-right p, #chi_sono .about-meta, #chi_sono .about-item');
+    for (let i = 0; i < rightItems.length; i++) {
+      const r = rightItems[i].getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) {
+        cachedReadingTargets.right.push({
+          left: r.left,
+          top: r.top,
+          width: r.width,
+          height: r.height
+        });
+      }
+    }
+  }
+
   function updateReadingGaze(dt, nowSec) {
     if (!readingState.active || currentSectionId !== 'chi_sono' || prefersReducedMotion) return;
 
@@ -1112,28 +1177,23 @@
         }
       }
 
-      // Find reading paragraph element in DOM
-      const selector = (readingState.column === 'left')
-        ? '#chi_sono .col-left p, #chi_sono .lead, #chi_sono .about-item'
-        : '#chi_sono .col-right p, #chi_sono .about-meta, #chi_sono .about-item';
-      const items = document.querySelectorAll(selector);
-      if (items.length > 0) {
-        const item = items[readingState.paragraphIdx % items.length];
-        const r = item.getBoundingClientRect();
-        // Scan left to right across paragraph width in 3-5 fixations
+      // Use cached targets pool (zero DOM queries per frame)
+      const pool = (readingState.column === 'left') ? cachedReadingTargets.left : cachedReadingTargets.right;
+      if (pool && pool.length > 0) {
+        const r = pool[readingState.paragraphIdx % pool.length];
         const frac = (readingState.fixationIdx + 0.5) / readingState.totalFixations;
-        lookTargetScreen = {
-          x: r.left + r.width * frac,
-          y: r.top + r.height * 0.5
-        };
+        lookTargetScreen.x = r.left + r.width * frac;
+        lookTargetScreen.y = r.top + r.height * 0.5;
       }
     }
   }
 
-  function setAudioAnalyser(analyserNode, ctx) {
+  function setAudioAnalyser(analyserNode, ctx, audioElement) {
     audioAnalyser = analyserNode;
     audioCtxRef = ctx;
+    if (audioElement) audioSource = audioElement;
     if (analyserNode) {
+      analyserNode.fftSize = 128;
       audioFreqBuffer = new Uint8Array(analyserNode.frequencyBinCount);
     }
   }
@@ -1144,17 +1204,34 @@
       return 0;
     }
 
+    if (audioSource && (audioSource.paused || audioSource.muted || audioSource.volume <= 0)) {
+      smoothedAudioEnergy *= 0.90;
+      return 0;
+    }
+
+    // 20 Hz budget (run at most every 50 ms)
+    const nowMs = performance.now();
+    if (nowMs - lastAudioTimeMs < 50) {
+      return smoothedAudioEnergy;
+    }
+    const t0 = nowMs;
+    lastAudioTimeMs = nowMs;
+
     try {
       audioAnalyser.getByteFrequencyData(audioFreqBuffer);
-      // Low-band bass energy: bins 1 to 8 (~40 to 300 Hz)
+      // Low-band bass energy: bins 1 to 4 (~40 to 300 Hz)
       let sum = 0;
-      const count = Math.min(8, audioFreqBuffer.length);
+      const count = Math.min(5, audioFreqBuffer.length);
       for (let i = 1; i < count; i++) {
         sum += audioFreqBuffer[i];
       }
-      const rawEnergy = sum / (count * 255);
+      const rawEnergy = sum / ((count - 1) * 255);
       // Smooth low-pass
       smoothedAudioEnergy += (rawEnergy - smoothedAudioEnergy) * Math.min(1, dt * 8.0);
+      lastAudioCostMs = performance.now() - t0;
+      if (window.AvatarDebug && typeof window.AvatarDebug.recordMetric === 'function') {
+        window.AvatarDebug.recordMetric('audioAnalyser', lastAudioCostMs);
+      }
       return smoothedAudioEnergy;
     } catch (e) {
       return 0;
@@ -1165,6 +1242,7 @@
   // 6. MAIN UPDATE TICK (Executed before AvatarRig.update)
   // ==========================================================================
   function update(dtRaw) {
+    const t0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
     const dt = Math.max(0.001, Math.min(0.1, dtRaw));
     const nowSec = performance.now() / 1000;
 
@@ -1318,244 +1396,21 @@
       }
     }
 
-    // 7. Autotest Metrics Tracking
-    if (autotestMetrics.running && rig && typeof rig.getJointValues === 'function') {
-      const vals = rig.getJointValues();
-      if (vals.isColliding) {
-        autotestMetrics.collisions++;
-      }
-      const safeDt = Math.max(0.001, dt);
-      for (let i = 0; i < DOF_COUNT; i++) {
-        const cur = vals.joints[i];
-        const prev = autotestMetrics.lastAngles[i];
-        const diff = Math.abs(cur - prev);
-        const speed = diff / safeDt;
-        if (speed > autotestMetrics.maxJointSpeed) autotestMetrics.maxJointSpeed = speed;
-        // Frame jump at 60fps / normal frame interval (safeDt <= 0.025)
-        const frameJump = (safeDt <= 0.025) ? diff : (diff / safeDt) * (1 / 60);
-        if (frameJump > autotestMetrics.maxFrameJump) autotestMetrics.maxFrameJump = frameJump;
-        // Unblended pop = discontinuous jump exceeding physical spring rate limit
-        if (diff > 0.15 && speed > 7.5) {
-          autotestMetrics.unblendedPops++;
-        }
-        autotestMetrics.lastAngles[i] = cur;
-      }
+    // 7. Render Debug Rays (if enabled and debug module loaded)
+    if (CONFIG.DEBUG_RAYS && window.AvatarDebug && typeof window.AvatarDebug.renderDebugRays === 'function') {
+      window.AvatarDebug.renderDebugRays(lookTargetSmooth);
     }
 
-    // 8. Render Debug Rays
-    if (CONFIG.DEBUG_RAYS) {
-      renderDebugRays();
+    if (t0 > 0 && window.AvatarDebug && typeof window.AvatarDebug.recordMetric === 'function') {
+      window.AvatarDebug.recordMetric('avatarDirectorUpdate', performance.now() - t0);
     }
   }
 
-  // ==========================================================================
-  // 7. DEBUG OVERLAY & VISUAL RAYS
-  // ==========================================================================
-  function initDebugCanvas() {
-    if (debugOverlayCanvas) return;
-    debugOverlayCanvas = document.createElement('canvas');
-    debugOverlayCanvas.id = 'debug-director-canvas';
-    debugOverlayCanvas.style.position = 'fixed';
-    debugOverlayCanvas.style.inset = '0';
-    debugOverlayCanvas.style.width = '100vw';
-    debugOverlayCanvas.style.height = '100vh';
-    debugOverlayCanvas.style.pointerEvents = 'none';
-    debugOverlayCanvas.style.zIndex = '99999';
-    debugOverlayCanvas.style.display = CONFIG.DEBUG_RAYS ? 'block' : 'none';
-    document.body.appendChild(debugOverlayCanvas);
-    debugOverlayCtx = debugOverlayCanvas.getContext('2d');
-  }
-
-  function renderDebugRays() {
-    initDebugCanvas();
-    if (!debugOverlayCanvas || !debugOverlayCtx) return;
-
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    if (debugOverlayCanvas.width !== w || debugOverlayCanvas.height !== h) {
-      debugOverlayCanvas.width = w;
-      debugOverlayCanvas.height = h;
-    }
-
-    debugOverlayCtx.clearRect(0, 0, w, h);
-
-    const player = getPlayerObject();
-    const skinViewer = window.skinViewer;
-    if (!player || !player.skin || !skinViewer || !skinViewer.camera) return;
-
-    // Head ray: cyan
-    if (player.skin.head) {
-      const headPos = new V3();
-      player.skin.head.getWorldPosition(headPos);
-      headPos.project(skinViewer.camera);
-
-      const hx = (headPos.x * 0.5 + 0.5) * w;
-      const hy = (-headPos.y * 0.5 + 0.5) * h;
-
-      debugOverlayCtx.strokeStyle = 'rgba(94, 168, 255, 0.7)';
-      debugOverlayCtx.lineWidth = 2;
-      debugOverlayCtx.setLineDash([4, 4]);
-      debugOverlayCtx.beginPath();
-      debugOverlayCtx.moveTo(hx, hy);
-      debugOverlayCtx.lineTo(lookTargetSmooth.x, lookTargetSmooth.y);
-      debugOverlayCtx.stroke();
-      debugOverlayCtx.setLineDash([]);
-
-      debugOverlayCtx.fillStyle = '#5ea8ff';
-      debugOverlayCtx.beginPath();
-      debugOverlayCtx.arc(lookTargetSmooth.x, lookTargetSmooth.y, 4, 0, Math.PI * 2);
-      debugOverlayCtx.fill();
-    }
-  }
-
-  // ==========================================================================
-  // 8. AUTOTEST SUITE (?autotest)
-  // ==========================================================================
   function runAutoTest() {
-    console.log('\n======================================================');
-    console.log(' [AvatarDirector.runAutoTest()] - Automated Verification');
-    console.log(' Running scripted scenario at 0.5x speed...');
-    console.log('======================================================\n');
-
-    const rig = getRig();
-    if (rig) rig.setSlowMo(0.5);
-
-    autotestMetrics.running = true;
-    autotestMetrics.startTime = performance.now();
-    autotestMetrics.collisions = 0;
-    autotestMetrics.maxJointSpeed = 0;
-    autotestMetrics.maxFrameJump = 0;
-    autotestMetrics.gestureCount = 0;
-    autotestMetrics.gesturesDuringFlight = 0;
-    autotestMetrics.unblendedPops = 0;
-    if (rig && typeof rig.getJointValues === 'function') {
-      const initVals = rig.getJointValues();
-      for (let i = 0; i < DOF_COUNT; i++) {
-        autotestMetrics.lastAngles[i] = initVals.joints[i];
-      }
+    if (window.AvatarDebug && typeof window.AvatarDebug.runAutoTest === 'function') {
+      return window.AvatarDebug.runAutoTest();
     }
-
-    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-
-    (async () => {
-      // 1. Skip intro immediately
-      if (typeof window.finishIntroInstant === 'function') {
-        window.finishIntroInstant();
-      }
-      await sleep(1000);
-
-      // 2. 5 seconds idle in home section
-      console.log('Step 1: 5s home idle monitoring...');
-      await sleep(5000);
-
-      // 3. Hover home bottom buttons
-      console.log('Step 2: Hovering home bottom buttons...');
-      const btns = document.querySelectorAll('.home-bottom-actions button, .home-bottom-actions a');
-      for (let b of btns) {
-        onHover(b, 'home-button');
-        await sleep(1200);
-        onLeave(b);
-        await sleep(400);
-      }
-
-      // 4. Hover hero title
-      const title = document.getElementById('hero-title');
-      if (title) {
-        onHover(title, 'hero-title');
-        await sleep(1000);
-        onLeave(title);
-        await sleep(300);
-      }
-
-      // 5. Scroll through the four sections with pauses
-      const sectionIds = ['chi_sono', 'esperienze', 'contatti', 'home'];
-      for (let secId of sectionIds) {
-        console.log(`Step 3: Programmatic transition to #${secId}...`);
-        const secEl = document.getElementById(secId);
-        if (secEl) {
-          secEl.scrollIntoView({ behavior: 'smooth' });
-          onSectionEnter(secId);
-        }
-        await sleep(3000);
-
-        if (secId === 'esperienze') {
-          // Hover experience row
-          const card = document.querySelector('.card-minimal');
-          if (card) {
-            onHover(card, 'experience-row');
-            await sleep(1000);
-            onLeave(card);
-            await sleep(400);
-          }
-          // Open detail
-          onDetailOpen('redismc');
-          await sleep(1500);
-          // Close detail
-          onDetailClose();
-          await sleep(1200);
-        } else if (secId === 'contatti') {
-          const row = document.querySelector('.contact-row');
-          if (row) {
-            onHover(row, 'contact-row');
-            await sleep(1000);
-            onClick(row, 'contact-link');
-            await sleep(1200);
-            onLeave(row);
-          }
-        }
-      }
-
-      // 6. Click avatar
-      console.log('Step 4: Click avatar (wave then spin)...');
-      onAvatarClick();
-      await sleep(3500);
-
-      // 7. Toggle audio
-      console.log('Step 5: Toggle audio check...');
-      CONFIG.MUSIC_REACTIVE = true;
-      await sleep(1000);
-
-      autotestMetrics.running = false;
-      if (rig) rig.setSlowMo(1.0);
-
-      // Print report
-      console.log('\n======================================================');
-      console.log(' [AvatarDirector.runAutoTest()] - FINAL REPORT');
-      console.log('======================================================');
-      console.log(` - Collisions Detected:         ${autotestMetrics.collisions} (Goal: 0)`);
-      console.log(` - Max Joint Speed:             ${autotestMetrics.maxJointSpeed.toFixed(2)} rad/s`);
-      console.log(` - Max Frame-to-Frame Jump:     ${autotestMetrics.maxFrameJump.toFixed(4)} rad (Goal: < 0.15)`);
-      console.log(` - Total Gestures Executed:     ${autotestMetrics.gestureCount}`);
-      console.log(` - Gestures Started in Flight:  ${autotestMetrics.gesturesDuringFlight} (Goal: 0)`);
-      console.log(` - Unblended Pops:              ${autotestMetrics.unblendedPops} (Goal: 0)`);
-
-      const pass = autotestMetrics.collisions === 0 &&
-        autotestMetrics.gesturesDuringFlight === 0 &&
-        autotestMetrics.unblendedPops === 0 &&
-        autotestMetrics.maxFrameJump < 0.15;
-
-      if (pass) {
-        console.log('\n>> ACCEPTED: ALL CHECKS PASSED <<\n');
-      } else {
-        console.warn('\n>> VALIDATION WARNING: Review metrics above <<\n');
-      }
-
-      // Alert or print on page if ?autotest
-      const resEl = document.createElement('div');
-      resEl.id = 'autotest-results-banner';
-      resEl.style.position = 'fixed';
-      resEl.style.bottom = '1rem';
-      resEl.style.left = '1rem';
-      resEl.style.padding = '0.8rem 1.2rem';
-      resEl.style.background = pass ? 'rgba(10, 30, 20, 0.95)' : 'rgba(30, 10, 10, 0.95)';
-      resEl.style.border = pass ? '1px solid #44ff88' : '1px solid #ff4444';
-      resEl.style.color = pass ? '#44ff88' : '#ff4444';
-      resEl.style.fontFamily = 'monospace';
-      resEl.style.fontSize = '0.85rem';
-      resEl.style.zIndex = '999999';
-      resEl.innerHTML = `[ AUTOTEST: ${pass ? 'PASSED (0 COLLISIONS, 0 POPS)' : 'FAILED'} ]<br>Collisions: ${autotestMetrics.collisions} · Gestures: ${autotestMetrics.gestureCount} · MaxJump: ${autotestMetrics.maxFrameJump.toFixed(3)} rad`;
-      document.body.appendChild(resEl);
-    })();
+    console.warn('[AvatarDirector] AvatarDebug module not loaded. Load with ?autotest or include avatar-debug.js');
   }
 
   // ==========================================================================
@@ -1579,6 +1434,8 @@
     onPointerMove,
     updateFlightMotion,
     setAudioAnalyser,
+    updateReadingRects,
+    getLastAudioCost() { return lastAudioCostMs; },
     setStageTransform(t) {
       if (t) {
         if (t.x !== undefined) stageTransform.x = t.x;
@@ -1606,12 +1463,6 @@
   // Attach to window & module
   if (typeof window !== 'undefined') {
     window.AvatarDirector = AvatarDirector;
-    // Auto-trigger if ?autotest
-    if (window.location.search && window.location.search.includes('autotest')) {
-      window.addEventListener('load', () => {
-        setTimeout(runAutoTest, 1200);
-      });
-    }
   }
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = AvatarDirector;

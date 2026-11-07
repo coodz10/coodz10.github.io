@@ -186,6 +186,10 @@
   let routeTargetPoseName = null;
   let routeStartTime = 0;
   let isCollidingNow = false;
+  let currentQualityTier = 'high';
+  let isCanvasVisible = true;
+  let lastRigCostMs = 0;
+  let lastGuardCostMs = 0;
 
   // Cache for Three.js Vector3 and collision points
   let Vector3Class = null;
@@ -612,6 +616,7 @@
   // ==========================================================================
   function update(dtRaw) {
     if (!isInitialized || !skinRef || !playerRef) return;
+    const rigT0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
 
     // Apply rig time scale
     const effectiveDt = Math.max(0.001, Math.min(1 / 30, dtRaw * (CONFIG.timeScale || 1.0)));
@@ -849,10 +854,15 @@
     // Apply root yaw/pitch/roll
     playerRef.rotation.y = rootAngles[0];
 
-    // 6. Runtime collision guard check (30 Hz)
-    const guardIntervalMs = 1000 / CONFIG.COLLISION.guardFreqHz;
+    // 6. Runtime collision guard check (30 Hz high, 15 Hz medium, 8 Hz low)
+    const guardFreq = (currentQualityTier === 'low') ? 8 : (currentQualityTier === 'medium') ? 15 : (CONFIG.COLLISION.guardFreqHz || 30);
+    const guardIntervalMs = 1000 / guardFreq;
     const nowMs = performance.now();
-    if (nowMs - lastGuardTime >= guardIntervalMs) {
+    let isHidden = false;
+    try { isHidden = typeof document !== 'undefined' && document.hidden; } catch (e) {}
+
+    if (!isHidden && isCanvasVisible && (nowMs - lastGuardTime >= guardIntervalMs)) {
+      const guardT0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
       lastGuardTime = nowMs;
       playerRef.updateMatrixWorld(true);
 
@@ -891,6 +901,16 @@
           }
         });
       }
+
+      if (guardT0 > 0 && window.AvatarDebug && typeof window.AvatarDebug.recordMetric === 'function') {
+        lastGuardCostMs = performance.now() - guardT0;
+        window.AvatarDebug.recordMetric('collisionGuard', lastGuardCostMs);
+      }
+    }
+
+    if (rigT0 > 0 && window.AvatarDebug && typeof window.AvatarDebug.recordMetric === 'function') {
+      lastRigCostMs = performance.now() - rigT0;
+      window.AvatarDebug.recordMetric('avatarRigUpdate', lastRigCostMs);
     }
   }
 
@@ -1007,7 +1027,8 @@
   }
 
   function setQualityTier(tier) {
-    CONFIG.COLLISION.guardFreqHz = (tier === 'low') ? 15 : 30;
+    currentQualityTier = tier;
+    CONFIG.COLLISION.guardFreqHz = (tier === 'low') ? 8 : (tier === 'medium') ? 15 : 30;
   }
 
   function triggerGesture(gestureName, options = {}) {
@@ -1088,140 +1109,14 @@
   }
 
   // ==========================================================================
-  // VALIDATION SUITE (AvatarRig.validate())
+  // VALIDATION SUITE DELEGATION
   // ==========================================================================
   function validate() {
-    console.log('\n======================================================');
-    console.log(' [AvatarRig.validate()] - Rig Verification & Acceptance');
-    console.log('======================================================\n');
-
-    if (!skinRef || !playerRef) {
-      console.warn('[AvatarRig] Error: Rig not initialized. Cannot validate.');
-      return { passes: false, error: 'Not initialized' };
+    if (window.AvatarDebug && typeof window.AvatarDebug.validateRig === 'function') {
+      return window.AvatarDebug.validateRig();
     }
-
-    const poseNames = Object.keys(AvatarRig.POSES);
-    const testYaws = [-0.65, 0, 0.65];
-    const reportRows = [];
-    let allPassed = true;
-
-    // 1. Static Poses x 3 Yaws
-    poseNames.forEach((name) => {
-      const pArr = AvatarRig.POSES[name];
-      testYaws.forEach((yaw) => {
-        // Set joints
-        for (let j = 0; j < JOINT_COUNT; j++) {
-          const obj = skinRef[JOINT_NAMES[j]];
-          if (obj) obj.rotation.set(pArr[j * 3 + 0], pArr[j * 3 + 1], pArr[j * 3 + 2]);
-        }
-        playerRef.rotation.y = yaw;
-        playerRef.updateMatrixWorld(true);
-
-        const beforeCollision = checkAnyCollision();
-        // Resolve
-        const resolved = resolvePoseCollisions(new Float32Array(pArr));
-        for (let j = 0; j < JOINT_COUNT; j++) {
-          const obj = skinRef[JOINT_NAMES[j]];
-          if (obj) obj.rotation.set(resolved[j * 3 + 0], resolved[j * 3 + 1], resolved[j * 3 + 2]);
-        }
-        playerRef.updateMatrixWorld(true);
-        const afterCollision = checkAnyCollision();
-
-        if (afterCollision) allPassed = false;
-
-        reportRows.push({
-          type: 'STATIC POSE',
-          test: `${name} (yaw: ${yaw})`,
-          beforeResolver: beforeCollision ? 'COLLISION' : 'CLEAN',
-          afterResolver: afterCollision ? 'FAIL (COLLISION)' : 'PASS (CLEAN)',
-          maxVel: '0.00 rad/s',
-          maxJump: '0.00 rad'
-        });
-      });
-    });
-
-    // 2. Pose Transitions at 25%, 50%, 75% Blends
-    for (let i = 0; i < poseNames.length; i++) {
-      for (let k = i + 1; k < poseNames.length; k++) {
-        const pA = AvatarRig.POSES[poseNames[i]];
-        const pB = AvatarRig.POSES[poseNames[k]];
-
-        [0.25, 0.50, 0.75].forEach((blend) => {
-          const blendArr = new Float32Array(DOF_COUNT);
-          for (let dof = 0; dof < DOF_COUNT; dof++) {
-            blendArr[dof] = pA[dof] * (1 - blend) + pB[dof] * blend;
-          }
-
-          for (let j = 0; j < JOINT_COUNT; j++) {
-            const obj = skinRef[JOINT_NAMES[j]];
-            if (obj) obj.rotation.set(blendArr[j * 3 + 0], blendArr[j * 3 + 1], blendArr[j * 3 + 2]);
-          }
-          playerRef.updateMatrixWorld(true);
-
-          const beforeCol = checkAnyCollision();
-          const resolved = resolvePoseCollisions(blendArr);
-          for (let j = 0; j < JOINT_COUNT; j++) {
-            const obj = skinRef[JOINT_NAMES[j]];
-            if (obj) obj.rotation.set(resolved[j * 3 + 0], resolved[j * 3 + 1], resolved[j * 3 + 2]);
-          }
-          playerRef.updateMatrixWorld(true);
-          const afterCol = checkAnyCollision();
-
-          if (afterCol) allPassed = false;
-
-          reportRows.push({
-            type: 'TRANSITION BLEND',
-            test: `${poseNames[i]} -> ${poseNames[k]} (${Math.round(blend * 100)}%)`,
-            beforeResolver: beforeCol ? 'COLLISION' : 'CLEAN',
-            afterResolver: afterCol ? 'FAIL (COLLISION)' : 'PASS (CLEAN)',
-            maxVel: 'N/A',
-            maxJump: '0.00 rad'
-          });
-        });
-      }
-    }
-
-    // 3. Simulated Dynamic 3s Transition: rate limits & continuity test
-    let simMaxVel = 0;
-    let simMaxAccel = 0;
-    let simMaxJump = 0;
-    const simSteps = 180; // 3 seconds at 60Hz
-    const simDt = 1 / 60;
-
-    // Simulate transition from float to reach
-    setPose('reach');
-    for (let s = 0; s < simSteps; s++) {
-      const prev = new Float32Array(currentJointAngles);
-      const prevVel = new Float32Array(currentJointVelocities);
-      update(simDt);
-      for (let dof = 0; dof < DOF_COUNT; dof++) {
-        const vel = Math.abs(currentJointVelocities[dof]);
-        const accel = Math.abs((currentJointVelocities[dof] - prevVel[dof]) / simDt);
-        const jump = Math.abs(currentJointAngles[dof] - prev[dof]);
-        if (vel > simMaxVel) simMaxVel = vel;
-        if (accel > simMaxAccel) simMaxAccel = accel;
-        if (jump > simMaxJump) simMaxJump = jump;
-      }
-    }
-
-    const rateExceeded = simMaxVel > 9.5;
-    const discontinuityDetected = simMaxJump > 0.15; // 0.15 rad frame-to-frame jump threshold
-    if (rateExceeded || discontinuityDetected) allPassed = false;
-
-    reportRows.push({
-      type: 'SIMULATION 3s',
-      test: 'float -> reach transition dynamics',
-      beforeResolver: 'CLEAN',
-      afterResolver: (rateExceeded || discontinuityDetected) ? 'FAIL' : 'PASS',
-      maxVel: `${simMaxVel.toFixed(2)} rad/s (${rateExceeded ? 'EXCEEDED' : 'OK'})`,
-      maxAccel: `${simMaxAccel.toFixed(1)} rad/s²`,
-      maxJump: `${simMaxJump.toFixed(3)} rad (${discontinuityDetected ? 'DISCONTINUITY' : 'OK'})`
-    });
-
-    console.table(reportRows);
-    console.log(`\n>>> OVERALL VALIDATION RESULT: [ ${allPassed ? 'ACCEPTED (ALL CHECKS PASSED)' : 'REJECTED (ISSUES DETECTED)'} ]\n`);
-
-    return { passes: allPassed, report: reportRows };
+    console.warn('[AvatarRig] AvatarDebug module not loaded. Load with ?debug, ?autotest, or include avatar-debug.js');
+    return { passes: false, error: 'AvatarDebug module not loaded' };
   }
 
   // ==========================================================================
@@ -1353,6 +1248,9 @@
   AvatarRig.getInnerMeshes = () => innerMeshes;
   AvatarRig.testPairCollision = testPairCollision;
   AvatarRig.validate = validate;
+  AvatarRig.setCanvasVisible = (visible) => { isCanvasVisible = !!visible; };
+  AvatarRig.getLastRigCost = () => lastRigCostMs;
+  AvatarRig.getLastGuardCost = () => lastGuardCostMs;
   AvatarRig.RigAnimation = RigAnimation;
   AvatarRig.getJointValues = () => ({
     joints: Array.from(currentJointAngles),
