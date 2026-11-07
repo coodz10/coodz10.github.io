@@ -39,8 +39,8 @@
 
     // Rate limiters per joint group (max rad/s)
     RATE_LIMITS: {
-      head: 7.0,
-      arms: 9.0,
+      head: 6.0,
+      arms: 6.5,
       legs: 5.0,
       body: 3.5,
       rootYaw: 3.0
@@ -138,6 +138,10 @@
   const targetCollisionOffsets = new Float32Array(DOF_COUNT);
   const proceduralOffsets      = new Float32Array(DOF_COUNT);
 
+  // Director layer overlay buffers
+  const directorOverrides      = new Float32Array(DOF_COUNT);
+  const directorWeights        = new Float32Array(DOF_COUNT);
+
   // Root transform (yaw, pitch, roll)
   const rootAngles             = new Float32Array(3);
   const rootVelocities         = new Float32Array(3);
@@ -229,7 +233,7 @@
     for (let ix = 0; ix < 3; ix++) {
       const fx = bbArm.min.x + (bbArm.max.x - bbArm.min.x) * (ix / 2);
       for (let iy = 0; iy < 5; iy++) {
-        const fy = bbArm.min.y + (bbArm.max.y - bbArm.min.y - 0.15) * (iy / 4);
+        const fy = bbArm.min.y + 0.45 * (iy / 4);
         for (let iz = 0; iz < 3; iz++) {
           const fz = bbArm.min.z + (bbArm.max.z - bbArm.min.z) * (iz / 2);
           samplePointsA[pIdx++] = fx;
@@ -311,8 +315,8 @@
     neutral: {
       head:     head({ yaw: 0, pitch: 0, roll: 0 }),
       body:     body({ lean: 0, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0, spread: 0.12, twist: 0 }),
-      rightArm: arm('right', { raise: 0, spread: 0.14, twist: 0 }),
+      leftArm:  arm('left',  { raise: 0, spread: 0.28, twist: 0 }),
+      rightArm: arm('right', { raise: 0, spread: 0.28, twist: 0 }),
       leftLeg:  leg('left',  { swing: -0.02, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.02, spread: 0.04 })
     },
@@ -327,80 +331,80 @@
     rest: {
       head:     head({ yaw: 0.05, pitch: -0.02, roll: 0 }),
       body:     body({ lean: 0.04, twist: 0.02, roll: 0.02 }),
-      leftArm:  arm('left',  { raise: 0.08, spread: 0.12, twist: 0 }),
-      rightArm: arm('right', { raise: 0.04, spread: 0.14, twist: 0 }),
+      leftArm:  arm('left',  { raise: 0.08, spread: 0.24, twist: 0 }),
+      rightArm: arm('right', { raise: 0.04, spread: 0.24, twist: 0 }),
       leftLeg:  leg('left',  { swing: 0.12, spread: 0.04 }),
       rightLeg: leg('right', { swing: -0.06, spread: 0.04 })
     },
     open: {
       head:     head({ yaw: 0, pitch: 0.04, roll: 0 }),
       body:     body({ lean: -0.02, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.15, spread: 0.55, twist: -0.15 }),
-      rightArm: arm('right', { raise: 0.15, spread: 0.55, twist: 0.15 }),
+      leftArm:  arm('left',  { raise: 0.15, spread: 0.38, twist: -0.15 }),
+      rightArm: arm('right', { raise: 0.15, spread: 0.38, twist: 0.15 }),
       leftLeg:  leg('left',  { swing: -0.04, spread: 0.05 }),
       rightLeg: leg('right', { swing: 0.04, spread: 0.05 })
     },
     reach: {
       head:     head({ yaw: 0.10, pitch: 0.05, roll: 0 }),
       body:     body({ lean: 0.04, twist: -0.08, roll: 0 }),
-      leftArm:  arm('left',  { raise: -0.10, spread: 0.14, twist: 0 }),
-      rightArm: arm('right', { raise: 1.20, spread: 0.20, twist: -0.10 }),
+      leftArm:  arm('left',  { raise: -0.10, spread: 0.28, twist: 0 }),
+      rightArm: arm('right', { raise: 1.20, spread: 0.30, twist: -0.10 }),
       leftLeg:  leg('left',  { swing: -0.08, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.10, spread: 0.04 })
     },
     wave: {
       head:     head({ yaw: 0.10, pitch: 0.08, roll: 0.05 }),
       body:     body({ lean: 0.02, twist: -0.05, roll: -0.03 }),
-      leftArm:  arm('left',  { raise: -0.08, spread: 0.14, twist: 0 }),
-      rightArm: arm('right', { raise: 2.60, spread: 0.35, twist: 0.20 }),
+      leftArm:  arm('left',  { raise: -0.08, spread: 0.30, twist: 0 }),
+      rightArm: arm('right', { raise: 2.60, spread: 0.38, twist: 0.20 }),
       leftLeg:  leg('left',  { swing: 0.02, spread: 0.04 }),
       rightLeg: leg('right', { swing: -0.02, spread: 0.04 })
     },
     fly: {
       head:     head({ yaw: 0, pitch: 0.20, roll: 0 }),
       body:     body({ lean: 0.35, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 1.50, spread: 0.15, twist: 0 }),
-      rightArm: arm('right', { raise: 1.50, spread: 0.15, twist: 0 }),
+      leftArm:  arm('left',  { raise: 1.50, spread: 0.28, twist: 0 }),
+      rightArm: arm('right', { raise: 1.50, spread: 0.28, twist: 0 }),
       leftLeg:  leg('left',  { swing: -0.25, spread: 0.05 }),
       rightLeg: leg('right', { swing: -0.25, spread: 0.05 })
     },
     write: {
       head:     head({ yaw: 0.15, pitch: -0.10, roll: 0 }),
       body:     body({ lean: 0.30, twist: 0.08, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.85, spread: 0.22, twist: 0.10 }),
-      rightArm: arm('right', { raise: -0.25, spread: 0.18, twist: -0.10 }),
+      leftArm:  arm('left',  { raise: 0.85, spread: 0.28, twist: 0.10 }),
+      rightArm: arm('right', { raise: -0.25, spread: 0.28, twist: -0.10 }),
       leftLeg:  leg('left',  { swing: -0.18, spread: 0.05 }),
       rightLeg: leg('right', { swing: -0.25, spread: 0.05 })
     },
     tilt: {
       head:     head({ yaw: 0.05, pitch: 0, roll: -0.08 }),
       body:     body({ lean: 0.05, twist: 0.10, roll: 0.12 }),
-      leftArm:  arm('left',  { raise: 0.06, spread: 0.22, twist: 0 }),
-      rightArm: arm('right', { raise: 0.14, spread: 0.28, twist: 0 }),
+      leftArm:  arm('left',  { raise: 0.06, spread: 0.28, twist: 0 }),
+      rightArm: arm('right', { raise: 0.14, spread: 0.30, twist: 0 }),
       leftLeg:  leg('left',  { swing: -0.06, spread: 0.08 }),
       rightLeg: leg('right', { swing: 0.08, spread: 0.08 })
     },
     point: {
       head:     head({ yaw: 0.15, pitch: 0.05, roll: 0 }),
       body:     body({ lean: 0.02, twist: -0.15, roll: 0 }),
-      leftArm:  arm('left',  { raise: -0.08, spread: 0.14, twist: 0 }),
-      rightArm: arm('right', { raise: 1.45, spread: 0.22, twist: -0.15 }),
+      leftArm:  arm('left',  { raise: -0.08, spread: 0.32, twist: 0 }),
+      rightArm: arm('right', { raise: 1.45, spread: 0.32, twist: -0.15 }),
       leftLeg:  leg('left',  { swing: -0.05, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.08, spread: 0.04 })
     },
     hold: {
       head:     head({ yaw: 0, pitch: 0, roll: 0 }),
       body:     body({ lean: 0.04, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.30, spread: 0.22, twist: 0.10 }),
-      rightArm: arm('right', { raise: 0.30, spread: 0.22, twist: -0.10 }),
+      leftArm:  arm('left',  { raise: 0.30, spread: 0.28, twist: 0.10 }),
+      rightArm: arm('right', { raise: 0.30, spread: 0.28, twist: -0.10 }),
       leftLeg:  leg('left',  { swing: -0.04, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.04, spread: 0.04 })
     },
     place: {
       head:     head({ yaw: 0.10, pitch: 0.05, roll: 0 }),
       body:     body({ lean: 0.15, twist: -0.08, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.30, spread: 0.18, twist: 0 }),
-      rightArm: arm('right', { raise: 0.85, spread: 0.22, twist: -0.20 }),
+      leftArm:  arm('left',  { raise: 0.30, spread: 0.28, twist: 0 }),
+      rightArm: arm('right', { raise: 0.85, spread: 0.30, twist: -0.20 }),
       leftLeg:  leg('left',  { swing: -0.12, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.10, spread: 0.04 })
     }
@@ -613,6 +617,11 @@
     const effectiveDt = Math.max(0.001, Math.min(1 / 30, dtRaw * (CONFIG.timeScale || 1.0)));
     const nowSec = performance.now() / 1000;
 
+    // Allow AvatarDirector to evaluate solvers, gaze, torso sharing, and gesture clips
+    if (typeof window !== 'undefined' && window.AvatarDirector && typeof window.AvatarDirector.update === 'function') {
+      window.AvatarDirector.update(effectiveDt);
+    }
+
     // 1. Procedural Layers: Breathing, Organic Drift, Secondary Motion
     let breathArmSpread = 0;
     let lagArmL = 0;
@@ -702,6 +711,12 @@
         const dof = j * 3 + ax;
         let val = rawTargetJointAngles[dof] + (prefersReducedMotion ? 0 : settleVariationOffsets[dof]) + proceduralOffsets[dof];
 
+        // Director layer overlay blend (gestures, aiming, music sway)
+        const dWeight = directorWeights[dof];
+        if (dWeight > 0.001) {
+          val = val * (1 - dWeight) + directorOverrides[dof] * dWeight;
+        }
+
         // Add breathing & lag to limb spread
         if (j === J_LEFT_ARM && ax === 0)  val += writeCircleX;
         if (j === J_LEFT_ARM && ax === 1)  val += writeCircleY;
@@ -711,6 +726,12 @@
         if (j === J_RIGHT_LEG && ax === 0) val += lagLegs - flightFlutter - writeFlutter;
         if (j === J_BODY && ax === 0)      val += bodyLeanSecondary;
         if (j === J_BODY && ax === 2)      val += bodyRollSecondary;
+
+        // Guaranteed arm spread clearance to prevent limb-torso penetration
+        const bodyTurnAbs = Math.abs(currentJointAngles[J_BODY * 3 + 1]);
+        const minArmClearance = 0.28 + bodyTurnAbs * 0.40;
+        if (j === J_LEFT_ARM && ax === 2)  val = Math.max(minArmClearance, val);
+        if (j === J_RIGHT_ARM && ax === 2) val = Math.min(-minArmClearance, val);
 
         // Add gesture wave oscillation
         if (j === J_RIGHT_ARM && ax === 2 && activeGesture === 'wave') val += gestureWaveOscZ;
@@ -758,6 +779,25 @@
           if (lim) {
             newPos = smoothSoftLimit(newPos, lim[0], lim[1]);
           }
+
+          // Enforce rigid physical clearance between arms and torso
+          if (j === J_LEFT_ARM && ax === 2) {
+            const bTurn = Math.abs(currentJointAngles[J_BODY * 3 + 1]);
+            const minC = 0.28 + bTurn * 0.45;
+            if (newPos < minC) {
+              newPos = minC;
+              if (newVel < 0) newVel = 0;
+            }
+          }
+          if (j === J_RIGHT_ARM && ax === 2) {
+            const bTurn = Math.abs(currentJointAngles[J_BODY * 3 + 1]);
+            const minC = 0.28 + bTurn * 0.45;
+            if (newPos > -minC) {
+              newPos = -minC;
+              if (newVel > 0) newVel = 0;
+            }
+          }
+
           currentJointAngles[dof] = newPos;
         }
       }
@@ -981,6 +1021,19 @@
 
   function registerGesture(name, handler) {
     gestureRegistry.set(name, handler);
+  }
+
+  function setDirectorOverlay(overrides, weights) {
+    if (overrides) {
+      for (let i = 0; i < DOF_COUNT; i++) directorOverrides[i] = overrides[i];
+    }
+    if (weights) {
+      for (let i = 0; i < DOF_COUNT; i++) directorWeights[i] = weights[i];
+    }
+  }
+
+  function clearDirectorOverlay() {
+    for (let i = 0; i < DOF_COUNT; i++) directorWeights[i] = 0;
   }
 
   function setForcedPose(poseName) {
@@ -1209,6 +1262,9 @@
 
     onSectionChange(sectionId) {
       this.currentSection = sectionId;
+      if (typeof window !== 'undefined' && window.AvatarDirector) {
+        return; // AvatarDirector manages section poses, gaze, and arrival gestures
+      }
       if (sectionId === 'home') {
         setPose('float');
       } else if (sectionId === 'chi_sono') {
@@ -1227,6 +1283,7 @@
     }
 
     onCardHover(isHovered) {
+      if (typeof window !== 'undefined' && window.AvatarDirector) return;
       if (this.currentSection === 'esperienze' && !forcedPoseName) {
         if (isHovered) {
           setPose('point');
@@ -1259,9 +1316,9 @@
       // Single animation owner: update the rig
       update(dt);
 
-      // Random idle gesture rotation every 6-9 seconds in home section
+      // Random idle gesture rotation every 6-9 seconds in home section (if Director is not active)
       const nowSec = now / 1000;
-      if (!forcedPoseName && !activeGesture && (nowSec - this.holdStartTime >= this.holdDuration)) {
+      if ((typeof window === 'undefined' || !window.AvatarDirector) && !forcedPoseName && !activeGesture && (nowSec - this.holdStartTime >= this.holdDuration)) {
         this.pickNextPose();
       }
     }
@@ -1284,6 +1341,9 @@
   AvatarRig.setQualityTier = setQualityTier;
   AvatarRig.triggerGesture = triggerGesture;
   AvatarRig.registerGesture = registerGesture;
+  AvatarRig.setDirectorOverlay = setDirectorOverlay;
+  AvatarRig.clearDirectorOverlay = clearDirectorOverlay;
+  AvatarRig.resolvePoseCollisions = resolvePoseCollisions;
   AvatarRig.setForcedPose = setForcedPose;
   AvatarRig.pickNextPose = pickNextPose;
   AvatarRig.getCurrentPoseName = () => currentPoseName;

@@ -915,6 +915,10 @@
       headLookMode = 'normal';
       setDesiredLookTarget(mouseX, mouseY, 0.8);
 
+      if (window.AvatarDirector) {
+        window.AvatarDirector.onIntroStep('finish');
+      }
+
       if (introCanvas) {
         introCanvas.style.display = 'none';
       }
@@ -985,6 +989,8 @@
         updateNavIndicator('home');
       }
     }
+
+    window.finishIntroInstant = finishIntroInstant;
 
     if (isIntroSkip || isDeepLink || prefersReducedMotion) {
       headLookMode = 'normal';
@@ -1393,6 +1399,18 @@
                 avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
               }
 
+              if (window.AvatarDirector) {
+                window.AvatarDirector.setStageTransform({
+                  x: curAvatarX,
+                  y: curAvatarY,
+                  scale: curScale,
+                  roll: curRoll,
+                  bobY: 0,
+                  bobRoll: 0
+                });
+                window.AvatarDirector.onIntroStep('fly-in');
+              }
+
               if (floatAnimation && floatAnimation.currentPoseName !== 'fly') {
                 floatAnimation.transitionTo('fly', 0.2);
               }
@@ -1594,10 +1612,25 @@
                 avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${curWriteScale.toFixed(3)}) rotate(0rad)`;
               }
 
+              if (window.AvatarDirector) {
+                window.AvatarDirector.setStageTransform({
+                  x: curAvatarX,
+                  y: curAvatarY,
+                  scale: curWriteScale,
+                  roll: 0,
+                  bobY: 0,
+                  bobRoll: 0
+                });
+                window.AvatarDirector.onIntroStep('writing', { penX: targetPenX, penY: targetPenY });
+              }
+
               setDesiredLookTarget(activePenX, activePenY, 0.08);
             }
             // Phase 4: Settle & Glide Down. Title glides to ~71vh, avatar glides up to HOME_AVATAR
             else if (virtualTime >= T_WRITE_END && virtualTime < T_SETTLE_END) {
+              if (window.AvatarDirector && !settleCrossfadeStarted) {
+                window.AvatarDirector.onIntroStep('glide-settle');
+              }
               // Ensure all cells are fully filled
               for (let k = 0; k < 8; k++) {
                 if (!letterData[k].completed) {
@@ -1655,6 +1688,18 @@
 
               if (avatarStage) {
                 avatarStage.style.transform = `translate3d(${curAvatarX.toFixed(2)}px, ${curAvatarY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)}) rotate(${curRoll.toFixed(4)}rad)`;
+              }
+
+              if (window.AvatarDirector) {
+                window.AvatarDirector.setStageTransform({
+                  x: curAvatarX,
+                  y: curAvatarY,
+                  scale: curScale,
+                  roll: curRoll,
+                  bobY: 0,
+                  bobRoll: 0
+                });
+                window.AvatarDirector.onIntroStep('fly-in');
               }
 
               if (!handoverLookSet) {
@@ -2223,22 +2268,38 @@
     }
 
     // 6. Home float bob and slow roll tilt (+-2vh period 5.5s, sway +-2.2deg)
+    let bobPx = 0;
+    let rollDeg = 0;
     const avatarFloatEl = document.getElementById('avatar-float');
-    if (!prefersReducedMotion && avatarFloatEl) {
+    if (!prefersReducedMotion) {
       if (currentHomeFloatAmp > 0.001) {
-        const bobPx = (cachedWindowHeight * 0.02) * Math.sin(nowSec * (2 * Math.PI / 5.5)) * currentHomeFloatAmp;
-        const rollDeg = 2.2 * Math.sin(nowSec * (2 * Math.PI / 7.5)) * currentHomeFloatAmp;
-        avatarFloatEl.style.transformOrigin = '50% 50%';
-        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
+        bobPx = (cachedWindowHeight * 0.02) * Math.sin(nowSec * (2 * Math.PI / 5.5)) * currentHomeFloatAmp;
+        rollDeg = 2.2 * Math.sin(nowSec * (2 * Math.PI / 7.5)) * currentHomeFloatAmp;
       } else if (fDisplay >= 0.35) {
         const nonHomeWeight = Math.min(1, (fDisplay - 0.35) / 0.2);
-        const bobPx = (cachedWindowHeight * 0.015) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * nonHomeWeight * (1 - flightW);
-        const rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * nonHomeWeight * (1 - flightW);
-        avatarFloatEl.style.transformOrigin = '50% 50%';
-        avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
-      } else {
-        avatarFloatEl.style.transform = 'none';
+        bobPx = (cachedWindowHeight * 0.015) * Math.sin(nowSec * (2 * Math.PI / 6.0)) * nonHomeWeight * (1 - flightW);
+        rollDeg = 1.5 * Math.sin(nowSec * (2 * Math.PI / 9.0)) * nonHomeWeight * (1 - flightW);
       }
+      if (avatarFloatEl) {
+        if (currentHomeFloatAmp > 0.001 || fDisplay >= 0.35) {
+          avatarFloatEl.style.transformOrigin = '50% 50%';
+          avatarFloatEl.style.transform = `translate3d(0, ${bobPx.toFixed(2)}px, 0) rotate(${rollDeg.toFixed(2)}deg)`;
+        } else {
+          avatarFloatEl.style.transform = 'none';
+        }
+      }
+    }
+
+    if (window.AvatarDirector) {
+      window.AvatarDirector.setStageTransform({
+        x: finalX,
+        y: finalY,
+        scale: finalScale,
+        roll: finalRoll,
+        bobY: bobPx,
+        bobRoll: (rollDeg * Math.PI) / 180
+      });
+      window.AvatarDirector.updateFlightMotion(stageVx, stageVy + bobVy, stageAx, stageAy, safeDt);
     }
 
     // 7. Title float & letter wave + scrub
@@ -2351,6 +2412,10 @@
 
     if (floatAnimation) {
       floatAnimation.onSectionChange(state);
+    }
+
+    if (window.AvatarDirector) {
+      window.AvatarDirector.onSectionEnter(state);
     }
 
     currentReadingIndex = 0;
@@ -2685,8 +2750,12 @@
         const dy = Math.abs(clientY - centerY);
 
         if (dx <= boxWidth / 2 && dy <= boxHeight / 2) {
-          floatAnimation.triggerWave(2.2);
-          avatarSpinTarget += Math.PI * 2;
+          if (window.AvatarDirector) {
+            window.AvatarDirector.onAvatarClick();
+          } else {
+            floatAnimation.triggerWave(2.2);
+            avatarSpinTarget += Math.PI * 2;
+          }
           return;
         }
       }
@@ -2722,10 +2791,16 @@
       handleInteraction(e.clientX, e.clientY, e.target);
     });
 
+    // Pointer movement tracking for AvatarDirector
+    window.addEventListener('mousemove', (e) => {
+      if (window.AvatarDirector) {
+        window.AvatarDirector.onPointerMove(e.clientX, e.clientY);
+      }
+    }, { passive: true });
+
     // Hover Reactions in Home (Only for non-touch devices)
     if (!isTouchDevice) {
-      const btnAbout = document.querySelector('a[href="#chi_sono"]');
-      const btnExp = document.querySelector('a[href="#esperienze"]');
+      const bottomLinks = document.querySelectorAll('.home-bottom-actions a, .home-bottom-actions button');
       const heroTitle = document.getElementById('hero-title');
 
       function onButtonHover(btnEl, isEntering) {
@@ -2737,35 +2812,42 @@
           const btnCenterY = rect.top + rect.height * 0.5;
           homeReactionYaw = (btnCenterX < window.innerWidth * 0.5) ? -0.42 : 0.42;
           setDesiredLookTarget(btnCenterX, btnCenterY, 0.35);
+          if (window.AvatarDirector) {
+            window.AvatarDirector.onHover(btnEl, 'home-button');
+          }
           if (floatAnimation) {
             floatAnimation.transitionTo('point', 0.5);
           }
         } else {
           homeReactionActive = false;
+          if (window.AvatarDirector) {
+            window.AvatarDirector.onLeave(btnEl);
+          }
           if (floatAnimation) {
             floatAnimation.transitionTo('float', 0.8);
           }
         }
       }
 
-      if (btnAbout) {
-        btnAbout.addEventListener('mouseenter', () => onButtonHover(btnAbout, true));
-        btnAbout.addEventListener('mouseleave', () => onButtonHover(btnAbout, false));
-      }
-      if (btnExp) {
-        btnExp.addEventListener('mouseenter', () => onButtonHover(btnExp, true));
-        btnExp.addEventListener('mouseleave', () => onButtonHover(btnExp, false));
-      }
+      bottomLinks.forEach((link) => {
+        link.addEventListener('mouseenter', () => onButtonHover(link, true));
+        link.addEventListener('mouseleave', () => onButtonHover(link, false));
+      });
 
       if (heroTitle) {
         heroTitle.addEventListener('mouseenter', () => {
           if (activeSectionId !== 'home' || fDisplay >= 0.35 || isIntroActive) return;
           const rect = heroTitle.getBoundingClientRect();
           setDesiredLookTarget(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, 0.35);
+          if (window.AvatarDirector) {
+            window.AvatarDirector.onHover(heroTitle, 'hero-title');
+          }
         });
         heroTitle.addEventListener('mouseleave', () => {
           if (activeSectionId !== 'home' || fDisplay >= 0.35 || isIntroActive) return;
-          // Normal mouse follow will naturally resume
+          if (window.AvatarDirector) {
+            window.AvatarDirector.onLeave(heroTitle);
+          }
         });
       }
     }
@@ -3209,6 +3291,9 @@
 
       // Trigger avatar reaction (substate 'esperienze-detail': turns slightly toward panel and nods)
       setAvatarState('esperienze-detail');
+      if (window.AvatarDirector) {
+        window.AvatarDirector.onDetailOpen(key);
+      }
     });
 
     setTimeout(() => {
@@ -3241,6 +3326,9 @@
 
       // Avatar returns to walking pose in 'esperienze'
       setAvatarState('esperienze');
+      if (window.AvatarDirector) {
+        window.AvatarDirector.onDetailClose();
+      }
     });
 
     setTimeout(() => {
@@ -3341,6 +3429,9 @@
         hoveredCard = card;
         const r = card.getBoundingClientRect();
         setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+        if (window.AvatarDirector) {
+          window.AvatarDirector.onHover(card, 'experience-row');
+        }
         if (floatAnimation) {
           floatAnimation.onCardHover(true);
         }
@@ -3348,6 +3439,9 @@
 
       card.addEventListener('mouseleave', () => {
         hoveredCard = null;
+        if (window.AvatarDirector) {
+          window.AvatarDirector.onLeave(card);
+        }
         if (floatAnimation) {
           floatAnimation.onCardHover(false);
         }
@@ -3360,10 +3454,24 @@
         hoveredContactRow = row;
         const r = row.getBoundingClientRect();
         setDesiredLookTarget(r.left + r.width * 0.5, r.top + r.height * 0.5, 0.8);
+        if (window.AvatarDirector) {
+          window.AvatarDirector.onHover(row, 'contact-row');
+        }
       });
 
       row.addEventListener('mouseleave', () => {
         hoveredContactRow = null;
+        if (window.AvatarDirector) {
+          window.AvatarDirector.onLeave(row);
+        }
+      });
+
+      row.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.AvatarDirector) {
+            window.AvatarDirector.onClick(link, 'contact-link');
+          }
+        });
       });
     });
   }
@@ -3628,6 +3736,18 @@
         webAudioSource.connect(webAudioCompressor);
         webAudioCompressor.connect(webAudioMasterGain);
         webAudioMasterGain.connect(webAudioCtx.destination);
+
+        // Music reactive AnalyserNode for AvatarDirector
+        try {
+          const webAudioAnalyser = webAudioCtx.createAnalyser();
+          webAudioAnalyser.fftSize = 256;
+          webAudioCompressor.connect(webAudioAnalyser);
+          if (window.AvatarDirector && typeof window.AvatarDirector.setAudioAnalyser === 'function') {
+            window.AvatarDirector.setAudioAnalyser(webAudioAnalyser, webAudioCtx);
+          }
+        } catch (e) {
+          console.warn('[Web Audio] AnalyserNode setup error:', e);
+        }
         audioEl.volume = 1.0; // Audio element volume at 1.0 so GainNode manages master volume
         webAudioReady = true;
       }
@@ -4446,6 +4566,26 @@
         </div>
 
         <div style="border-top: 1px solid rgba(94, 168, 255, 0.25); margin: 0.75rem 0 0.5rem; padding-top: 0.5rem;">
+          <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.25rem;">[ AVATAR DIRECTOR GESTURES & INTENTS ]</div>
+          <div class="debug-toggles-row" style="flex-wrap: wrap; gap: 0.25rem;">
+            <button id="btn-g-wave" class="debug-toggle-btn cursor-pointer">[ WAVE ]</button>
+            <button id="btn-g-point" class="debug-toggle-btn cursor-pointer">[ POINT ]</button>
+            <button id="btn-g-present" class="debug-toggle-btn cursor-pointer">[ PRESENT ]</button>
+            <button id="btn-g-nod" class="debug-toggle-btn cursor-pointer">[ NOD ]</button>
+            <button id="btn-g-tilt" class="debug-toggle-btn cursor-pointer">[ TILT ]</button>
+            <button id="btn-g-lookaround" class="debug-toggle-btn cursor-pointer">[ LOOK-AROUND ]</button>
+            <button id="btn-g-stretch" class="debug-toggle-btn cursor-pointer">[ STRETCH ]</button>
+            <button id="btn-g-settle" class="debug-toggle-btn cursor-pointer">[ SETTLE ]</button>
+            <button id="btn-g-spin" class="debug-toggle-btn cursor-pointer">[ SPIN ]</button>
+          </div>
+          <div class="debug-toggles-row" style="margin-top: 0.35rem;">
+            <button id="toggle-debug-rays" class="debug-toggle-btn cursor-pointer">[ DEBUG RAYS: OFF ]</button>
+            <button id="btn-run-autotest" class="debug-toggle-btn cursor-pointer" style="color: #44ff88; border-color: #44ff88;">[ RUN ?AUTOTEST ]</button>
+          </div>
+          <pre id="val-director-status" style="font-size: 0.65rem; line-height: 1.35; background: rgba(5,6,15,0.7); padding: 0.4rem; border: 1px solid var(--line); margin: 0.25rem 0 0.5rem; white-space: pre-wrap; color: #7cf0ff;"></pre>
+        </div>
+
+        <div style="border-top: 1px solid rgba(94, 168, 255, 0.25); margin: 0.75rem 0 0.5rem; padding-top: 0.5rem;">
           <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.25rem;">[ LIVE RIG JOINTS & ROOT ]</div>
           <pre id="val-rig-dofs" style="font-size: 0.65rem; line-height: 1.35; background: rgba(5,6,15,0.7); padding: 0.4rem; border: 1px solid var(--line); margin: 0.25rem 0 0.5rem; white-space: pre-wrap; color: #a4b3e6;"></pre>
           <div class="debug-row"><span>Float Amp: <b id="val-float-amp">0.00</b></span></div>
@@ -4887,6 +5027,48 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       }
     });
 
+    // AvatarDirector debug buttons
+    const gButtons = [
+      { id: '#btn-g-wave', name: 'wave' },
+      { id: '#btn-g-point', name: 'point' },
+      { id: '#btn-g-present', name: 'present' },
+      { id: '#btn-g-nod', name: 'nod' },
+      { id: '#btn-g-tilt', name: 'tilt' },
+      { id: '#btn-g-lookaround', name: 'lookAround' },
+      { id: '#btn-g-stretch', name: 'stretch' },
+      { id: '#btn-g-settle', name: 'settle' },
+      { id: '#btn-g-spin', name: 'spin' }
+    ];
+    gButtons.forEach(({ id, name }) => {
+      const b = panel.querySelector(id);
+      if (b) {
+        b.addEventListener('click', () => {
+          if (window.AvatarDirector) window.AvatarDirector.triggerGesture(name, { force: true });
+        });
+      }
+    });
+
+    const toggleDebugRays = panel.querySelector('#toggle-debug-rays');
+    if (toggleDebugRays) {
+      toggleDebugRays.addEventListener('click', () => {
+        if (window.AvatarDirector) {
+          window.AvatarDirector.CONFIG.DEBUG_RAYS = !window.AvatarDirector.CONFIG.DEBUG_RAYS;
+          toggleDebugRays.textContent = `[ DEBUG RAYS: ${window.AvatarDirector.CONFIG.DEBUG_RAYS ? 'ON' : 'OFF'} ]`;
+          const c = document.getElementById('debug-director-canvas');
+          if (c) c.style.display = window.AvatarDirector.CONFIG.DEBUG_RAYS ? 'block' : 'none';
+        }
+      });
+    }
+
+    const btnRunAutotest = panel.querySelector('#btn-run-autotest');
+    if (btnRunAutotest) {
+      btnRunAutotest.addEventListener('click', () => {
+        if (window.AvatarDirector && typeof window.AvatarDirector.runAutoTest === 'function') {
+          window.AvatarDirector.runAutoTest();
+        }
+      });
+    }
+
     const valFloatAmp = panel.querySelector('#val-float-amp');
     const valCurrentPose = panel.querySelector('#val-current-pose');
     const valAudioState = panel.querySelector('#val-audio-state');
@@ -4920,6 +5102,17 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       }
       if (valAudioErr) {
         valAudioErr.textContent = audioLastError || 'none';
+      }
+      const valDirectorStatus = panel.querySelector('#val-director-status');
+      if (valDirectorStatus && window.AvatarDirector && typeof window.AvatarDirector.getStatus === 'function') {
+        const s = window.AvatarDirector.getStatus();
+        const deg = (r) => ((r || 0) * 180 / Math.PI).toFixed(1) + '°';
+        valDirectorStatus.textContent = [
+          `SECTION: ${s.currentSectionId} | FLIGHT: ${s.isFlightActive ? 'ACTIVE' : 'OFF'}`,
+          `LOOK: ${s.lookMode} -> (${Math.round(s.targetScreen.x)}, ${Math.round(s.targetScreen.y)})`,
+          `HEAD: yaw:${deg(s.headAngles.yaw)} pitch:${deg(s.headAngles.pitch)} | BODY YAW: ${deg(s.bodyYaw)}`,
+          `GESTURES: [ ${s.activeGestures.length > 0 ? s.activeGestures.join(', ') : 'none'} ]`
+        ].join('\n');
       }
     }, 100);
 
