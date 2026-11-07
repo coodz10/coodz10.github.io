@@ -50,6 +50,7 @@
     // Zero-Gravity Float Dynamics
     FLOAT_BOB: 1.2,            // Vertical bob amplitude in vh (period ~6s)
     POSE_BLEND: 2.0,           // Pose blend duration in seconds (easeInOutCubic)
+    HAZE_OPACITY: 0.0,         // Ambient haze opacity
 
     // Head Tracking Look-At Signs (+1: right->right, above->up; -1: inverted)
     HEAD_YAW_SIGN: 1,          // Mouse right -> face turns to viewer's right
@@ -401,6 +402,10 @@
   let cachedWindowHeight = window.innerHeight;
   let lastComputedStageX = 0;
   let lastComputedStageY = 0;
+  let prevStageX = 0;
+  let prevStageY = 0;
+  let prevStageVx = 0;
+  let prevStageVy = 0;
   let tryStartAudioGlobal = null;
 
   // Look mode: 'intro' forces target and completely ignores mouse; 'normal' follows mouse in home
@@ -432,147 +437,16 @@
     }
   }
 
-  // ==========================================================================
-  // ZERO-GRAVITY POSES & CUBIC EASING ENGINE
-  // ==========================================================================
-  const POSES = {
-    neutral: {
-      body: { x: 0, y: 0, z: 0 },
-      leftArm: { x: 0.08, y: 0, z: -0.18 },
-      rightArm: { x: 0.08, y: 0, z: 0.18 },
-      leftLeg: { x: -0.05, y: 0, z: -0.04 },
-      rightLeg: { x: 0.05, y: 0, z: 0.04 }
-    },
-    float: {
-      body: { x: 0.04, y: 0, z: 0 },
-      leftArm: { x: 0.12, y: 0.1, z: -0.32 },
-      rightArm: { x: 0.12, y: -0.1, z: 0.32 },
-      leftLeg: { x: 0.08, y: 0, z: -0.06 },
-      rightLeg: { x: -0.04, y: 0, z: 0.06 }
-    },
-    tilt: {
-      body: { x: 0.05, y: 0.1, z: 0.12 },
-      leftArm: { x: 0.06, y: 0, z: -0.22 },
-      rightArm: { x: 0.14, y: 0, z: 0.28 },
-      leftLeg: { x: -0.06, y: 0, z: -0.08 },
-      rightLeg: { x: 0.08, y: 0, z: 0.08 }
-    },
-    fly: {
-      body: { x: 0.35, y: 0, z: 0 },
-      leftArm: { x: -1.5, y: 0, z: -0.25 },
-      rightArm: { x: -1.5, y: 0, z: 0.25 },
-      leftLeg: { x: -0.25, y: 0, z: -0.05 },
-      rightLeg: { x: -0.25, y: 0, z: 0.05 }
-    },
-    write: {
-      body: { x: 0.35, y: 0.08, z: 0 },
-      leftArm: { x: -0.75, y: 0.1, z: -0.25 },
-      rightArm: { x: 0.40, y: -0.1, z: 0.25 },
-      leftLeg: { x: -0.28, y: 0, z: -0.05 },
-      rightLeg: { x: -0.22, y: 0, z: 0.05 }
-    },
-    place: {
-      body: { x: 0.15, y: 0.08, z: 0 },
-      leftArm: { x: -0.3, y: 0, z: -0.22 },
-      rightArm: { x: -0.85, y: -0.2, z: 0.22 },
-      leftLeg: { x: -0.12, y: 0, z: -0.04 },
-      rightLeg: { x: 0.10, y: 0, z: 0.04 }
-    },
-    open: {
-      body: { x: -0.02, y: 0, z: 0 },
-      leftArm: { x: -0.15, y: 0.15, z: -0.5 },
-      rightArm: { x: -0.15, y: -0.15, z: 0.5 },
-      leftLeg: { x: -0.06, y: 0, z: -0.06 },
-      rightLeg: { x: 0.06, y: 0, z: 0.06 }
-    },
-    reach: {
-      body: { x: 0.03, y: 0.08, z: 0 },
-      leftArm: { x: 0.1, y: 0, z: -0.18 },
-      rightArm: { x: -1.2, y: -0.1, z: 0.25 },
-      leftLeg: { x: 0.1, y: 0, z: -0.04 },
-      rightLeg: { x: -0.12, y: 0, z: 0.04 }
-    },
-    rest: {
-      body: { x: 0.05, y: 0, z: 0 },
-      leftArm: { x: 0.04, y: 0, z: -0.15 },
-      rightArm: { x: 0.04, y: 0, z: 0.15 },
-      leftLeg: { x: 0.12, y: 0, z: -0.04 },
-      rightLeg: { x: -0.08, y: 0, z: 0.04 }
-    },
-    point: {
-      body: { x: 0.02, y: 0.2, z: 0 },
-      leftArm: { x: 0.08, y: 0, z: -0.18 },
-      rightArm: { x: -1.45, y: -0.3, z: 0.25 },
-      leftLeg: { x: -0.05, y: 0, z: -0.04 },
-      rightLeg: { x: 0.08, y: 0, z: 0.04 }
-    },
-    wave: {
-      body: { x: 0, y: 0, z: 0 },
-      leftArm: { x: 0.08, y: 0, z: -0.18 },
-      rightArm: { x: -2.8, y: 0.2, z: 0.35 },
-      leftLeg: { x: -0.03, y: 0, z: -0.04 },
-      rightLeg: { x: 0.03, y: 0, z: 0.04 }
-    },
-    hold: {
-      body: { x: 0.04, y: 0, z: 0 },
-      leftArm: { x: -0.3, y: 0.1, z: -0.22 },
-      rightArm: { x: -0.3, y: -0.1, z: 0.22 },
-      leftLeg: { x: -0.04, y: 0, z: -0.04 },
-      rightLeg: { x: 0.04, y: 0, z: 0.04 }
-    }
-  };
-
-  /**
-   * Final constraint step in pose blender:
-   * - Hanging arms (|rot.x| < 0.6) outward |z| >= 0.07 rad (left <= -0.07, right >= +0.07)
-   * - Raised forward arms (rot.x <= -0.9) outward |z| >= 0.20 rad (left <= -0.20, right >= +0.20)
-   * - Legs outward |z| >= 0.02 rad each (left <= -0.02, right >= +0.02)
-   * - Head/body yaw/pitch within safe limits
-   */
-  function applyLimbConstraints(skin) {
-    if (!skin) return;
-
-    // Left arm: outward is negative z
-    if (skin.leftArm) {
-      const rx = skin.leftArm.rotation.x;
-      if (Math.abs(rx) < 0.6) {
-        if (skin.leftArm.rotation.z > -0.07) skin.leftArm.rotation.z = -0.07;
-      } else if (rx <= -0.9) {
-        if (skin.leftArm.rotation.z > -0.20) skin.leftArm.rotation.z = -0.20;
-      }
-    }
-
-    // Right arm: outward is positive z
-    if (skin.rightArm) {
-      const rx = skin.rightArm.rotation.x;
-      if (Math.abs(rx) < 0.6) {
-        if (skin.rightArm.rotation.z < 0.07) skin.rightArm.rotation.z = 0.07;
-      } else if (rx <= -0.9) {
-        if (skin.rightArm.rotation.z < 0.20) skin.rightArm.rotation.z = 0.20;
-      }
-    }
-
-    // Legs: outward is negative z for left, positive z for right
-    if (skin.leftLeg) {
-      if (skin.leftLeg.rotation.z > -0.02) skin.leftLeg.rotation.z = -0.02;
-    }
-    if (skin.rightLeg) {
-      if (skin.rightLeg.rotation.z < 0.02) skin.rightLeg.rotation.z = 0.02;
-    }
-
-    // Body safe limits
-    if (skin.body) {
-      skin.body.rotation.x = Math.max(-0.45, Math.min(0.45, skin.body.rotation.x));
-      skin.body.rotation.y = Math.max(-0.75, Math.min(0.75, skin.body.rotation.y));
-      skin.body.rotation.z = Math.max(-0.35, Math.min(0.35, skin.body.rotation.z));
-    }
-
-    // Head safe limits
-    if (skin.head) {
-      skin.head.rotation.x = Math.max(-0.45, Math.min(0.45, skin.head.rotation.x));
-      skin.head.rotation.y = Math.max(-0.65, Math.min(0.65, skin.head.rotation.y));
-    }
+  if (typeof window !== 'undefined' && window.AvatarRig && typeof window.AvatarRig.setQualityTier === 'function') {
+    window.AvatarRig.setQualityTier(qualityTier);
   }
+
+  // ==========================================================================
+  // ZERO-GRAVITY POSES REFERENCE (Delegates to window.AvatarRig)
+  // ==========================================================================
+  const POSES = (typeof window !== 'undefined' && window.AvatarRig && window.AvatarRig.POSES)
+    ? window.AvatarRig.POSES
+    : {};
 
   function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
@@ -664,6 +538,49 @@
     currentLookTargetY = blendLookSourceY + (desiredLookTargetY - blendLookSourceY) * ease;
   }
 
+  function updateHeadLookTarget() {
+    if (!skinViewer || !skinViewer.playerObject) return;
+    const stage = document.getElementById('avatar-stage');
+    if (!stage) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const headScreenX = stageRect.left + stageRect.width * 0.5;
+    const headScreenY = stageRect.top + stageRect.height * 0.15;
+
+    const dx = currentLookTargetX - headScreenX;
+    const dy = currentLookTargetY - headScreenY;
+
+    const halfW = Math.max(1, window.innerWidth * 0.5);
+    const halfH = Math.max(1, window.innerHeight * 0.5);
+
+    const rawYaw = (dx / halfW) * CONFIG.HEAD_YAW_SIGN;
+    const rawPitch = -(dy / halfH) * CONFIG.HEAD_PITCH_SIGN; // Positive pitch = look up
+
+    const bodyYaw = skinViewer.playerObject.rotation.y - CONFIG.ROT_OFFSET;
+    const targetHeadYaw = rawYaw - bodyYaw;
+
+    let clampedYaw = 0;
+    let clampedPitch = 0;
+
+    if (flightW > 0.3) {
+      clampedYaw = Math.max(-0.25, Math.min(0.25, targetHeadYaw));
+      clampedPitch = Math.max(-0.15, Math.min(0.15, rawPitch));
+    } else if (headLookMode === 'intro') {
+      clampedYaw = Math.max(-0.65, Math.min(0.65, targetHeadYaw));
+      clampedPitch = Math.max(-0.55, Math.min(0.55, rawPitch));
+    } else if (fDisplay < 0.2) {
+      clampedYaw = Math.max(-0.45, Math.min(0.45, targetHeadYaw));
+      clampedPitch = Math.max(-0.35, Math.min(0.35, rawPitch));
+    } else {
+      clampedYaw = Math.max(-0.8, Math.min(0.8, targetHeadYaw));
+      clampedPitch = Math.max(-0.4, Math.min(0.4, rawPitch));
+    }
+
+    if (window.AvatarRig) {
+      window.AvatarRig.setLook(clampedYaw, clampedPitch);
+    }
+  }
+
   function scheduleNextReadingTarget() {
     clearTimeout(readingTargetTimer);
     if (activeSectionId === 'home') return;
@@ -742,323 +659,11 @@
   }
 
   // ==========================================================================
-  // CUSTOM ZERO-GRAVITY FLOAT ANIMATION ENGINE (Owns all joints every frame)
+  // AVATAR ANIMATION ENGINE (Delegates to window.AvatarRig.RigAnimation)
   // ==========================================================================
-  class FloatAnimation extends (window.skinview3d ? skinview3d.PlayerAnimation : class {}) {
-    constructor() {
-      super();
-      this.currentPoseName = 'float';
-      this.sourceRotations = this.clonePose(POSES.float);
-      this.targetRotations = this.clonePose(POSES.float);
-      this.blendedRotations = this.clonePose(POSES.float);
-
-      this.blendStartTime = performance.now() / 1000;
-      this.blendDuration = CONFIG.POSE_BLEND;
-      this.isBlending = false;
-
-      this.holdStartTime = performance.now() / 1000;
-      this.holdDuration = 7.0;
-
-      this.forcedPose = null;
-      this.isOneShotWave = false;
-      this.oneShotHoldDuration = 2.0;
-
-      this.headYaw = 0;
-      this.headPitch = 0;
-
-      this.currentSection = 'home';
-      this.hasDoneChiSonoWave = false;
-    }
-
-    clonePose(p) {
-      return {
-        body: { ...p.body },
-        leftArm: { ...p.leftArm },
-        rightArm: { ...p.rightArm },
-        leftLeg: { ...p.leftLeg },
-        rightLeg: { ...p.rightLeg }
-      };
-    }
-
-    interpolateJoints(from, to, factor, target) {
-      for (const joint of ['body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg']) {
-        target[joint].x = from[joint].x + (to[joint].x - from[joint].x) * factor;
-        target[joint].y = from[joint].y + (to[joint].y - from[joint].y) * factor;
-        target[joint].z = from[joint].z + (to[joint].z - from[joint].z) * factor;
-      }
-    }
-
-    transitionTo(poseName, customDuration) {
-      if (!POSES[poseName]) return;
-      this.sourceRotations = this.clonePose(this.blendedRotations);
-      this.targetRotations = this.clonePose(POSES[poseName]);
-      this.currentPoseName = poseName;
-      this.blendStartTime = performance.now() / 1000;
-      this.blendDuration = (typeof customDuration === 'number') ? customDuration : CONFIG.POSE_BLEND;
-      this.isBlending = true;
-    }
-
-    triggerWave(duration = 2.0) {
-      this.isOneShotWave = true;
-      this.oneShotHoldDuration = duration;
-      this.transitionTo('wave', 0.8);
-    }
-
-    onSectionChange(sectionId) {
-      this.currentSection = sectionId;
-      this.isOneShotWave = false;
-
-      if (sectionId === 'home') {
-        this.transitionTo('float', 1.8);
-        return;
-      } else if (sectionId === 'chi_sono') {
-        this.transitionTo('rest');
-        this.holdDuration = Math.random() * 4 + 6;
-        this.holdStartTime = performance.now() / 1000;
-      } else if (sectionId === 'esperienze') {
-        this.transitionTo('neutral');
-        this.holdDuration = Math.random() * 4 + 6;
-        this.holdStartTime = performance.now() / 1000;
-      } else if (sectionId === 'esperienze-detail') {
-        this.transitionTo('point');
-      } else if (sectionId === 'contatti') {
-        this.triggerWave(2.0);
-      }
-    }
-
-    onCardHover(isHovered) {
-      if (this.currentSection === 'esperienze' && !activeDetailId && !this.forcedPose) {
-        if (isHovered) {
-          this.transitionTo('point', 0.8);
-        } else {
-          this.transitionTo('neutral', 1.2);
-        }
-      }
-    }
-
-    pickNextPose() {
-      if (this.forcedPose) {
-        this.transitionTo(this.forcedPose);
-        return;
-      }
-
-      if (this.currentSection === 'home' || fDisplay < 0.15) {
-        // Idle gestures in home every 5-8s: rest, open, reach, tilt, neutral; wave only rarely (~8%)
-        const rareWave = Math.random() < 0.08;
-        if (rareWave) {
-          this.triggerWave(2.0);
-          return;
-        }
-        const homePool = ['float', 'rest', 'open', 'reach', 'tilt', 'neutral'];
-        const available = homePool.filter((p) => p !== this.currentPoseName);
-        const next = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : 'float';
-        this.transitionTo(next, 1.4);
-        this.holdDuration = Math.random() * 3 + 5; // 5-8 seconds
-        this.holdStartTime = performance.now() / 1000;
-        return;
-      }
-
-      let pool = ['neutral', 'open', 'rest'];
-      if (this.currentSection === 'chi_sono') {
-        pool = ['rest', 'open', 'neutral'];
-      } else if (this.currentSection === 'esperienze') {
-        if (activeDetailId) {
-          this.transitionTo('point');
-          return;
-        }
-        pool = ['neutral', 'point', 'rest'];
-      } else if (this.currentSection === 'contatti') {
-        pool = ['open', 'neutral'];
-      }
-
-      const available = pool.filter((p) => p !== this.currentPoseName);
-      const next = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : pool[0];
-      this.transitionTo(next);
-      this.holdDuration = Math.random() * 4 + 6;
-      this.holdStartTime = performance.now() / 1000;
-    }
-
-    animate(player) {
-      if (!player || !player.skin) return;
-
-      const nowSec = performance.now() / 1000;
-
-      // 1. Pose Blend
-      if (this.isBlending) {
-        const elapsed = nowSec - this.blendStartTime;
-        const p = Math.min(1, Math.max(0, elapsed / Math.max(0.1, this.blendDuration)));
-        const ease = easeInOutCubic(p);
-
-        this.interpolateJoints(this.sourceRotations, this.targetRotations, ease, this.blendedRotations);
-
-        if (p >= 1) {
-          this.isBlending = false;
-          this.holdStartTime = nowSec;
-          if (!this.isOneShotWave) {
-            this.holdDuration = (this.currentSection === 'home' || fDisplay < 0.15) ? (Math.random() * 3 + 5) : (Math.random() * 4 + 6);
-          }
-        }
-      } else {
-        if (this.isOneShotWave) {
-          if (nowSec - this.holdStartTime >= (this.oneShotHoldDuration || 2.0)) {
-            this.isOneShotWave = false;
-            this.pickNextPose();
-          }
-        } else if (!this.forcedPose) {
-          if (nowSec - this.holdStartTime >= this.holdDuration) {
-            this.pickNextPose();
-          }
-        }
-      }
-
-      // Leaving home: transition out of 'float' or 'tilt'
-      if (fDisplay >= 0.15) {
-        if ((this.currentPoseName === 'float' || this.currentPoseName === 'tilt') && !this.isBlending) {
-          this.transitionTo('neutral', 1.0);
-        }
-      }
-
-      // 2. Flight Pose Blend & Flutter
-      const w = Math.min(1, Math.max(0, flightW));
-      const skin = player.skin;
-      const b = this.blendedRotations;
-      const fly = POSES.fly;
-
-      let legFlutter = 0;
-      if (!prefersReducedMotion && w > 0.02) {
-        legFlutter = 0.08 * Math.sin(nowSec * 14.0) * w;
-      }
-
-      // 3. Secondary Limb Drift & Alternating Sway (about 2x amplitude in home)
-      let armLDriftZ = 0;
-      let armRDriftZ = 0;
-      let legLDriftX = 0;
-      let legRDriftX = 0;
-      let bodyNoiseX = 0;
-      let bodyNoiseZ = 0;
-      let waveOscZ = 0;
-      let legSway = 0;
-
-      if (!prefersReducedMotion) {
-        if (currentHomeFloatAmp > 0.001) {
-          legSway = 0.22 * Math.sin(nowSec * 1.8) * currentHomeFloatAmp; // slow alternating sway
-        }
-
-        const driftWeight = 1 - w * 0.7; // drift calms down during high-speed flight
-        const armFactor = (fDisplay < 0.35) ? (currentHomeFloatAmp * 2.0) : 1;
-        armLDriftZ = 0.16 * Math.sin(nowSec * 1.1 + 0.5) * driftWeight * armFactor;
-        armRDriftZ = -0.16 * Math.sin(nowSec * 1.3 + 2.0) * driftWeight * armFactor;
-        legLDriftX = 0.12 * Math.sin(nowSec * 0.9 + 1.2) * driftWeight * armFactor;
-        legRDriftX = -0.12 * Math.sin(nowSec * 1.05 + 3.4) * driftWeight * armFactor;
-        bodyNoiseX = 0.04 * Math.sin(nowSec * 0.8 + 0.2) * driftWeight * armFactor;
-        bodyNoiseZ = 0.03 * Math.sin(nowSec * 0.7 + 1.5) * driftWeight * armFactor;
-
-        if (this.currentPoseName === 'wave' || this.isOneShotWave) {
-          waveOscZ = Math.sin(nowSec * 7.0) * 0.35 * (1 - w);
-        }
-      }
-
-      // 3b. Write pose micro-motion (circular hand pulses + gentle leg flutter)
-      let writeCircleX = 0;
-      let writeCircleY = 0;
-      let writeFlutter = 0;
-      if (this.currentPoseName === 'write' && !prefersReducedMotion) {
-        writeCircleX = Math.sin(nowSec * 16.0) * 0.08;
-        writeCircleY = Math.cos(nowSec * 16.0) * 0.08;
-        writeFlutter = 0.10 * Math.sin(nowSec * 12.0);
-      }
-
-      // 4. Lerp with fly pose
-      const bodyRotX = (b.body.x * (1 - w) + fly.body.x * w);
-      const leftArmRotX = (b.leftArm.x * (1 - w) + fly.leftArm.x * w);
-      const leftArmRotZ = (b.leftArm.z * (1 - w) + fly.leftArm.z * w);
-      const rightArmRotX = (b.rightArm.x * (1 - w) + fly.rightArm.x * w);
-      const rightArmRotZ = (b.rightArm.z * (1 - w) + fly.rightArm.z * w);
-      const leftLegRotX = (b.leftLeg.x * (1 - w) + fly.leftLeg.x * w) + legFlutter;
-      const rightLegRotX = (b.rightLeg.x * (1 - w) + fly.rightLeg.x * w) - legFlutter;
-
-      if (skin.body) {
-        skin.body.rotation.x = bodyRotX + bodyNoiseX;
-        skin.body.rotation.y = b.body.y;
-        skin.body.rotation.z = b.body.z + bodyNoiseZ;
-      }
-
-      const isPenLeft = (CONFIG.PEN_ARM !== 'right');
-      const writeCircleArmLX = isPenLeft ? writeCircleX : 0;
-      const writeCircleArmLY = isPenLeft ? writeCircleY : 0;
-      const writeCircleArmRX = !isPenLeft ? writeCircleX : 0;
-      const writeCircleArmRY = !isPenLeft ? writeCircleY : 0;
-
-      skin.leftArm.rotation.x = leftArmRotX + writeCircleArmLX;
-      skin.leftArm.rotation.y = b.leftArm.y + writeCircleArmLY;
-      skin.leftArm.rotation.z = leftArmRotZ + armLDriftZ;
-
-      skin.rightArm.rotation.x = rightArmRotX + writeCircleArmRX;
-      skin.rightArm.rotation.y = b.rightArm.y + writeCircleArmRY;
-      skin.rightArm.rotation.z = rightArmRotZ + armRDriftZ + waveOscZ;
-
-      skin.leftLeg.rotation.x = leftLegRotX + legLDriftX + legSway + writeFlutter;
-      skin.leftLeg.rotation.y = b.leftLeg.y;
-      skin.leftLeg.rotation.z = b.leftLeg.z;
-
-      skin.rightLeg.rotation.x = rightLegRotX + legRDriftX - legSway - writeFlutter;
-      skin.rightLeg.rotation.y = b.rightLeg.y;
-      skin.rightLeg.rotation.z = b.rightLeg.z;
-
-      // 5. Drive Head inside FloatAnimation
-      this.updateHeadLook(player);
-
-      // 6. Enforce 3D Limb Non-Self-Intersection & Safe Angular Constraints
-      applyLimbConstraints(skin);
-    }
-
-    updateHeadLook(player) {
-      if (!player.skin || !player.skin.head) return;
-
-      const stage = document.getElementById('avatar-stage');
-      if (!stage) return;
-
-      const stageRect = stage.getBoundingClientRect();
-      const headScreenX = stageRect.left + stageRect.width * 0.5;
-      const headScreenY = stageRect.top + stageRect.height * 0.15;
-
-      const dx = currentLookTargetX - headScreenX;
-      const dy = currentLookTargetY - headScreenY;
-
-      const halfW = Math.max(1, window.innerWidth * 0.5);
-      const halfH = Math.max(1, window.innerHeight * 0.5);
-
-      const rawYaw = (dx / halfW) * CONFIG.HEAD_YAW_SIGN;
-      const rawPitch = (dy / halfH) * CONFIG.HEAD_PITCH_SIGN;
-
-      const bodyYaw = player.rotation.y - CONFIG.ROT_OFFSET;
-      const targetHeadYaw = rawYaw - bodyYaw;
-
-      let clampedYaw = 0;
-      let clampedPitch = 0;
-
-      if (flightW > 0.3) {
-        clampedYaw = Math.max(-0.25, Math.min(0.25, targetHeadYaw));
-        clampedPitch = Math.max(-0.15, Math.min(0.15, rawPitch));
-      } else if (headLookMode === 'intro') {
-        clampedYaw = Math.max(-0.65, Math.min(0.65, targetHeadYaw));
-        clampedPitch = Math.max(-0.55, Math.min(0.55, rawPitch));
-      } else if (fDisplay < 0.2) {
-        clampedYaw = Math.max(-0.45, Math.min(0.45, targetHeadYaw));
-        clampedPitch = Math.max(-0.35, Math.min(0.35, rawPitch));
-      } else {
-        clampedYaw = Math.max(-0.8, Math.min(0.8, targetHeadYaw));
-        clampedPitch = Math.max(-0.4, Math.min(0.4, rawPitch));
-      }
-
-      this.headYaw += (clampedYaw - this.headYaw) * 0.05;
-      this.headPitch += (clampedPitch - this.headPitch) * 0.05;
-
-      player.skin.head.rotation.y = this.headYaw;
-      player.skin.head.rotation.x = this.headPitch;
-      player.skin.head.rotation.z = 0;
-    }
-  }
+  const FloatAnimation = (typeof window !== 'undefined' && window.AvatarRig && window.AvatarRig.RigAnimation)
+    ? window.AvatarRig.RigAnimation
+    : class {};
 
   // ==========================================================================
   // TITLE & SUBTITLE DECRYPT EFFECT (Random glyphs resolving left to right)
@@ -2563,6 +2168,19 @@
     lastComputedStageX = finalX;
     lastComputedStageY = finalY;
 
+    // Compute stage velocity and acceleration for secondary motion
+    const vh = Math.max(1, cachedWindowHeight);
+    const safeDt = Math.max(0.001, dt);
+    const stageVx = (finalX - prevStageX) / safeDt / vh;
+    const stageVy = (finalY - prevStageY) / safeDt / vh;
+    prevStageX = finalX;
+    prevStageY = finalY;
+
+    const stageAx = (stageVx - prevStageVx) / safeDt;
+    const stageAy = (stageVy - prevStageVy) / safeDt;
+    prevStageVx = stageVx;
+    prevStageVy = stageVy;
+
     // Apply transform directly to #avatar-stage (translate3d, scale, rotate) when intro is not running
     if (!isIntroActive) {
       const stage = document.getElementById('avatar-stage');
@@ -2591,6 +2209,18 @@
     // Combined home float amplitude (strictly 1 at fDisplay=0 after intro fade; fades out while scrolling away)
     const homeWeight = (fDisplay < 0.35) ? Math.max(0, 1 - (fDisplay / 0.35)) : 0;
     currentHomeFloatAmp = prefersReducedMotion ? 0 : (floatDriverAmplitude * homeWeight * (1 - flightW));
+
+    let bobVy = 0;
+    if (!prefersReducedMotion && currentHomeFloatAmp > 0.001) {
+      const omega = (2 * Math.PI) / 5.5;
+      bobVy = 0.02 * omega * Math.cos(nowSec * omega) * currentHomeFloatAmp;
+    }
+
+    if (window.AvatarRig) {
+      window.AvatarRig.setStageMotion(stageVx, stageVy + bobVy, stageAx, stageAy);
+      window.AvatarRig.setFlightW(flightW);
+      window.AvatarRig.setHomeFloatAmp(currentHomeFloatAmp);
+    }
 
     // 6. Home float bob and slow roll tilt (+-2vh period 5.5s, sway +-2.2deg)
     const avatarFloatEl = document.getElementById('avatar-float');
@@ -2896,9 +2526,15 @@
       skinViewer.controls.enabled = false;
       skinViewer.autoRotate = false; // Smoothly controlled via zero-g per-frame lerp
 
-      // Single custom FloatAnimation engine owning all joints
-      skinViewer.animation = new FloatAnimation();
-      floatAnimation = skinViewer.animation;
+      // Single custom AvatarRig animation engine owning all joints
+      if (window.AvatarRig) {
+        window.AvatarRig.init(skinViewer.playerObject, skinViewer);
+        skinViewer.animation = new window.AvatarRig.RigAnimation();
+        floatAnimation = skinViewer.animation;
+      } else {
+        skinViewer.animation = new FloatAnimation();
+        floatAnimation = skinViewer.animation;
+      }
 
       // Apply light intensities and 3D emissive material luminosity
       if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
@@ -2953,8 +2589,9 @@
 
         // 2. Update on-screen look targets
         updateLookTargetEveryFrame();
+        updateHeadLookTarget();
 
-        // 3. Continuous rotation lerp on player.rotation.y (NEVER move the camera)
+        // 3. Continuous rotation on player.rotation.y (driven via AvatarRig root yaw spring)
         if (skinViewer.playerObject) {
           let yawDrift = 0;
           if (!prefersReducedMotion && flightW < 0.2) {
@@ -2967,7 +2604,12 @@
           avatarSpinCurrent += (avatarSpinTarget - avatarSpinCurrent) * 0.09;
           const baseYaw = (homeReactionActive && activeSectionId === 'home' && fDisplay < 0.35) ? homeReactionYaw : targetPlayerRotY;
           const finalTargetRotY = baseYaw + CONFIG.ROT_OFFSET + yawDrift + avatarSpinCurrent;
-          skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
+
+          if (window.AvatarRig) {
+            window.AvatarRig.setRootYaw(finalTargetRotY);
+          } else {
+            skinViewer.playerObject.rotation.y += (finalTargetRotY - skinViewer.playerObject.rotation.y) * 0.08;
+          }
         }
 
         origRender();
@@ -4764,26 +4406,48 @@
         </div>
 
         <label class="debug-row">
-          <span>Force Pose:</span>
+          <span>Rig Speed: <b id="val-slowmo">1.00x</b></span>
+          <input type="range" id="slider-slowmo" min="0.1" max="1.0" step="0.05" value="1.0">
+        </label>
+
+        <label class="debug-row">
+          <span>Pose Tester:</span>
           <select id="debug-pose-select" class="debug-select cursor-pointer">
             <option value="auto">[ AUTO / SECTION ]</option>
-            <option value="float">float</option>
-            <option value="write">write</option>
             <option value="neutral">neutral</option>
+            <option value="float">float</option>
+            <option value="rest">rest</option>
             <option value="open">open</option>
             <option value="reach">reach</option>
-            <option value="rest">rest</option>
-            <option value="point">point</option>
             <option value="wave">wave</option>
+            <option value="fly">fly</option>
+            <option value="write">write</option>
+            <option value="tilt">tilt</option>
+            <option value="point">point</option>
             <option value="hold">hold</option>
+            <option value="place">place</option>
+            <option value="gesture:wave">[ GESTURE: wave ]</option>
           </select>
         </label>
 
         <div class="debug-toggles-row">
-          <button id="btn-pose-test" class="debug-toggle-btn cursor-pointer">[ POSE TEST ]</button>
+          <button id="btn-yaw-neg" class="debug-toggle-btn cursor-pointer">[ YAW -0.65 ]</button>
+          <button id="btn-yaw-zero" class="debug-toggle-btn cursor-pointer">[ YAW 0 ]</button>
+          <button id="btn-yaw-pos" class="debug-toggle-btn cursor-pointer">[ YAW +0.65 ]</button>
+        </div>
+
+        <div class="debug-toggles-row">
+          <button id="toggle-tint-collision" class="debug-toggle-btn cursor-pointer">[ TINT COLLISIONS: OFF ]</button>
+          <button id="btn-rig-validate" class="debug-toggle-btn cursor-pointer">[ RUN VALIDATE() ]</button>
+        </div>
+
+        <div class="debug-toggles-row">
+          <button id="btn-pose-test" class="debug-toggle-btn cursor-pointer">[ POSE CYCLE ]</button>
         </div>
 
         <div style="border-top: 1px solid rgba(94, 168, 255, 0.25); margin: 0.75rem 0 0.5rem; padding-top: 0.5rem;">
+          <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.25rem;">[ LIVE RIG JOINTS & ROOT ]</div>
+          <pre id="val-rig-dofs" style="font-size: 0.65rem; line-height: 1.35; background: rgba(5,6,15,0.7); padding: 0.4rem; border: 1px solid var(--line); margin: 0.25rem 0 0.5rem; white-space: pre-wrap; color: #a4b3e6;"></pre>
           <div class="debug-row"><span>Float Amp: <b id="val-float-amp">0.00</b></span></div>
           <div class="debug-row"><span>Current Pose: <b id="val-current-pose">float</b></span></div>
           <div class="debug-row"><span>Audio State: <b id="val-audio-state">PAUSED</b></span></div>
@@ -5107,18 +4771,75 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
       });
     }
 
+    const sliderSlowMo = panel.querySelector('#slider-slowmo');
+    const valSlowMo = panel.querySelector('#val-slowmo');
+    if (sliderSlowMo) {
+      sliderSlowMo.addEventListener('input', (e) => {
+        const factor = parseFloat(e.target.value);
+        if (valSlowMo) valSlowMo.textContent = `${factor.toFixed(2)}x`;
+        if (window.AvatarRig) window.AvatarRig.setSlowMo(factor);
+      });
+    }
+
     poseSelect.addEventListener('change', (e) => {
       const val = e.target.value;
-      if (floatAnimation) {
-        if (val === 'auto') {
+      if (val === 'auto') {
+        if (floatAnimation) {
           floatAnimation.forcedPose = null;
           floatAnimation.pickNextPose();
-        } else {
+        }
+      } else if (val.startsWith('gesture:')) {
+        const gName = val.split(':')[1];
+        if (window.AvatarRig) window.AvatarRig.triggerGesture(gName);
+      } else {
+        if (floatAnimation) {
           floatAnimation.forcedPose = val;
-          floatAnimation.transitionTo(val, 1.0);
+          floatAnimation.transitionTo(val, 0.8);
         }
       }
     });
+
+    const btnYawNeg = panel.querySelector('#btn-yaw-neg');
+    const btnYawZero = panel.querySelector('#btn-yaw-zero');
+    const btnYawPos = panel.querySelector('#btn-yaw-pos');
+
+    function applyDebugYaw(yaw) {
+      targetPlayerRotY = yaw;
+      if (window.AvatarRig) {
+        window.AvatarRig.setRootYaw(yaw + CONFIG.ROT_OFFSET);
+      } else if (skinViewer && skinViewer.playerObject) {
+        skinViewer.playerObject.rotation.y = yaw + CONFIG.ROT_OFFSET;
+      }
+    }
+    if (btnYawNeg) btnYawNeg.addEventListener('click', () => applyDebugYaw(-0.65));
+    if (btnYawZero) btnYawZero.addEventListener('click', () => applyDebugYaw(0));
+    if (btnYawPos) btnYawPos.addEventListener('click', () => applyDebugYaw(0.65));
+
+    const toggleTintCollision = panel.querySelector('#toggle-tint-collision');
+    let tintCollisionsActive = false;
+    if (toggleTintCollision) {
+      toggleTintCollision.addEventListener('click', () => {
+        tintCollisionsActive = !tintCollisionsActive;
+        toggleTintCollision.textContent = `[ TINT COLLISIONS: ${tintCollisionsActive ? 'ON' : 'OFF'} ]`;
+        if (window.AvatarRig) {
+          window.AvatarRig.setTintCollisions(tintCollisionsActive);
+        }
+      });
+    }
+
+    const btnRigValidate = panel.querySelector('#btn-rig-validate');
+    if (btnRigValidate) {
+      btnRigValidate.addEventListener('click', () => {
+        if (window.AvatarRig && typeof window.AvatarRig.validate === 'function') {
+          btnRigValidate.textContent = '[ RUNNING... ]';
+          setTimeout(() => {
+            const res = window.AvatarRig.validate();
+            btnRigValidate.textContent = res.passes ? '[ VALIDATE: PASS ]' : '[ VALIDATE: FAIL ]';
+            setTimeout(() => (btnRigValidate.textContent = '[ RUN VALIDATE() ]'), 3000);
+          }, 50);
+        }
+      });
+    }
 
     if (sliderBgWord) {
       sliderBgWord.addEventListener('input', (e) => {
@@ -5173,8 +4894,12 @@ WARP_STRENGTH: ${CONFIG.WARP_STRENGTH.toFixed(0)}`;
     const valAudioMuted = panel.querySelector('#val-audio-muted');
     const valAudioTrack = panel.querySelector('#val-audio-track');
     const valAudioErr = panel.querySelector('#val-audio-err');
+    const valRigDofs = panel.querySelector('#val-rig-dofs');
 
     setInterval(() => {
+      if (valRigDofs && window.AvatarRig && typeof window.AvatarRig.getFormattedReadout === 'function') {
+        valRigDofs.textContent = window.AvatarRig.getFormattedReadout();
+      }
       if (valFloatAmp) {
         valFloatAmp.textContent = currentHomeFloatAmp.toFixed(2);
       }
