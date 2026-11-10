@@ -54,8 +54,8 @@
       bodyYaw:   [-0.90, 0.90],
       bodyLean:  [-0.25, 0.60],
       bodyRoll:  [-0.30, 0.30],
-      armRaise:  [-0.60, 3.10],
-      legSwing:  [-0.70, 0.70]
+      armRaise:  [-3.14, 0.70], // rot.x = -raise; negative raises forward and overhead to -pi (-3.14)
+      legSwing:  [-0.90, 0.90]
     },
 
     // Organic drift amplitudes (radians)
@@ -191,10 +191,20 @@
   let lastRigCostMs = 0;
   let lastGuardCostMs = 0;
 
-  // Cache for Three.js Vector3 and collision points
+  // Cache for Three.js Vector3, Quaternion, Euler, and collision points
   let Vector3Class = null;
+  let QuaternionClass = null;
+  let EulerClass = null;
   let tempV = null;
+  let qBody = null;
+  let qLocal = null;
+  let qWorld = null;
+  let eulerScratch = null;
+  let vSocketScratch = null;
   const samplePointsA = new Float32Array(3 * 5 * 3 * 3); // 45 points x 3 floats
+
+  // Anatomical socket offsets relative to torso pivot (0, -6, 0)
+  const SOCKET_OFFSETS = new Array(JOINT_COUNT).fill(null);
 
   // ==========================================================================
   // RIG FACTS VERIFICATION & LOGGING
@@ -209,10 +219,29 @@
     if (skin.leftLeg)  AvatarRig.outwardSigns.leftLeg  = Math.sign(skin.leftLeg.position.x) || 1;
     if (skin.rightLeg) AvatarRig.outwardSigns.rightLeg = Math.sign(skin.rightLeg.position.x) || -1;
 
-    // 2. Vector3 constructor resolution
+    // 2. Three.js math constructors resolution & FK scratch objects
     if (skin.leftArm && skin.leftArm.position) {
       Vector3Class = skin.leftArm.position.constructor;
       tempV = new Vector3Class();
+      vSocketScratch = new Vector3Class();
+    }
+    if (skin.head && skin.head.quaternion) {
+      QuaternionClass = skin.head.quaternion.constructor;
+      qBody = new QuaternionClass();
+      qLocal = new QuaternionClass();
+      qWorld = new QuaternionClass();
+    }
+    if (skin.head && skin.head.rotation) {
+      EulerClass = skin.head.rotation.constructor;
+      eulerScratch = new EulerClass(0, 0, 0, 'XYZ');
+    }
+    if (Vector3Class) {
+      SOCKET_OFFSETS[J_HEAD]      = new Vector3Class(0, 6, 0);         // Neck socket
+      SOCKET_OFFSETS[J_BODY]      = null;                              // Torso root
+      SOCKET_OFFSETS[J_LEFT_ARM]  = new Vector3Class(5, 4, 0);         // Left shoulder socket
+      SOCKET_OFFSETS[J_RIGHT_ARM] = new Vector3Class(-5, 4, 0);        // Right shoulder socket
+      SOCKET_OFFSETS[J_LEFT_LEG]  = new Vector3Class(1.9, -6, -0.1);   // Left hip socket
+      SOCKET_OFFSETS[J_RIGHT_LEG] = new Vector3Class(-1.9, -6, -0.1);  // Right hip socket
     }
 
     // 3. Cache inner meshes for collision resolver
@@ -699,9 +728,9 @@
       if (skinRef.body) skinRef.body.scale.y = 1;
     }
 
-    // 2. Active gesture overlay
+    // 2. Active gesture overlay (legacy fallback if director is not active)
     let gestureWaveOscZ = 0;
-    if (activeGesture === 'wave') {
+    if (activeGesture === 'wave' && directorWeights[J_RIGHT_ARM * 3 + 2] < 0.01) {
       const elapsed = nowSec - gestureStartTime;
       if (elapsed < gestureDuration) {
         gestureWaveOscZ = Math.sin(nowSec * 7.5) * 0.35 * outwardSign('rightArm');
@@ -732,14 +761,19 @@
         if (j === J_BODY && ax === 0)      val += bodyLeanSecondary;
         if (j === J_BODY && ax === 2)      val += bodyRollSecondary;
 
-        // Guaranteed arm spread clearance to prevent limb-torso penetration
+        // Guaranteed arm spread clearance to prevent limb-torso penetration.
+        // Clearance only applies when the arm is adjacent to torso sides (rot.x near 0).
+        // When arm is raised forward or overhead (rot.x < -1.0), it is clear of the torso.
         const bodyTurnAbs = Math.abs(currentJointAngles[J_BODY * 3 + 1]);
-        const minArmClearance = 0.28 + bodyTurnAbs * 0.40;
-        if (j === J_LEFT_ARM && ax === 2)  val = Math.max(minArmClearance, val);
-        if (j === J_RIGHT_ARM && ax === 2) val = Math.min(-minArmClearance, val);
+        const armProxL = Math.max(0, Math.min(1, (currentJointAngles[J_LEFT_ARM * 3 + 0] + 1.2) / 0.8));
+        const armProxR = Math.max(0, Math.min(1, (currentJointAngles[J_RIGHT_ARM * 3 + 0] + 1.2) / 0.8));
+        const minArmClearanceL = (0.24 + bodyTurnAbs * 0.35) * armProxL;
+        const minArmClearanceR = (0.24 + bodyTurnAbs * 0.35) * armProxR;
+        if (j === J_LEFT_ARM && ax === 2)  val = Math.max(minArmClearanceL, val);
+        if (j === J_RIGHT_ARM && ax === 2) val = Math.min(-minArmClearanceR, val);
 
-        // Add gesture wave oscillation
-        if (j === J_RIGHT_ARM && ax === 2 && activeGesture === 'wave') val += gestureWaveOscZ;
+        // Add legacy gesture wave oscillation if director did not drive it
+        if (j === J_RIGHT_ARM && ax === 2 && gestureWaveOscZ !== 0) val += gestureWaveOscZ;
 
         // Apply soft joint limits to target
         const lim = getJointLimits(j, ax);
@@ -785,10 +819,11 @@
             newPos = smoothSoftLimit(newPos, lim[0], lim[1]);
           }
 
-          // Enforce rigid physical clearance between arms and torso
+          // Enforce physical clearance between arms and torso when arm hangs adjacent to torso
           if (j === J_LEFT_ARM && ax === 2) {
             const bTurn = Math.abs(currentJointAngles[J_BODY * 3 + 1]);
-            const minC = 0.28 + bTurn * 0.45;
+            const armProx = Math.max(0, Math.min(1, (currentJointAngles[J_LEFT_ARM * 3 + 0] + 1.2) / 0.8));
+            const minC = (0.24 + bTurn * 0.35) * armProx;
             if (newPos < minC) {
               newPos = minC;
               if (newVel < 0) newVel = 0;
@@ -796,7 +831,8 @@
           }
           if (j === J_RIGHT_ARM && ax === 2) {
             const bTurn = Math.abs(currentJointAngles[J_BODY * 3 + 1]);
-            const minC = 0.28 + bTurn * 0.45;
+            const armProx = Math.max(0, Math.min(1, (currentJointAngles[J_RIGHT_ARM * 3 + 0] + 1.2) / 0.8));
+            const minC = (0.24 + bTurn * 0.35) * armProx;
             if (newPos > -minC) {
               newPos = -minC;
               if (newVel > 0) newVel = 0;
@@ -840,14 +876,50 @@
       }
     }
 
-    // 5. Apply computed rotations directly to Three.js joints
+    // 5. Forward Kinematic Articulation & Socket Binding
+    // Torso (body) is the kinematic parent: its rotations lean and twist the entire torso.
+    // Head, arms, and legs are locked to their anatomical sockets on the rotated torso.
+    const bodyObj = skinRef.body;
+    if (bodyObj) {
+      const bDof = J_BODY * 3;
+      bodyObj.rotation.x = currentJointAngles[bDof + 0] + collisionOffsets[bDof + 0];
+      bodyObj.rotation.y = currentJointAngles[bDof + 1] + collisionOffsets[bDof + 1];
+      bodyObj.rotation.z = currentJointAngles[bDof + 2] + collisionOffsets[bDof + 2];
+      if (qBody) {
+        qBody.setFromEuler(bodyObj.rotation);
+      }
+    }
+
+    const scaleY = (bodyObj && bodyObj.scale) ? bodyObj.scale.y : 1;
+    const bodyPos = bodyObj ? bodyObj.position : null;
+
     for (let j = 0; j < JOINT_COUNT; j++) {
+      if (j === J_BODY) continue;
       const jointObj = skinRef[JOINT_NAMES[j]];
+      const sock = SOCKET_OFFSETS[j];
       if (jointObj) {
         const dof = j * 3;
-        jointObj.rotation.x = currentJointAngles[dof + 0] + collisionOffsets[dof + 0];
-        jointObj.rotation.y = currentJointAngles[dof + 1] + collisionOffsets[dof + 1];
-        jointObj.rotation.z = currentJointAngles[dof + 2] + collisionOffsets[dof + 2];
+        const rx = currentJointAngles[dof + 0] + collisionOffsets[dof + 0];
+        const ry = currentJointAngles[dof + 1] + collisionOffsets[dof + 1];
+        const rz = currentJointAngles[dof + 2] + collisionOffsets[dof + 2];
+
+        if (bodyPos && sock && qBody && vSocketScratch && qLocal && qWorld && eulerScratch) {
+          // Socket position in skin space: bodyPos + R_body * (socket_x, socket_y * scaleY, socket_z)
+          vSocketScratch.copy(sock);
+          vSocketScratch.y *= scaleY;
+          vSocketScratch.applyQuaternion(qBody);
+          jointObj.position.copy(bodyPos).add(vSocketScratch);
+
+          // Compounded rotation: qWorld = qBody * qLocal
+          eulerScratch.set(rx, ry, rz, 'XYZ');
+          qLocal.setFromEuler(eulerScratch);
+          qWorld.multiplyQuaternions(qBody, qLocal);
+          jointObj.quaternion.copy(qWorld);
+        } else {
+          jointObj.rotation.x = rx;
+          jointObj.rotation.y = ry;
+          jointObj.rotation.z = rz;
+        }
       }
     }
 

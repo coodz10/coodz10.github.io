@@ -96,6 +96,7 @@
   let localHit = null;
   let tempDir = null;
   let scratchVecA = null;
+  let scratchInvBodyQuat = null;
 
   function initVectors() {
     if (V3) return;
@@ -111,6 +112,9 @@
       localHit = new V3();
       tempDir = new V3();
       scratchVecA = new V3();
+    }
+    if (!scratchInvBodyQuat && skinViewer && skinViewer.playerObject && skinViewer.playerObject.quaternion) {
+      scratchInvBodyQuat = new (skinViewer.playerObject.quaternion.constructor)();
     }
   }
 
@@ -256,12 +260,13 @@
   // ==========================================================================
 
   /**
-   * screenToModelDirection(screenPoint, jointObject)
+   * screenToModelDirection(screenPoint, jointObject, relativeToBody = false)
    * Converts a 2D screen coordinate into a normalized 3D direction vector
    * in the local space of the joint's parent object, pointing from the joint
    * pivot toward the target unprojected on the camera-facing plane.
+   * If relativeToBody is true, transforms into the body's local frame.
    */
-  function screenToModelDirection(screenPoint, jointObject) {
+  function screenToModelDirection(screenPoint, jointObject, relativeToBody = false) {
     initVectors();
     if (!V3 || !jointObject) {
       sharedDirResult.x = 0;
@@ -341,6 +346,15 @@
     // 7. Subtract joint local position and normalize
     tempDir.copy(localHit).sub(jointObject.position).normalize();
 
+    // 8. If relativeToBody is true, rotate into the torso's coordinate frame
+    if (relativeToBody && scratchInvBodyQuat) {
+      const p = getPlayerObject();
+      if (p && p.skin && p.skin.body && p.skin.body.quaternion) {
+        scratchInvBodyQuat.copy(p.skin.body.quaternion).conjugate();
+        tempDir.applyQuaternion(scratchInvBodyQuat);
+      }
+    }
+
     sharedDirResult.x = tempDir.x;
     sharedDirResult.y = tempDir.y;
     sharedDirResult.z = tempDir.z;
@@ -371,7 +385,7 @@
       return sharedAimResult;
     }
 
-    const d = screenToModelDirection(screenPoint, jointObj);
+    const d = screenToModelDirection(screenPoint, jointObj, true);
     const sign = getOutwardSign(side);
 
     // b is spread abduction, a is forward raise
@@ -455,8 +469,9 @@
   const GESTURE_DEFINITIONS = {
     /**
      * wave:
-     * Shoulder raises first, forearm oscillation faked by arm spread +/- 0.3 decaying
-     * over ~2s, head tilts toward the viewer.
+     * Right arm smoothly raises overhead (raise ~2.50 rad, hand clearly above head level),
+     * forearm waves side-to-side with decaying exponential oscillation,
+     * palm turns slightly forward (twist 0.25 rad), and head tilts warmly toward viewer.
      */
     wave: {
       name: 'wave',
@@ -471,42 +486,49 @@
         const out = {
           rightArm: { raise: 0, spread: 0.22, twist: 0, weight: 0 },
           leftArm: { spread: 0.30, weight: leftArmWeight },
-          head: { roll: 0, weight: 0 }
+          head: { roll: 0, pitch: 0, weight: 0 }
         };
 
         if (t < 0.12) {
           // Anticipation: small opposite dip
           const aU = t / 0.12;
-          out.rightArm.raise = -0.10 * Math.sin(Math.PI * aU);
-          out.rightArm.spread = 0.12;
+          out.rightArm.raise = -0.05 * Math.sin(Math.PI * aU);
+          out.rightArm.spread = 0.14;
+          out.rightArm.twist = 0;
           out.rightArm.weight = aU * 0.5;
         } else if (t < 0.65) {
-          // Action: fast in, raise arm up
+          // Action: fast in, raise arm overhead above head
           const actU = (t - 0.12) / (0.65 - 0.12);
           const s = minJerk(actU);
-          out.rightArm.raise = -0.10 + (2.10 - (-0.10)) * s;
-          out.rightArm.spread = 0.12 + (0.35 - 0.12) * s;
+          out.rightArm.raise = -0.05 + (2.50 - (-0.05)) * s;
+          out.rightArm.spread = 0.14 + (0.32 - 0.14) * s;
+          out.rightArm.twist = 0.25 * s;
           out.rightArm.weight = 1.0;
-          out.head.roll = 0.16 * s;
+          out.head.roll = 0.12 * s;
+          out.head.pitch = 0.05 * s;
           out.head.weight = s * 0.8;
         } else if (t < 1.60) {
-          // Hold with decaying exponential oscillation
+          // Hold with decaying exponential oscillation above head
           const oscT = t - 0.65;
-          const decay = Math.exp(-1.5 * oscT);
-          const waveOsc = 0.30 * Math.sin(oscT * 12.0) * decay;
-          out.rightArm.raise = 2.05 + 0.05 * Math.sin(oscT * 6.0);
-          out.rightArm.spread = 0.35 + waveOsc;
+          const decay = Math.exp(-1.4 * oscT);
+          const waveOsc = 0.22 * Math.sin(oscT * 10.5) * decay;
+          out.rightArm.raise = 2.45 + 0.05 * Math.sin(oscT * 5.0);
+          out.rightArm.spread = 0.32 + waveOsc;
+          out.rightArm.twist = 0.25;
           out.rightArm.weight = 1.0;
-          out.head.roll = 0.16 * decay;
+          out.head.roll = 0.12 * decay;
+          out.head.pitch = 0.05 * decay;
           out.head.weight = 0.8 * decay;
         } else {
           // Release: smooth ease-out (400-500ms) back to pose
           const relU = (t - 1.60) / (dur - 1.60);
           const s = 1 - minJerk(relU);
-          out.rightArm.raise = 2.05 * s;
-          out.rightArm.spread = 0.14 + (0.35 - 0.14) * s;
+          out.rightArm.raise = 2.45 * s;
+          out.rightArm.spread = 0.14 + (0.32 - 0.14) * s;
+          out.rightArm.twist = 0.25 * s;
           out.rightArm.weight = s;
-          out.head.roll = 0.05 * s;
+          out.head.roll = 0.04 * s;
+          out.head.pitch = 0.02 * s;
           out.head.weight = s * 0.3;
         }
         return out;
@@ -1033,17 +1055,13 @@
 
   function onAvatarClick() {
     lastUserInteractionTime = performance.now() / 1000;
-    // Wave, then spin!
+    // Wave fully, then spin on completion
     triggerGesture('wave', {
       force: true,
       onComplete: () => {
         triggerGesture('spin', { force: true });
       }
     });
-    // Fallback timer in case wave is interrupted
-    setTimeout(() => {
-      triggerGesture('spin', { force: true });
-    }, 1200);
   }
 
   function onDetailOpen(key) {
