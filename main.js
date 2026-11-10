@@ -418,10 +418,21 @@
   const FLOAT_FADE_DURATION = 1.2;
   let currentHomeFloatAmp = 0;
 
-  // Audio diagnostics and interaction retry
+  // Audio diagnostics, Web Audio pipeline & playback state
   let audioLastError = null;
   let audioNeedsRetry = false;
   let audioRetryAttached = false;
+  let webAudioCtx = null;
+  let webAudioSource = null;
+  let webAudioCompressor = null;
+  let webAudioMasterGain = null;
+  let webAudioAnalyser = null;
+  let webAudioReady = false;
+  let currentPlayPromise = null;
+  let playlistIndex = 0;
+  let pendingRestoreTime = null;
+  let skipDebounceTimer = null;
+  let updateMuteBtnState = () => {};
 
   // Quality Tier detection ('high', 'med', 'low')
   let qualityTier = 'high';
@@ -865,17 +876,20 @@
         });
         const isMuted = localStorage.getItem('coodz_muted') === 'true';
         if (!isMuted && audio) {
-          audio.muted = false;
-          audio.volume = 0;
-          const p = audio.play();
-          if (p !== undefined) {
-            p.then(() => {
-              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 3000);
-              audioLastError = null;
-            }).catch((err) => {
-              audioLastError = err ? (err.message || String(err)) : 'play error';
-            });
+          initWebAudioGraph(audio);
+          if (webAudioCtx && webAudioCtx.state === 'suspended') {
+            webAudioCtx.resume().catch(() => {});
           }
+          audio.muted = false;
+          if (webAudioMasterGain && webAudioCtx) {
+            webAudioMasterGain.gain.setValueAtTime(0, webAudioCtx.currentTime);
+          } else {
+            audio.volume = 0;
+          }
+          safePlayAudio(audio).then(() => {
+            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 2000);
+            updateMuteBtnState();
+          });
         }
       }
       events.forEach((evt) => {
@@ -891,16 +905,15 @@
         retryEvents.forEach((evt) => window.removeEventListener(evt, onRetryInteraction, true));
         audioRetryAttached = false;
         if (audio && localStorage.getItem('coodz_muted') !== 'true') {
-          audio.muted = false;
-          const p = audio.play();
-          if (p !== undefined) {
-            p.then(() => {
-              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
-              audioLastError = null;
-            }).catch((err) => {
-              audioLastError = err ? (err.message || String(err)) : 'retry error';
-            });
+          initWebAudioGraph(audio);
+          if (webAudioCtx && webAudioCtx.state === 'suspended') {
+            webAudioCtx.resume().catch(() => {});
           }
+          audio.muted = false;
+          safePlayAudio(audio).then(() => {
+            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
+            updateMuteBtnState();
+          });
         }
       }
       retryEvents.forEach((evt) => window.addEventListener(evt, onRetryInteraction, { capture: true, once: true }));
@@ -980,8 +993,12 @@
 
       sessionStorage.setItem('coodz_intro_seen', 'true');
 
-      if (startMusic && audio && !audio.muted) {
-        fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1200);
+      if (startMusic && audio && !audio.muted && localStorage.getItem('coodz_muted') !== 'true') {
+        initWebAudioGraph(audio);
+        safePlayAudio(audio).then(() => {
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1200);
+          updateMuteBtnState();
+        });
       }
 
       if (isDeepLink) {
@@ -1012,25 +1029,32 @@
 
       // Synchronously unlock audio at gate interaction
       if (audio) {
+        initWebAudioGraph(audio);
+        if (webAudioCtx && webAudioCtx.state === 'suspended') {
+          webAudioCtx.resume().catch(() => {});
+        }
         if (!audio.src) {
-          audio.src = CONFIG.PLAYLIST[0].src;
+          audio.src = CONFIG.PLAYLIST[playlistIndex || 0].src;
         }
         const isMuted = localStorage.getItem('coodz_muted') === 'true';
-        if (!isMuted) audio.muted = false;
-        audio.volume = 0;
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            audioLastError = null;
-            if (!isMuted) {
-              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1500);
-            }
+        if (!isMuted) {
+          audio.muted = false;
+          if (webAudioMasterGain && webAudioCtx) {
+            webAudioMasterGain.gain.setValueAtTime(0, webAudioCtx.currentTime);
+          } else {
+            audio.volume = 0;
+          }
+          safePlayAudio(audio).then(() => {
+            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1500);
+            updateMuteBtnState();
           }).catch((err) => {
             audioLastError = err ? (err.message || String(err)) : 'gate play rejected';
             console.warn('[Audio] play rejected at gate:', err);
             audioNeedsRetry = true;
             attachAudioRetryListener();
           });
+        } else {
+          audio.muted = true;
         }
       }
 
@@ -1256,7 +1280,9 @@
               baselineY,
               charX,
               inkLeft,
+              inkRight,
               inkTop,
+              inkBottom,
               inkWidth,
               inkHeight,
               strokes,
@@ -1265,9 +1291,10 @@
           });
 
           // Draw real glyphs on offscreen canvas with horizontal gradient
-          const finalInkLeft = Math.min(...letterData.map((l) => l.inkLeft));
-          const finalInkRight = Math.max(...letterData.map((l) => l.inkRight));
-          const grad = offGlyphsCtx.createLinearGradient(finalInkLeft, 0, finalInkRight, 0);
+          const finalInkLeft = Math.min(...letterData.map((l) => (l.inkLeft !== undefined ? l.inkLeft : 0)));
+          const finalInkRight = Math.max(...letterData.map((l) => (l.inkRight !== undefined ? l.inkRight : (l.inkLeft || 0) + (l.inkWidth || 10))));
+          const safeRight = (isFinite(finalInkRight) && finalInkRight > finalInkLeft) ? finalInkRight : (finalInkLeft + 100);
+          const grad = offGlyphsCtx.createLinearGradient(isFinite(finalInkLeft) ? finalInkLeft : 0, 0, safeRight, 0);
           grad.addColorStop(0, '#5ea8ff');
           grad.addColorStop(0.5, '#8b6cff');
           grad.addColorStop(1, '#c4b5ff');
@@ -1737,7 +1764,8 @@
                   fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, (CONFIG.INTRO.AUDIO_FADE_DUR * 1000) / timeScale);
                 }
                 setTimeout(() => {
-                  if (audio && (audio.paused || audio.volume < 0.05) && localStorage.getItem('coodz_muted') !== 'true') {
+                  const isGainLow = webAudioMasterGain ? (webAudioMasterGain.gain.value < 0.05) : (audio.volume < 0.05);
+                  if (audio && (audio.paused || isGainLow) && localStorage.getItem('coodz_muted') !== 'true') {
                     audioNeedsRetry = true;
                     attachAudioRetryListener();
                   }
@@ -3783,14 +3811,13 @@
   // ==========================================================================
   // 6. AUDIO CONTROLS & WEB AUDIO DYNAMICS COMPRESSOR PIPELINE
   // ==========================================================================
-  let webAudioCtx = null;
-  let webAudioSource = null;
-  let webAudioCompressor = null;
-  let webAudioMasterGain = null;
-  let webAudioReady = false;
-
   function initWebAudioGraph(audioEl) {
-    if (webAudioReady && webAudioMasterGain) return true;
+    if (webAudioReady && webAudioMasterGain && webAudioCtx) {
+      if (webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(() => {});
+      }
+      return true;
+    }
     try {
       const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtxClass) return false;
@@ -3810,7 +3837,8 @@
 
         webAudioMasterGain = webAudioCtx.createGain();
         const isMuted = audioEl.muted || localStorage.getItem('coodz_muted') === 'true';
-        webAudioMasterGain.gain.setValueAtTime(isMuted ? 0 : 0, webAudioCtx.currentTime);
+        const defaultGain = (CONFIG.AUDIO_VOLUME || 0.9) * (CONFIG.AUDIO_GAIN || 1.4);
+        webAudioMasterGain.gain.setValueAtTime(isMuted ? 0 : defaultGain, webAudioCtx.currentTime);
 
         webAudioSource.connect(webAudioCompressor);
         webAudioCompressor.connect(webAudioMasterGain);
@@ -3818,7 +3846,7 @@
 
         // Music reactive AnalyserNode for AvatarDirector
         try {
-          const webAudioAnalyser = webAudioCtx.createAnalyser();
+          webAudioAnalyser = webAudioCtx.createAnalyser();
           webAudioAnalyser.fftSize = 128;
           webAudioCompressor.connect(webAudioAnalyser);
           if (window.AvatarDirector && typeof window.AvatarDirector.setAudioAnalyser === 'function') {
@@ -3838,37 +3866,98 @@
     }
   }
 
-  function fadeAudioVolume(audio, targetVol, duration = 1000, onComplete) {
-    if (!audio) return;
-    const isGraphOk = initWebAudioGraph(audio);
+  function safePlayAudio(audioEl) {
+    if (!audioEl) return Promise.resolve();
+    if (webAudioCtx && webAudioCtx.state === 'suspended') {
+      webAudioCtx.resume().catch(() => {});
+    }
+    // Seek pending restore time if metadata is already available
+    if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
+      if (audioEl.duration && !isNaN(audioEl.duration) && audioEl.duration > 0) {
+        try {
+          const targetTime = Math.min(pendingRestoreTime, Math.max(0, audioEl.duration - 0.5));
+          audioEl.currentTime = targetTime;
+          if (audioEl.currentTime > 0) {
+            pendingRestoreTime = null;
+          }
+        } catch (e) {}
+      }
+    }
+    try {
+      const p = audioEl.play();
+      if (p !== undefined && typeof p.then === 'function') {
+        currentPlayPromise = p;
+        return p.then(() => {
+          if (currentPlayPromise === p) currentPlayPromise = null;
+          audioLastError = null;
+          if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
+            if (audioEl.duration && !isNaN(audioEl.duration) && audioEl.duration > 0) {
+              try {
+                const targetTime = Math.min(pendingRestoreTime, Math.max(0, audioEl.duration - 0.5));
+                audioEl.currentTime = targetTime;
+                if (audioEl.currentTime > 0) {
+                  pendingRestoreTime = null;
+                }
+              } catch (e) {}
+            }
+          }
+        }).catch((err) => {
+          if (currentPlayPromise === p) currentPlayPromise = null;
+          if (err && err.name === 'AbortError') {
+            // Normal interruption when track changes or pauses rapidly
+            return;
+          }
+          audioLastError = err ? (err.message || String(err)) : 'play error';
+          console.warn('[Audio] play error:', err);
+        });
+      }
+    } catch (err) {
+      audioLastError = err ? (err.message || String(err)) : 'sync play error';
+      console.warn('[Audio] sync play error:', err);
+    }
+    return Promise.resolve();
+  }
+
+  function fadeAudioVolume(audioEl, targetVol, duration = 1000, onComplete) {
+    if (!audioEl) return;
+    const isGraphOk = initWebAudioGraph(audioEl);
     if (isGraphOk && webAudioMasterGain && webAudioCtx) {
       if (webAudioCtx.state === 'suspended') {
         webAudioCtx.resume().catch(() => {});
       }
-      const targetGain = targetVol * (CONFIG.AUDIO_GAIN || 1.4);
+      const targetGain = targetVol <= 0 ? 0 : targetVol * (CONFIG.AUDIO_GAIN || 1.4);
       const currTime = webAudioCtx.currentTime;
-      const durSec = Math.max(0.05, duration / 1000);
-      webAudioMasterGain.gain.cancelScheduledValues(currTime);
-      webAudioMasterGain.gain.setValueAtTime(webAudioMasterGain.gain.value, currTime);
-      webAudioMasterGain.gain.linearRampToValueAtTime(targetGain, currTime + durSec);
+      const durSec = Math.max(0.04, duration / 1000);
+
+      try {
+        const curVal = webAudioMasterGain.gain.value;
+        webAudioMasterGain.gain.cancelScheduledValues(currTime);
+        webAudioMasterGain.gain.setValueAtTime(curVal, currTime);
+        webAudioMasterGain.gain.linearRampToValueAtTime(targetGain, currTime + durSec);
+      } catch (e) {
+        try {
+          webAudioMasterGain.gain.setValueAtTime(targetGain, currTime);
+        } catch (e2) {}
+      }
 
       if (targetVol > 0) {
-        audio.muted = false;
+        audioEl.muted = false;
+        audioEl.volume = 1.0;
       }
       if (onComplete) {
         setTimeout(onComplete, duration);
       }
     } else {
-      const startVol = audio.volume;
+      const startVol = audioEl.volume;
       const startTime = performance.now();
       function step(now) {
         const elapsed = now - startTime;
         const p = Math.min(1, elapsed / Math.max(10, duration));
-        audio.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * p));
+        audioEl.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * p));
         if (p < 1) {
           requestAnimationFrame(step);
         } else {
-          if (targetVol <= 0) audio.muted = true;
+          if (targetVol <= 0) audioEl.muted = true;
           if (onComplete) onComplete();
         }
       }
@@ -3882,43 +3971,99 @@
     const skipBtn = document.getElementById('audio-skip-btn');
     if (!audio) return;
 
-    let playlistIndex = 0;
-    const isMuted = localStorage.getItem('coodz_muted') === 'true';
-
-    function loadTrack(index) {
-      playlistIndex = ((index % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
-      audio.src = CONFIG.PLAYLIST[playlistIndex].src;
-      try {
-        audio.load();
-      } catch (e) {}
+    function applyPendingRestoreTime() {
+      if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
+        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+          const targetTime = Math.min(pendingRestoreTime, Math.max(0, audio.duration - 0.5));
+          try {
+            audio.currentTime = targetTime;
+            if (audio.currentTime > 0) {
+              pendingRestoreTime = null;
+            }
+          } catch (e) {}
+        }
+      }
     }
 
-    loadTrack(0);
+    audio.addEventListener('loadedmetadata', applyPendingRestoreTime);
+    audio.addEventListener('loadeddata', applyPendingRestoreTime);
+    audio.addEventListener('canplay', applyPendingRestoreTime);
+    audio.addEventListener('playing', applyPendingRestoreTime);
+
+    function onTimeUpdateCheckRestore() {
+      if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
+        applyPendingRestoreTime();
+      } else {
+        audio.removeEventListener('timeupdate', onTimeUpdateCheckRestore);
+      }
+    }
+    audio.addEventListener('timeupdate', onTimeUpdateCheckRestore);
+
+    function loadTrack(index, seekTime = null) {
+      playlistIndex = ((index % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
+      const track = CONFIG.PLAYLIST[playlistIndex];
+      if (!track || !track.src) return;
+
+      if (seekTime !== null && seekTime > 0) {
+        pendingRestoreTime = seekTime;
+      }
+
+      const cur = audio.getAttribute('src') || '';
+      if (!cur.endsWith(track.src)) {
+        audio.src = track.src;
+        try {
+          audio.load();
+        } catch (e) {}
+      }
+      if (audio.readyState >= 1) {
+        applyPendingRestoreTime();
+      }
+    }
+
+    // Mute preference
+    const isMutedPref = localStorage.getItem('coodz_muted') === 'true';
     audio.loop = false;
-    audio.muted = isMuted;
+    audio.muted = isMutedPref;
 
     // Restore saved audio state from sessionStorage if available
+    let wasPlayingBeforeRefresh = false;
     try {
       const savedStateStr = sessionStorage.getItem('coodz_audio_state');
       if (savedStateStr) {
         const saved = JSON.parse(savedStateStr);
         if (typeof saved.trackIndex === 'number') {
-          loadTrack(saved.trackIndex);
+          playlistIndex = ((saved.trackIndex % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
         }
         if (typeof saved.currentTime === 'number' && saved.currentTime > 0) {
-          audio.currentTime = saved.currentTime;
+          pendingRestoreTime = saved.currentTime;
         }
-        if (saved.muted) {
+        if (saved.muted === true) {
           audio.muted = true;
           localStorage.setItem('coodz_muted', 'true');
+        } else if (saved.muted === false) {
+          audio.muted = false;
+          localStorage.setItem('coodz_muted', 'false');
         }
+        wasPlayingBeforeRefresh = !!saved.playing;
       }
     } catch (e) {}
 
-    function updateMuteBtnState() {
+    loadTrack(playlistIndex, pendingRestoreTime);
+
+    // If user refreshed while playing (and not muted), attempt resume or attach interaction listener
+    if (wasPlayingBeforeRefresh && !audio.muted) {
+      safePlayAudio(audio).then(() => {
+        fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
+        updateMuteBtnState();
+      }).catch(() => {
+        attachMusicStartOnInteraction();
+      });
+    }
+
+    updateMuteBtnState = function () {
       if (!muteBtn) return;
       const isMutedNow = audio.muted || localStorage.getItem('coodz_muted') === 'true';
-      const isPlaying = !audio.paused && !isMutedNow && (webAudioMasterGain ? webAudioMasterGain.gain.value > 0.01 : audio.volume > 0.01);
+      const isPlaying = !audio.paused && !isMutedNow;
       const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
 
       const desktopLabel = muteBtn.querySelector('.audio-label-desktop');
@@ -3935,7 +4080,7 @@
         if (desktopLabel) desktopLabel.textContent = dict.musicOff || '[ MUSICA OFF ]';
         if (mobileLabel) mobileLabel.textContent = dict.musicOffShort || '[ OFF ]';
       }
-    }
+    };
 
     // Expose for language changes
     window.__coUpdateAudioUI = updateMuteBtnState;
@@ -3944,68 +4089,64 @@
       muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         initWebAudioGraph(audio);
+        if (webAudioCtx && webAudioCtx.state === 'suspended') {
+          webAudioCtx.resume().catch(() => {});
+        }
         const isMutedNow = audio.muted || localStorage.getItem('coodz_muted') === 'true';
-        if (isMutedNow || (webAudioMasterGain && webAudioMasterGain.gain.value < 0.05) || audio.volume < 0.05) {
+        if (isMutedNow || audio.paused) {
           audio.muted = false;
           localStorage.setItem('coodz_muted', 'false');
-          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 500);
-          if (audio.paused) {
-            const p = audio.play();
-            if (p !== undefined) {
-              p.then(() => {
-                audioLastError = null;
-              }).catch((err) => {
-                audioLastError = err ? (err.message || String(err)) : 'unmute play error';
-              });
-            }
-          }
-        } else {
-          fadeAudioVolume(audio, 0, 400, () => {
-            audio.muted = true;
-            localStorage.setItem('coodz_muted', 'true');
+          safePlayAudio(audio).then(() => {
+            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 500);
             updateMuteBtnState();
           });
+          updateMuteBtnState();
+        } else {
           localStorage.setItem('coodz_muted', 'true');
+          fadeAudioVolume(audio, 0, 300, () => {
+            audio.muted = true;
+            updateMuteBtnState();
+          });
+          updateMuteBtnState();
         }
-        setTimeout(updateMuteBtnState, 50);
       });
     }
 
     function skipNextTrack() {
       if (!audio) return;
       initWebAudioGraph(audio);
-      const nextIdx = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
-      const isCurrentlyMuted = audio.muted || localStorage.getItem('coodz_muted') === 'true';
-      const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted && (webAudioMasterGain ? webAudioMasterGain.gain.value > 0.01 : audio.volume > 0.01);
+      if (webAudioCtx && webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(() => {});
+      }
 
-      if (isCurrentlyPlaying) {
-        fadeAudioVolume(audio, 0, 150, () => {
-          loadTrack(nextIdx);
-          const p = audio.play();
-          if (p !== undefined) {
-            p.then(() => {
-              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 150);
-              audioLastError = null;
-            }).catch((err) => {
-              audioLastError = err ? (err.message || String(err)) : 'skip play error';
-            });
-          }
-        });
+      const isMutedNow = audio.muted || localStorage.getItem('coodz_muted') === 'true';
+      const wasPlaying = !audio.paused && !isMutedNow;
+
+      // Increment playlistIndex immediately so rapid clicks advance cleanly
+      playlistIndex = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
+      pendingRestoreTime = null; // intentional skip resets time to 0
+
+      if (skipDebounceTimer) {
+        clearTimeout(skipDebounceTimer);
+        skipDebounceTimer = null;
+      }
+
+      if (wasPlaying) {
+        fadeAudioVolume(audio, 0, 100);
+        skipDebounceTimer = setTimeout(() => {
+          skipDebounceTimer = null;
+          loadTrack(playlistIndex, 0);
+          safePlayAudio(audio).then(() => {
+            if (!audio.muted && localStorage.getItem('coodz_muted') !== 'true') {
+              fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 200);
+            }
+            updateMuteBtnState();
+          });
+        }, 110);
       } else {
-        loadTrack(nextIdx);
-        if (isCurrentlyMuted) {
-          audio.muted = true;
-        }
-        if (!audio.paused) {
-          const p = audio.play();
-          if (p !== undefined) {
-            p.then(() => {
-              audioLastError = null;
-            }).catch((err) => {
-              audioLastError = err ? (err.message || String(err)) : 'skip error';
-            });
-          }
-        }
+        loadTrack(playlistIndex, 0);
+        if (isMutedNow) audio.muted = true;
+        updateMuteBtnState();
       }
     }
 
@@ -4018,13 +4159,14 @@
 
     // Auto loop playlist: track 1 -> track 2 -> track 3 -> loop
     audio.addEventListener('ended', () => {
-      loadTrack(playlistIndex + 1);
-      const p = audio.play();
-      if (p !== undefined) {
-        p.then(() => {
-          audioLastError = null;
-        }).catch((err) => {
-          audioLastError = err ? (err.message || String(err)) : 'loop error';
+      playlistIndex = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
+      pendingRestoreTime = null;
+      loadTrack(playlistIndex, 0);
+      const isMutedNow = audio.muted || localStorage.getItem('coodz_muted') === 'true';
+      if (!isMutedNow) {
+        safePlayAudio(audio).then(() => {
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 800);
+          updateMuteBtnState();
         });
       }
     });
@@ -4042,15 +4184,10 @@
         webAudioCtx.resume().catch(() => {});
       }
       if (audio.paused) {
-        const p = audio.play();
-        if (p !== undefined) {
-          p.then(() => {
-            audioLastError = null;
-            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 400);
-          }).catch((err) => {
-            audioLastError = err ? (err.message || String(err)) : 'resume error';
-          });
-        }
+        safePlayAudio(audio).then(() => {
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 400);
+          updateMuteBtnState();
+        });
       }
     }
 
@@ -4062,28 +4199,38 @@
     window.addEventListener('pageshow', tryResumeAudioPlayback);
     window.addEventListener('focus', tryResumeAudioPlayback);
 
-    // Safety net: save audio state in sessionStorage every second
-    setInterval(() => {
+    // SessionStorage state tracking
+    function saveAudioSessionState() {
       if (!audio) return;
       try {
         const isCurrentlyMuted = audio.muted || localStorage.getItem('coodz_muted') === 'true';
         const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted;
+        const curTime = Math.floor(audio.currentTime || 0);
+        const effectiveTime = (pendingRestoreTime !== null && pendingRestoreTime > 0 && curTime < 1)
+          ? pendingRestoreTime
+          : curTime;
+
         const state = {
           trackIndex: playlistIndex,
-          currentTime: Math.floor(audio.currentTime || 0),
+          currentTime: effectiveTime,
           muted: isCurrentlyMuted,
           playing: isCurrentlyPlaying
         };
         sessionStorage.setItem('coodz_audio_state', JSON.stringify(state));
       } catch (e) {}
-    }, 1000);
+    }
+
+    setInterval(saveAudioSessionState, 1000);
+    window.addEventListener('beforeunload', saveAudioSessionState);
+    window.addEventListener('pagehide', saveAudioSessionState);
 
     // Debug readout accessor
     window.__coAudioDebug = {
       getAudio: () => audio,
       getTrackIndex: () => playlistIndex,
       isWebAudioReady: () => webAudioReady,
-      getMasterGain: () => (webAudioMasterGain ? webAudioMasterGain.gain.value : null)
+      getMasterGain: () => (webAudioMasterGain ? webAudioMasterGain.gain.value : null),
+      getPendingRestoreTime: () => pendingRestoreTime
     };
 
     updateMuteBtnState();
