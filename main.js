@@ -430,7 +430,6 @@
   let webAudioReady = false;
   let currentPlayPromise = null;
   let playlistIndex = 0;
-  let pendingRestoreTime = null;
   let skipDebounceTimer = null;
   let updateMuteBtnState = () => {};
 
@@ -3871,18 +3870,6 @@
     if (webAudioCtx && webAudioCtx.state === 'suspended') {
       webAudioCtx.resume().catch(() => {});
     }
-    // Seek pending restore time if metadata is already available
-    if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
-      if (audioEl.duration && !isNaN(audioEl.duration) && audioEl.duration > 0) {
-        try {
-          const targetTime = Math.min(pendingRestoreTime, Math.max(0, audioEl.duration - 0.5));
-          audioEl.currentTime = targetTime;
-          if (audioEl.currentTime > 0) {
-            pendingRestoreTime = null;
-          }
-        } catch (e) {}
-      }
-    }
     try {
       const p = audioEl.play();
       if (p !== undefined && typeof p.then === 'function') {
@@ -3890,17 +3877,6 @@
         return p.then(() => {
           if (currentPlayPromise === p) currentPlayPromise = null;
           audioLastError = null;
-          if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
-            if (audioEl.duration && !isNaN(audioEl.duration) && audioEl.duration > 0) {
-              try {
-                const targetTime = Math.min(pendingRestoreTime, Math.max(0, audioEl.duration - 0.5));
-                audioEl.currentTime = targetTime;
-                if (audioEl.currentTime > 0) {
-                  pendingRestoreTime = null;
-                }
-              } catch (e) {}
-            }
-          }
         }).catch((err) => {
           if (currentPlayPromise === p) currentPlayPromise = null;
           if (err && err.name === 'AbortError') {
@@ -3971,42 +3947,10 @@
     const skipBtn = document.getElementById('audio-skip-btn');
     if (!audio) return;
 
-    function applyPendingRestoreTime() {
-      if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
-        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
-          const targetTime = Math.min(pendingRestoreTime, Math.max(0, audio.duration - 0.5));
-          try {
-            audio.currentTime = targetTime;
-            if (audio.currentTime > 0) {
-              pendingRestoreTime = null;
-            }
-          } catch (e) {}
-        }
-      }
-    }
-
-    audio.addEventListener('loadedmetadata', applyPendingRestoreTime);
-    audio.addEventListener('loadeddata', applyPendingRestoreTime);
-    audio.addEventListener('canplay', applyPendingRestoreTime);
-    audio.addEventListener('playing', applyPendingRestoreTime);
-
-    function onTimeUpdateCheckRestore() {
-      if (pendingRestoreTime !== null && pendingRestoreTime > 0) {
-        applyPendingRestoreTime();
-      } else {
-        audio.removeEventListener('timeupdate', onTimeUpdateCheckRestore);
-      }
-    }
-    audio.addEventListener('timeupdate', onTimeUpdateCheckRestore);
-
-    function loadTrack(index, seekTime = null) {
+    function loadTrack(index) {
       playlistIndex = ((index % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
       const track = CONFIG.PLAYLIST[playlistIndex];
       if (!track || !track.src) return;
-
-      if (seekTime !== null && seekTime > 0) {
-        pendingRestoreTime = seekTime;
-      }
 
       const cur = audio.getAttribute('src') || '';
       if (!cur.endsWith(track.src)) {
@@ -4015,9 +3959,6 @@
           audio.load();
         } catch (e) {}
       }
-      if (audio.readyState >= 1) {
-        applyPendingRestoreTime();
-      }
     }
 
     // Mute preference
@@ -4025,7 +3966,7 @@
     audio.loop = false;
     audio.muted = isMutedPref;
 
-    // Restore saved audio state from sessionStorage if available
+    // Restore saved audio track index and mute state from sessionStorage if available (always restart from 0:00)
     let wasPlayingBeforeRefresh = false;
     try {
       const savedStateStr = sessionStorage.getItem('coodz_audio_state');
@@ -4033,9 +3974,6 @@
         const saved = JSON.parse(savedStateStr);
         if (typeof saved.trackIndex === 'number') {
           playlistIndex = ((saved.trackIndex % CONFIG.PLAYLIST.length) + CONFIG.PLAYLIST.length) % CONFIG.PLAYLIST.length;
-        }
-        if (typeof saved.currentTime === 'number' && saved.currentTime > 0) {
-          pendingRestoreTime = saved.currentTime;
         }
         if (saved.muted === true) {
           audio.muted = true;
@@ -4048,16 +3986,24 @@
       }
     } catch (e) {}
 
-    loadTrack(playlistIndex, pendingRestoreTime);
+    loadTrack(playlistIndex);
 
-    // If user refreshed while playing (and not muted), attempt resume or attach interaction listener
+    // If user refreshed while playing (and not muted), respect browser autoplay policy and the user interaction gate
+    const urlParams = new URLSearchParams(window.location.search);
+    const isGateBypassed = urlParams.get('intro') === 'skip' ||
+      (window.location.hash && window.location.hash.length > 1) ||
+      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
     if (wasPlayingBeforeRefresh && !audio.muted) {
-      safePlayAudio(audio).then(() => {
-        fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
-        updateMuteBtnState();
-      }).catch(() => {
-        attachMusicStartOnInteraction();
-      });
+      if (isGateBypassed) {
+        safePlayAudio(audio).then(() => {
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
+          updateMuteBtnState();
+        }).catch(() => {
+          attachMusicStartOnInteraction();
+        });
+      }
+      // If the intro gate is active, playback will begin from 0:00 when the user enters the gate
     }
 
     updateMuteBtnState = function () {
@@ -4124,7 +4070,6 @@
 
       // Increment playlistIndex immediately so rapid clicks advance cleanly
       playlistIndex = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
-      pendingRestoreTime = null; // intentional skip resets time to 0
 
       if (skipDebounceTimer) {
         clearTimeout(skipDebounceTimer);
@@ -4135,7 +4080,7 @@
         fadeAudioVolume(audio, 0, 100);
         skipDebounceTimer = setTimeout(() => {
           skipDebounceTimer = null;
-          loadTrack(playlistIndex, 0);
+          loadTrack(playlistIndex);
           safePlayAudio(audio).then(() => {
             if (!audio.muted && localStorage.getItem('coodz_muted') !== 'true') {
               fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 200);
@@ -4144,7 +4089,7 @@
           });
         }, 110);
       } else {
-        loadTrack(playlistIndex, 0);
+        loadTrack(playlistIndex);
         if (isMutedNow) audio.muted = true;
         updateMuteBtnState();
       }
@@ -4160,8 +4105,7 @@
     // Auto loop playlist: track 1 -> track 2 -> track 3 -> loop
     audio.addEventListener('ended', () => {
       playlistIndex = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
-      pendingRestoreTime = null;
-      loadTrack(playlistIndex, 0);
+      loadTrack(playlistIndex);
       const isMutedNow = audio.muted || localStorage.getItem('coodz_muted') === 'true';
       if (!isMutedNow) {
         safePlayAudio(audio).then(() => {
@@ -4199,20 +4143,15 @@
     window.addEventListener('pageshow', tryResumeAudioPlayback);
     window.addEventListener('focus', tryResumeAudioPlayback);
 
-    // SessionStorage state tracking
+    // SessionStorage state tracking (preserves selected track and play state across refreshes, no timestamp)
     function saveAudioSessionState() {
       if (!audio) return;
       try {
         const isCurrentlyMuted = audio.muted || localStorage.getItem('coodz_muted') === 'true';
         const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted;
-        const curTime = Math.floor(audio.currentTime || 0);
-        const effectiveTime = (pendingRestoreTime !== null && pendingRestoreTime > 0 && curTime < 1)
-          ? pendingRestoreTime
-          : curTime;
 
         const state = {
           trackIndex: playlistIndex,
-          currentTime: effectiveTime,
           muted: isCurrentlyMuted,
           playing: isCurrentlyPlaying
         };
@@ -4230,7 +4169,7 @@
       getTrackIndex: () => playlistIndex,
       isWebAudioReady: () => webAudioReady,
       getMasterGain: () => (webAudioMasterGain ? webAudioMasterGain.gain.value : null),
-      getPendingRestoreTime: () => pendingRestoreTime
+      getPendingRestoreTime: () => null
     };
 
     updateMuteBtnState();
