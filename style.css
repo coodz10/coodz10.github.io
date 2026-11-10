@@ -108,6 +108,7 @@ html, body {
    ========================================================================== */
 .scroll-container {
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   max-width: 100%;
   overflow-y: scroll;
@@ -130,7 +131,9 @@ html, body {
 
 .snap-section {
   height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   scroll-snap-align: start;
   scroll-snap-stop: always;
@@ -169,6 +172,7 @@ html, body {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   pointer-events: none;
   z-index: 0;
 }
@@ -179,6 +183,7 @@ html, body {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   pointer-events: none;
   z-index: 7;
   transition: opacity var(--dur-fast) ease;
@@ -230,6 +235,7 @@ html, body {
 .avatar-canvas {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: block;
   position: relative;
   z-index: 1;
@@ -859,6 +865,7 @@ html, body {
    ========================================================================== */
 .section-home {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -872,6 +879,7 @@ html, body {
   width: 100%;
   max-width: 1200px;
   height: 100vh;
+  height: 100dvh;
   margin-inline: auto;
   display: grid;
   grid-template-rows: 1fr auto auto auto;
@@ -1025,6 +1033,7 @@ html, body {
    ========================================================================== */
 .section-about {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1037,6 +1046,7 @@ html, body {
   width: 100%;
   max-width: 1400px;
   height: 100vh;
+  height: 100dvh;
   margin-inline: auto;
   display: flex;
   flex-direction: column;
@@ -1099,6 +1109,7 @@ html, body {
    ========================================================================== */
 .section-experiences {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1110,6 +1121,7 @@ html, body {
   width: 100%;
   max-width: 1400px;
   height: 100vh;
+  height: 100dvh;
   margin-inline: auto;
   display: grid;
   grid-template-columns: 36vw 1fr;
@@ -1383,6 +1395,7 @@ html, body {
    ========================================================================== */
 .section-contact {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1394,6 +1407,7 @@ html, body {
   width: 100%;
   max-width: 560px;
   height: 100vh;
+  height: 100dvh;
   margin-inline: auto;
   display: grid;
   grid-template-rows: auto 1fr auto auto;

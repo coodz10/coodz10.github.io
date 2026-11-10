@@ -463,9 +463,7 @@
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   }
 
-  // ==========================================================================
-  // SCREEN LOOK-AT TARGET SYSTEM
-  // ==========================================================================
+  // Screen look-at target state & cached DOM elements
   let currentLookTargetX = window.innerWidth * 0.5;
   let currentLookTargetY = window.innerHeight * 0.3;
   let desiredLookTargetX = currentLookTargetX;
@@ -484,6 +482,67 @@
   let currentReadingIndex = 0;
   let hoveredCard = null;
   let hoveredContactRow = null;
+
+  // Cached DOM references for zero DOM searches in requestAnimationFrame loops
+  let domStage = null;
+  let domAvatarFloat = null;
+  let domHeroTitle = null;
+  let domHeroTitleChSpans = null;
+  let domHeroSubElements = null;
+  let domBgWordTargets = null;
+  let domActionsEl = null;
+
+  function getDomStage() {
+    if (!domStage) domStage = document.getElementById('avatar-stage');
+    return domStage;
+  }
+  function getDomAvatarFloat() {
+    if (!domAvatarFloat) domAvatarFloat = document.getElementById('avatar-float');
+    return domAvatarFloat;
+  }
+  function getDomHeroTitle() {
+    if (!domHeroTitle) {
+      domHeroTitle = document.getElementById('hero-title');
+      if (domHeroTitle) {
+        domHeroTitleChSpans = domHeroTitle.querySelectorAll('.ch');
+      }
+    }
+    return domHeroTitle;
+  }
+  function getDomHeroTitleChSpans() {
+    if (!domHeroTitleChSpans) {
+      getDomHeroTitle();
+    }
+    return domHeroTitleChSpans;
+  }
+  function getDomHeroSubElements() {
+    if (!domHeroSubElements) {
+      domHeroSubElements = document.querySelectorAll('.hero-subtitle-wrap, .home-bottom-actions, .hero-light-spill');
+    }
+    return domHeroSubElements;
+  }
+  function getDomBgWordTargets() {
+    if (!domBgWordTargets) {
+      domBgWordTargets = [
+        { sel: '#chi_sono .section-bg-word', el: document.querySelector('#chi_sono .section-bg-word'), index: 1, isContact: false },
+        { sel: '#esperienze .section-bg-word', el: document.querySelector('#esperienze .section-bg-word'), index: 2, isContact: false },
+        { sel: '#contatti .section-bg-word', el: document.querySelector('#contatti .section-bg-word'), index: 3, isContact: true }
+      ];
+    }
+    return domBgWordTargets;
+  }
+  function getDomActionsEl() {
+    if (!domActionsEl) {
+      domActionsEl = document.querySelector('.hero-actions') || document.querySelector('[data-i18n="scrollHint"]');
+    }
+    return domActionsEl;
+  }
+
+  // Pre-allocated vectors & points for zero-allocation avatar projection loops
+  let _fingertipLocal = null;
+  let _fingertipWorld = null;
+  let _projPoint = null;
+  const _canvasPoint = { x: 0, y: 0 };
 
   function setDesiredLookTarget(x, y, duration = 0.8) {
     blendLookSourceX = currentLookTargetX;
@@ -510,8 +569,8 @@
         desiredLookTargetY = mouseY;
       } else {
         // Slowly scan between title and buttons
-        const titleEl = document.getElementById('hero-title');
-        const actionsEl = document.querySelector('.hero-actions') || document.querySelector('[data-i18n="scrollHint"]');
+        const titleEl = getDomHeroTitle();
+        const actionsEl = getDomActionsEl();
         let p1 = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.85 };
         let p2 = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.94 };
 
@@ -551,7 +610,7 @@
 
   function updateHeadLookTarget() {
     if (!skinViewer || !skinViewer.playerObject) return;
-    const stage = document.getElementById('avatar-stage');
+    const stage = getDomStage();
     if (!stage) return;
 
     const stageRect = stage.getBoundingClientRect();
@@ -2305,7 +2364,7 @@
 
     // Apply transform directly to #avatar-stage (translate3d, scale, rotate) when intro is not running
     if (!isIntroActive) {
-      const stage = document.getElementById('avatar-stage');
+      const stage = getDomStage();
       if (stage) {
         stage.style.transform = `translate3d(${finalX.toFixed(2)}px, ${finalY.toFixed(2)}px, 0) scale(${finalScale.toFixed(3)}) rotate(${finalRoll.toFixed(4)}rad)`;
       }
@@ -2347,7 +2406,7 @@
     // 6. Home float bob and slow roll tilt (+-2vh period 5.5s, sway +-2.2deg)
     let bobPx = 0;
     let rollDeg = 0;
-    const avatarFloatEl = document.getElementById('avatar-float');
+    const avatarFloatEl = getDomAvatarFloat();
     if (!prefersReducedMotion) {
       if (currentHomeFloatAmp > 0.001) {
         bobPx = (cachedWindowHeight * 0.02) * Math.sin(nowSec * (2 * Math.PI / 5.5)) * currentHomeFloatAmp;
@@ -2380,7 +2439,7 @@
     }
 
     // 7. Title float & letter wave + scrub
-    const heroTitle = document.getElementById('hero-title');
+    const heroTitle = getDomHeroTitle();
     if (heroTitle && !isIntroActive) {
       if (fDisplay <= 0.6) {
         const p = fDisplay / 0.6;
@@ -2397,16 +2456,20 @@
           bobTitlePx = (titleBobVh * cachedWindowHeight) / 100;
 
           if (qualityTier !== 'low') {
-            const chSpans = heroTitle.querySelectorAll('.ch');
-            for (let i = 0; i < chSpans.length; i++) {
-              const chYVh = Math.sin((2 * Math.PI * nowSec / 5.0) + (i * 0.55)) * 0.5 * titleAmp;
-              const chYPx = (chYVh * cachedWindowHeight) / 100;
-              chSpans[i].style.transform = `translate3d(0, ${chYPx.toFixed(2)}px, 0)`;
+            const chSpans = getDomHeroTitleChSpans();
+            if (chSpans) {
+              for (let i = 0; i < chSpans.length; i++) {
+                const chYVh = Math.sin((2 * Math.PI * nowSec / 5.0) + (i * 0.55)) * 0.5 * titleAmp;
+                const chYPx = (chYVh * cachedWindowHeight) / 100;
+                chSpans[i].style.transform = `translate3d(0, ${chYPx.toFixed(2)}px, 0)`;
+              }
             }
           }
         } else {
-          const chSpans = heroTitle.querySelectorAll('.ch');
-          chSpans.forEach((ch) => { ch.style.transform = ''; });
+          const chSpans = getDomHeroTitleChSpans();
+          if (chSpans) {
+            chSpans.forEach((ch) => { ch.style.transform = ''; });
+          }
         }
 
         heroTitle.style.transform = `translate3d(0, ${bobTitlePx.toFixed(2)}px, 0) rotate(${rotTitleDeg.toFixed(2)}deg) scale(${s.toFixed(3)})`;
@@ -2420,34 +2483,32 @@
       }
     }
 
-    const heroSubElements = document.querySelectorAll('.hero-subtitle-wrap, .home-bottom-actions, .hero-light-spill');
-    if (fDisplay <= 0.3) {
-      const subOp = Math.max(0, 1 - (fDisplay / 0.3));
-      heroSubElements.forEach((el) => {
-        el.style.opacity = subOp.toFixed(3);
-        el.style.pointerEvents = subOp < 0.1 ? 'none' : 'auto';
-      });
-    } else {
-      heroSubElements.forEach((el) => {
-        el.style.opacity = '0';
-        el.style.pointerEvents = 'none';
-      });
+    const heroSubElements = getDomHeroSubElements();
+    if (heroSubElements) {
+      if (fDisplay <= 0.3) {
+        const subOp = Math.max(0, 1 - (fDisplay / 0.3));
+        heroSubElements.forEach((el) => {
+          el.style.opacity = subOp.toFixed(3);
+          el.style.pointerEvents = subOp < 0.1 ? 'none' : 'auto';
+        });
+      } else {
+        heroSubElements.forEach((el) => {
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+        });
+      }
     }
 
     // 8. Continuous background word sliding scrub
-    const bgWordTargets = [
-      { sel: '#chi_sono .section-bg-word', index: 1 },
-      { sel: '#esperienze .section-bg-word', index: 2 },
-      { sel: '#contatti .section-bg-word', index: 3 }
-    ];
+    const bgWordTargets = getDomBgWordTargets();
     bgWordTargets.forEach((item) => {
-      const el = document.querySelector(item.sel);
+      const el = item.el || (item.el = document.querySelector(item.sel));
       if (el) {
         const dist = fDisplay - item.index;
         if (Math.abs(dist) < 1.2) {
           const op = Math.max(0, 1 - Math.abs(dist)) * 0.12;
           const shiftPx = dist * 70;
-          if (item.sel.includes('contatti')) {
+          if (item.isContact) {
             el.style.transform = `translate(-50%, -50%) translateX(${shiftPx.toFixed(1)}px)`;
           } else {
             el.style.transform = `translateY(-50%) translateX(${shiftPx.toFixed(1)}px)`;
@@ -2593,11 +2654,15 @@
 
     try {
       skinViewer.playerObject.updateMatrixWorld(true);
-      const Vector3 = skinViewer.camera.position.constructor;
-      const localTip = new Vector3(0, -tipDistance, 0);
-      const worldTip = localTip.clone();
-      arm.localToWorld(worldTip);
-      return worldTip;
+      if (!_fingertipLocal) {
+        const Vector3 = skinViewer.camera.position.constructor;
+        _fingertipLocal = new Vector3();
+        _fingertipWorld = new Vector3();
+      }
+      _fingertipLocal.set(0, -tipDistance, 0);
+      _fingertipWorld.copy(_fingertipLocal);
+      arm.localToWorld(_fingertipWorld);
+      return _fingertipWorld;
     } catch (e) {
       return null;
     }
@@ -2606,14 +2671,16 @@
   function projectToCanvas(worldPoint) {
     if (!worldPoint || !skinViewer || !skinViewer.camera) return null;
     try {
-      const p = worldPoint.clone();
-      p.project(skinViewer.camera);
+      if (!_projPoint) {
+        _projPoint = new (skinViewer.camera.position.constructor)();
+      }
+      _projPoint.copy(worldPoint);
+      _projPoint.project(skinViewer.camera);
       const w = window.innerWidth;
       const h = window.innerHeight;
-      return {
-        x: (p.x * 0.5 + 0.5) * w,
-        y: (-p.y * 0.5 + 0.5) * h
-      };
+      _canvasPoint.x = (_projPoint.x * 0.5 + 0.5) * w;
+      _canvasPoint.y = (-_projPoint.y * 0.5 + 0.5) * h;
+      return _canvasPoint;
     } catch (e) {
       return null;
     }
@@ -2631,7 +2698,7 @@
       function fallbackLoop() {
         const now = performance.now();
         const nowSec = now / 1000;
-        const dt = Math.min(0.1, (now - lastFallbackTime) / 1000);
+        const dt = Math.max(0.001, Math.min(0.05, (now - lastFallbackTime) / 1000));
         lastFallbackTime = now;
 
         runFrameFlightTick(nowSec, dt);
@@ -2715,7 +2782,7 @@
       skinViewer.render = function () {
         const now = performance.now();
         const nowSec = now / 1000;
-        const dt = Math.min(0.1, (now - lastRenderTime) / 1000);
+        const dt = Math.max(0.001, Math.min(0.05, (now - lastRenderTime) / 1000));
         lastRenderTime = now;
 
         // Apply emissive materials once meshes become ready
@@ -4142,6 +4209,15 @@
     });
     window.addEventListener('pageshow', tryResumeAudioPlayback);
     window.addEventListener('focus', tryResumeAudioPlayback);
+
+    // Touch/pointer down unlock for mobile browsers (iOS Safari / Android Chrome)
+    function onMobileAudioTouch() {
+      if (webAudioCtx && (webAudioCtx.state === 'suspended' || webAudioCtx.state === 'interrupted')) {
+        webAudioCtx.resume().catch(() => {});
+      }
+    }
+    window.addEventListener('touchstart', onMobileAudioTouch, { passive: true });
+    window.addEventListener('pointerdown', onMobileAudioTouch, { passive: true });
 
     // SessionStorage state tracking (preserves selected track and play state across refreshes, no timestamp)
     function saveAudioSessionState() {

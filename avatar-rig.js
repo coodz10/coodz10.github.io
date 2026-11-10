@@ -137,6 +137,8 @@
   const collisionVelocities    = new Float32Array(DOF_COUNT);
   const targetCollisionOffsets = new Float32Array(DOF_COUNT);
   const proceduralOffsets      = new Float32Array(DOF_COUNT);
+  const poseSaveScratch        = new Float32Array(DOF_COUNT);
+  const halfMixScratch         = new Float32Array(DOF_COUNT);
 
   // Director layer overlay buffers
   const directorOverrides      = new Float32Array(DOF_COUNT);
@@ -513,7 +515,7 @@
     if (!skinRef || !playerRef) return poseArr;
 
     // Save current joint rotations
-    const saved = new Float32Array(DOF_COUNT);
+    const saved = poseSaveScratch;
     for (let i = 0; i < JOINT_COUNT; i++) {
       const j = skinRef[JOINT_NAMES[i]];
       if (j) {
@@ -1000,7 +1002,7 @@
 
     // Test 50% blend mix for collision before transitioning
     if (isInitialized && skinRef && playerRef) {
-      const halfMix = new Float32Array(DOF_COUNT);
+      const halfMix = halfMixScratch;
       for (let i = 0; i < DOF_COUNT; i++) {
         halfMix[i] = currentJointAngles[i] * 0.5 + targetPack[i] * 0.5;
       }
@@ -1277,7 +1279,7 @@
       }
 
       const now = performance.now();
-      const dt = Math.min(0.1, (now - lastUpdateTime) / 1000);
+      const dt = Math.max(0.001, Math.min(0.05, (now - lastUpdateTime) / 1000));
       lastUpdateTime = now;
 
       // Single animation owner: update the rig
