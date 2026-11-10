@@ -27,25 +27,29 @@
   --bg: #05060f;
   --surface: rgba(10, 11, 36, 0.45);
   --line: rgba(124, 131, 168, 0.22);
-  --line-strong: rgba(94, 168, 255, 0.5);
+  --line-strong: rgba(56, 189, 248, 0.5);
   --text: #e8eaff;
   --muted: #7c83a8;
-  --accent: #5ea8ff;
-  --accent-gradient: linear-gradient(90deg, #5ea8ff 0%, #8b6cff 50%, #c4b5ff 100%);
+  --accent: #38bdf8;
+  --accent-blue: #38bdf8;
+  --text-muted: #64748b;
+  --accent-gradient: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c4b5ff 100%);
 
   /* Layout Variables */
   --gutter: clamp(24px, 3vw, 56px);
   --bg-word-opacity: 1;
 
-  /* Typography */
-  --font-title: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Typography (Strict 2-Font System) */
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-title: var(--font-sans);
   --font-mono: 'JetBrains Mono', monospace;
 
+  /* Strict Font Sizes (4-Size Hierarchy: display, h1, body, mono) */
   --fs-display: clamp(2.8rem, 8.5vw, 8.5rem);
-  --fs-h1: clamp(2.0rem, 3.8vw, 3.2rem);
+  --fs-h1: clamp(2rem, 3.5vw, 2.75rem);
   --fs-h2: clamp(1.1rem, 1.5vw, 1.35rem);
-  --fs-body: clamp(0.92rem, 1.0vw, 1.02rem);
-  --fs-lead: clamp(1.05rem, 1.25vw, 1.2rem);
+  --fs-body: 0.9375rem;
+  --fs-lead: 0.9375rem;
   --fs-mono: 0.75rem;
 
   /* Spacing scale */
@@ -284,40 +288,43 @@ html, body {
 .section-head__tag {
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--accent);
+  letter-spacing: 0.08em;
+  color: var(--accent-blue);
 }
 
 .section-head__title {
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
   font-size: var(--fs-h1);
   font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #fff;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  line-height: 1.15;
 }
 
-/* Lead Paragraph (Explicit weight 400 not bold, clamp size, max 36ch, color --text) */
+/* Lead Paragraph / Bio (Strictly identical to all other body paragraphs) */
 .lead {
-  font-family: var(--font-title);
-  font-size: clamp(1.05rem, 1.25vw, 1.2rem);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
   font-weight: 400 !important;
-  color: var(--text);
+  color: rgba(226, 232, 240, 0.78);
   line-height: 1.65;
   text-wrap: pretty;
-  max-width: 36ch;
+  max-width: 360px;
 }
 
-/* Single Mono Metadata Line (HANDLE · RUOLO · STATO) */
+/* Single Mono Metadata Line (HANDLE // RUOLO // STATO) */
 .about-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--s2);
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-top: 4px;
 }
@@ -329,31 +336,34 @@ html, body {
 }
 
 .meta-label {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .meta-val {
-  color: var(--text);
+  color: rgba(226, 232, 240, 0.78);
 }
 
 .meta-sep {
-  color: var(--line);
+  color: var(--text-muted);
   user-select: none;
-  font-weight: 300;
+  font-weight: 500;
   margin: 0 4px;
 }
 
 .meta-status {
-  color: var(--text);
+  color: rgba(226, 232, 240, 0.78);
 }
 
-/* Stacked Hairline Items in Chi Sono */
+/* Symmetric Items in Chi Sono: Technical accent border-left */
 .about-item {
   display: flex;
   flex-direction: column;
-  gap: var(--s2);
-  padding: clamp(14px, 2.2vh, 24px) 0;
-  border-bottom: 1px solid var(--line);
+  gap: 0.5rem;
+  max-width: 360px;
+  width: 100%;
+  border-left: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 0 0 0 1rem;
+  border-bottom: none;
   background: transparent;
 }
 
@@ -367,38 +377,49 @@ html, body {
 }
 
 .about-item__header {
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   display: flex;
   align-items: baseline;
-  gap: var(--s2);
+  gap: 0.35rem;
 }
 
 .item-num {
-  color: var(--accent);
-  font-weight: 700;
+  color: var(--accent-blue);
+  font-weight: 500;
 }
 
 .item-title {
-  color: var(--text);
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
 }
 
 .about-item__body {
+  font-family: var(--font-sans);
   font-size: var(--fs-body);
   font-weight: 400;
   line-height: 1.65;
-  color: var(--muted);
-  max-width: 42ch;
+  color: rgba(226, 232, 240, 0.78);
+  max-width: 360px;
+  margin: 0;
+}
+
+.about-item__body strong,
+.lead strong {
+  color: #FFFFFF;
+  font-weight: 500;
 }
 
 /* Status Indicator Tag (Plain mono text with dot: ● ATTIVO / ○ DIMESSO) */
 .status-indicator-tag {
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
@@ -410,13 +431,13 @@ html, body {
 }
 
 .status-dot-accent {
-  color: var(--accent);
+  color: #10B981;
   font-size: 0.85rem;
   line-height: 1;
 }
 
 .status-dot-muted {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.85rem;
   line-height: 1;
 }
@@ -719,20 +740,22 @@ html, body {
 .nav-link {
   color: var(--muted);
   text-decoration: none;
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: var(--s1) var(--s2);
   transition: color var(--dur-fast) ease;
   cursor: pointer;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover {
   color: var(--text);
 }
 
 .nav-link.active {
-  color: #fff;
+  color: var(--accent-blue);
 }
 
 /* Active Nav Indicator (Reserved Accent Gradient) */
@@ -1074,7 +1097,7 @@ html, body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--avatar-col) minmax(0, 1fr);
   column-gap: var(--gutter);
-  align-items: start;
+  align-items: center;
   height: 62vh; /* Band: 26vh to 88vh */
   max-height: 62vh;
   margin-top: 2vh;
@@ -1083,8 +1106,8 @@ html, body {
 .about-col {
   display: flex;
   flex-direction: column;
-  gap: clamp(14px, 2.0vh, 24px);
-  max-width: 30vw;
+  gap: 2.5rem;
+  max-width: 360px;
   width: 100%;
 }
 
@@ -1622,6 +1645,14 @@ html, body {
   will-change: transform;
 }
 
+/* Chi Sono Watermark: repositioned cleanly behind section header, clear of avatar silhouette */
+.section-about .section-bg-word,
+#chi_sono .section-bg-word {
+  top: 18vh;
+  -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.18);
+  opacity: calc(var(--bg-word-opacity, 1) * 0.75);
+}
+
 @keyframes bgWordDrift {
   0% { transform: translate(-50%, -50%) translateX(-1.5vw); }
   50% { transform: translate(-50%, -50%) translateX(1.5vw); }
@@ -1739,13 +1770,10 @@ html, body {
   .about-item {
     padding: 10px 0;
   }
-  .lead {
-    font-size: clamp(0.92rem, 1.4vh, 1.05rem);
-    line-height: 1.5;
-  }
+  .lead,
   .about-item__body {
-    font-size: clamp(0.80rem, 1.25vh, 0.88rem);
-    line-height: 1.5;
+    font-size: 0.875rem;
+    line-height: 1.55;
   }
   .experiences-block {
     padding-top: 4vh;

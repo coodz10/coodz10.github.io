@@ -203,10 +203,14 @@
   let qWorld = null;
   let eulerScratch = null;
   let vSocketScratch = null;
+  let vArmPivotScratch = null;
+  let vTorsoSocketScratch = null;
   const samplePointsA = new Float32Array(3 * 5 * 3 * 3); // 45 points x 3 floats
 
   // Anatomical socket offsets relative to torso pivot (0, -6, 0)
   const SOCKET_OFFSETS = new Array(JOINT_COUNT).fill(null);
+  const ARM_PIVOTS_LOCAL = new Array(JOINT_COUNT).fill(null);
+  const TORSO_SOCKETS = new Array(JOINT_COUNT).fill(null);
 
   // ==========================================================================
   // RIG FACTS VERIFICATION & LOGGING
@@ -226,6 +230,8 @@
       Vector3Class = skin.leftArm.position.constructor;
       tempV = new Vector3Class();
       vSocketScratch = new Vector3Class();
+      vArmPivotScratch = new Vector3Class();
+      vTorsoSocketScratch = new Vector3Class();
     }
     if (skin.head && skin.head.quaternion) {
       QuaternionClass = skin.head.quaternion.constructor;
@@ -244,6 +250,12 @@
       SOCKET_OFFSETS[J_RIGHT_ARM] = new Vector3Class(-5, 4, 0);        // Right shoulder socket
       SOCKET_OFFSETS[J_LEFT_LEG]  = new Vector3Class(1.9, -6, -0.1);   // Left hip socket
       SOCKET_OFFSETS[J_RIGHT_LEG] = new Vector3Class(-1.9, -6, -0.1);  // Right hip socket
+
+      // Anatomical shoulder anchor offsets: inner top corner of arms & torso sockets
+      ARM_PIVOTS_LOCAL[J_LEFT_ARM]  = new Vector3Class(-1.0, 2.0, 0);
+      ARM_PIVOTS_LOCAL[J_RIGHT_ARM] = new Vector3Class(1.0, 2.0, 0);
+      TORSO_SOCKETS[J_LEFT_ARM]     = new Vector3Class(4.0, 6.0, 0);
+      TORSO_SOCKETS[J_RIGHT_ARM]    = new Vector3Class(-4.0, 6.0, 0);
     }
 
     // 3. Cache inner meshes for collision resolver
@@ -906,17 +918,32 @@
         const rz = currentJointAngles[dof + 2] + collisionOffsets[dof + 2];
 
         if (bodyPos && sock && qBody && vSocketScratch && qLocal && qWorld && eulerScratch) {
-          // Socket position in skin space: bodyPos + R_body * (socket_x, socket_y * scaleY, socket_z)
-          vSocketScratch.copy(sock);
-          vSocketScratch.y *= scaleY;
-          vSocketScratch.applyQuaternion(qBody);
-          jointObj.position.copy(bodyPos).add(vSocketScratch);
-
           // Compounded rotation: qWorld = qBody * qLocal
           eulerScratch.set(rx, ry, rz, 'XYZ');
           qLocal.setFromEuler(eulerScratch);
           qWorld.multiplyQuaternions(qBody, qLocal);
           jointObj.quaternion.copy(qWorld);
+
+          // Anatomical shoulder attachment for arms:
+          // Keep inner top corner of the arm anchored to the torso shoulder socket at all rotation angles
+          const armPivot = ARM_PIVOTS_LOCAL[j];
+          const torsoSock = TORSO_SOCKETS[j];
+          if (armPivot && torsoSock && vArmPivotScratch && vTorsoSocketScratch) {
+            vTorsoSocketScratch.copy(torsoSock);
+            vTorsoSocketScratch.y *= scaleY;
+            vTorsoSocketScratch.applyQuaternion(qBody);
+
+            vArmPivotScratch.copy(armPivot);
+            vArmPivotScratch.applyQuaternion(qWorld);
+
+            jointObj.position.copy(bodyPos).add(vTorsoSocketScratch).sub(vArmPivotScratch);
+          } else {
+            // Default socket kinematics for head and legs
+            vSocketScratch.copy(sock);
+            vSocketScratch.y *= scaleY;
+            vSocketScratch.applyQuaternion(qBody);
+            jointObj.position.copy(bodyPos).add(vSocketScratch);
+          }
         } else {
           jointObj.rotation.x = rx;
           jointObj.rotation.y = ry;

@@ -36,9 +36,9 @@
     ROT_EXP_DETAIL: 0.65,      // esperienze-detail: turns toward detail panel on right
 
     // Lighting & Emissive Luminous Skin (Dark navy black texels, vivid blues)
-    GLOBAL_LIGHT: 5.2,         // Global ambient light intensity
-    CAMERA_LIGHT: 2.0,         // Directional camera light intensity
-    AVATAR_EMISSIVE: '#0c1238', // Dark navy emissive so pure black texels read dark navy, blues stay vivid
+    GLOBAL_LIGHT: 5.5,         // Global ambient light intensity
+    CAMERA_LIGHT: 2.8,         // Directional camera light intensity
+    AVATAR_EMISSIVE: '#182442', // Rich midnight navy emissive so pure black texels read deep charcoal/navy, blues stay vivid
     AVATAR_EMISSIVE_INTENSITY: 1.0, // Emissive intensity in 3D materials
     AURA: 1.0,                 // Aura drop-shadow strength (0 to 1)
 
@@ -125,13 +125,14 @@
       onlineStatus: 'coodz_10 // ONLINE',
       audioLabel: 'AUDIO',
       scrollHint: '[ SCROLL ]',
-      aboutTag: 'LOG_ENTRY_00 // CHI_SONO',
+      aboutTag: 'LOG_ENTRY_01 // CHI_SONO',
       aboutTitle: 'Chi Sono',
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'RUOLO:',
       aboutRoleVal: 'SysAdmin // Security',
       aboutStatusLabel: 'STATO:',
       aboutStatusVal: '[ OPERATIVO ]',
+      aboutPillarTitle0: '[ PROFILO // BIO ]',
       aboutIntro: "Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.",
       aboutPillarTitle1: '[ SOFTWARE & SICUREZZA ]',
       aboutPillarDesc1: "Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.",
@@ -139,7 +140,7 @@
       aboutPillarDesc2: "Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.",
       aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
       aboutPillarDesc3: "Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.",
-      expTag: 'LOG_ENTRY_01 // ESPERIENZE',
+      expTag: 'LOG_ENTRY_02 // ESPERIENZE',
       expTitle: 'Esperienze',
       expTabAll: '[ TUTTO ]',
       expCatMinecraft: '[ MINECRAFT ]',
@@ -157,7 +158,7 @@
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'DIMESSO',
       viewDossier: '[ VEDI SCHEDA ]',
-      contactTag: 'LOG_ENTRY_02 // CONTATTI',
+      contactTag: 'LOG_ENTRY_03 // CONTATTI',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
       footerEnd: 'END_TRANSMISSION // COODZ_10',
@@ -186,13 +187,14 @@
       onlineStatus: 'coodz_10 // ONLINE',
       audioLabel: 'AUDIO',
       scrollHint: '[ SCROLL ]',
-      aboutTag: 'LOG_ENTRY_00 // ABOUT_ME',
+      aboutTag: 'LOG_ENTRY_01 // ABOUT_ME',
       aboutTitle: 'About Me',
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'ROLE:',
       aboutRoleVal: 'SysAdmin // Security',
       aboutStatusLabel: 'STATUS:',
       aboutStatusVal: '[ OPERATIONAL ]',
+      aboutPillarTitle0: '[ PROFILE // BIO ]',
       aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
       aboutPillarTitle1: '[ SOFTWARE & SECURITY ]',
       aboutPillarDesc1: "On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.",
@@ -200,7 +202,7 @@
       aboutPillarDesc2: "In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.",
       aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
       aboutPillarDesc3: "On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.",
-      expTag: 'LOG_ENTRY_01 // EXPERIENCES',
+      expTag: 'LOG_ENTRY_02 // EXPERIENCES',
       expTitle: 'Experiences',
       expTabAll: '[ ALL ]',
       expCatMinecraft: '[ MINECRAFT ]',
@@ -218,7 +220,7 @@
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'RESIGNED',
       viewDossier: '[ VIEW DOSSIER ]',
-      contactTag: 'LOG_ENTRY_02 // CONTACT',
+      contactTag: 'LOG_ENTRY_03 // CONTACT',
       contactTitle: "Let's Talk",
       contactSub: 'For collaborations, service requests or security investigations.',
       footerEnd: 'END_TRANSMISSION // COODZ_10',
@@ -660,7 +662,7 @@
       if (activeSectionId === 'home') return;
 
       if (activeSectionId === 'chi_sono') {
-        const steps = ['.section-head', '.about-meta', '.lead', '.about-item'];
+        const steps = ['.section-head', '.about-meta', '.about-item'];
         currentReadingIndex = (currentReadingIndex + 1) % steps.length;
         const sel = steps[currentReadingIndex];
         const el = document.querySelector(`#chi_sono ${sel}`);
@@ -2603,6 +2605,8 @@
                 mat.emissive.set(CONFIG.AVATAR_EMISSIVE);
               }
               mat.emissiveIntensity = CONFIG.AVATAR_EMISSIVE_INTENSITY;
+              mat.roughness = 0.45;
+              mat.metalness = 0.12;
               mat.needsUpdate = true;
             }
           });
@@ -2610,6 +2614,24 @@
       });
       if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
       if (skinViewer.cameraLight) skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
+
+      // Studio 3-point lighting setup: subtle cyan rim light and soft white fill light
+      if (skinViewer.scene && !skinViewer._rimLight && skinViewer.cameraLight) {
+        try {
+          const LightClass = skinViewer.cameraLight.constructor;
+          const rimLight = new LightClass(0x38bdf8, 2.5);
+          rimLight.position.set(-25, 30, -30);
+          skinViewer.scene.add(rimLight);
+          skinViewer._rimLight = rimLight;
+
+          const fillLight = new LightClass(0xe8eaff, 1.8);
+          fillLight.position.set(25, 20, 25);
+          skinViewer.scene.add(fillLight);
+          skinViewer._fillLight = fillLight;
+        } catch (lightErr) {
+          console.warn('[Avatar] Error adding studio rim/fill lights:', lightErr);
+        }
+      }
     } catch (err) {
       console.warn('[Avatar] Error applying emissive material settings:', err);
     }
