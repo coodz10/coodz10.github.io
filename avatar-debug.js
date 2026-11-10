@@ -581,20 +581,31 @@
     const viewportCenterX = vw * 0.5;
     const viewportCenterY = vh * 0.5;
 
+    // 1. Nav Centering Audit (desktop only)
+    const navBar = document.querySelector('.nav-bar');
+    const navCenter = document.querySelector('.nav-center');
+    let navCenteringError = 0;
+    let navBottom = 0;
+    if (navBar) {
+      navBottom = navBar.getBoundingClientRect().bottom;
+    }
+    if (navCenter && vw > 768) {
+      const nRect = navCenter.getBoundingClientRect();
+      const navLinksGroupCenterX = nRect.left + nRect.width * 0.5;
+      navCenteringError = Math.round(Math.abs(viewportCenterX - navLinksGroupCenterX) * 100) / 100;
+    }
+
     const sections = [
-      { id: 'home', slotSelector: '.home-avatar-slot' },
-      { id: 'chi_sono', slotSelector: '.about-avatar-slot' },
-      { id: 'esperienze', slotSelector: '.exp-avatar-slot' },
-      { id: 'contatti', slotSelector: '.contact-avatar-slot' }
+      { id: 'home', slotSelector: '.home-avatar-slot', headerSelector: '.hero-title' },
+      { id: 'chi_sono', slotSelector: '.about-avatar-slot', headerSelector: '.about-head' },
+      { id: 'esperienze', slotSelector: '.exp-avatar-slot', headerSelector: '.exp-head' },
+      { id: 'contatti', slotSelector: '.contact-avatar-slot', headerSelector: '.contact-head' }
     ];
 
     const targets = sectionId ? sections.filter((s) => s.id === sectionId) : sections;
     const auditResults = [];
 
-    const baseH = (window.CONFIG && window.CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM) || 320;
-    const baseW = baseH * 0.55;
-
-    targets.forEach(({ id, slotSelector }) => {
+    targets.forEach(({ id, slotSelector, headerSelector }) => {
       const el = document.getElementById(id);
       if (!el) return;
 
@@ -603,8 +614,6 @@
       if (!slot) return;
 
       const slotRect = slot.getBoundingClientRect();
-      const slotRelLeft = slotRect.left - secRect.left;
-      const slotRelTop = slotRect.top - secRect.top;
 
       const avatarBox = {
         left: slotRect.left,
@@ -614,6 +623,55 @@
         width: slotRect.width,
         height: slotRect.height
       };
+
+      // Header Centering Error
+      const headerEl = el.querySelector(headerSelector);
+      let headerCenteringError = 0;
+      let headerTop = 0;
+      let distanceFromNav = 0;
+      if (headerEl) {
+        const hr = headerEl.getBoundingClientRect();
+        headerTop = Math.round(hr.top * 10) / 10;
+        distanceFromNav = Math.round((hr.top - navBottom) * 10) / 10;
+        if (id === 'home' || id === 'chi_sono' || id === 'contatti') {
+          const headerCenterX = hr.left + hr.width * 0.5;
+          const targetCenterX = secRect.left + secRect.width * 0.5;
+          headerCenteringError = Math.round(Math.abs(targetCenterX - headerCenterX) * 100) / 100;
+        }
+      }
+
+      // Column Top Alignment & Relative Rules
+      let columnTopAlignment = 0;
+      let noColumnHigherThanHeader = true;
+
+      if (id === 'esperienze' && vw > 768) {
+        const expHead = el.querySelector('.exp-head');
+        const expContentCol = el.querySelector('.experiences-content-col');
+        if (expHead && expContentCol) {
+          const ht = expHead.getBoundingClientRect().top;
+          const ct = expContentCol.getBoundingClientRect().top;
+          columnTopAlignment = Math.round(Math.abs(ht - ct) * 100) / 100;
+          if (ct < ht - 2) noColumnHigherThanHeader = false;
+        }
+      } else if (id === 'chi_sono' && vw > 768) {
+        const aboutHead = el.querySelector('.about-head');
+        const leftCol = el.querySelector('.about-col--left');
+        const rightCol = el.querySelector('.about-col--right');
+        if (aboutHead && leftCol && rightCol) {
+          const ht = aboutHead.getBoundingClientRect().top;
+          const lt = leftCol.getBoundingClientRect().top;
+          const rt = rightCol.getBoundingClientRect().top;
+          if (lt < ht - 2 || rt < ht - 2) noColumnHigherThanHeader = false;
+        }
+      } else if (id === 'contatti') {
+        const contactHead = el.querySelector('.contact-head');
+        const contactRows = el.querySelector('.contact-rows');
+        if (contactHead && contactRows) {
+          const ht = contactHead.getBoundingClientRect().top;
+          const rt = contactRows.getBoundingClientRect().top;
+          if (rt < ht - 2) noColumnHigherThanHeader = false;
+        }
+      }
 
       const textNodes = Array.from(el.querySelectorAll('h1, h2, h3, p, a, button, .section-head, .lead, .about-item, .exp-row, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot'))
         .filter((node) => {
@@ -639,12 +697,26 @@
         }
       });
 
+      const sectionPasses = (
+        overlaps.length === 0 &&
+        headerCenteringError <= 2 &&
+        columnTopAlignment <= 2 &&
+        (vw <= 768 || navCenteringError <= 2) &&
+        noColumnHigherThanHeader
+      );
+
       auditResults.push({
         section: id,
         viewport: { width: vw, height: vh },
+        navCenteringError,
+        headerCenteringError,
+        columnTopAlignment,
+        headerTop,
+        distanceFromNav,
+        noColumnHigherThanHeader,
         overlaps,
         hasOverlaps: overlaps.length > 0,
-        passesAudit: overlaps.length === 0
+        passesAudit: sectionPasses
       });
     });
 
@@ -720,6 +792,22 @@
       </div>
 
       <div style="margin-bottom:0.75rem;">
+        <div style="color:#7c83a8;font-size:0.7rem;margin-bottom:0.35rem;">TUNING SLIDERS:</div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;">
+          <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
+            <span>Aura Strength:</span>
+            <span id="debug-aura-val">${(window.CONFIG && typeof window.CONFIG.AURA === 'number') ? window.CONFIG.AURA.toFixed(2) : '1.00'}</span>
+            <input type="range" id="debug-aura-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && window.CONFIG.AURA) || 1.0}" style="width:90px;">
+          </label>
+          <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
+            <span>BG Word Opacity:</span>
+            <span id="debug-bg-val">${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY.toFixed(2) : '1.00'}</span>
+            <input type="range" id="debug-bg-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && window.CONFIG.BG_WORD_OPACITY) || 1.0}" style="width:90px;">
+          </label>
+        </div>
+      </div>
+
+      <div style="margin-bottom:0.75rem;">
         <div style="color:#7c83a8;font-size:0.7rem;margin-bottom:0.35rem;">TESTS & TOOLS:</div>
         <div style="display:flex;gap:0.4rem;">
           <button id="debug-run-val-btn" style="background:rgba(94,168,255,0.15);border:1px solid #5ea8ff;color:#5ea8ff;padding:0.25rem 0.5rem;font-family:monospace;cursor:pointer;">[ Validate Rig ]</button>
@@ -770,6 +858,29 @@
         debugOverlayCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       }
     });
+
+    // Tuning sliders
+    const auraSlider = document.getElementById('debug-aura-slider');
+    if (auraSlider) {
+      auraSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (window.CONFIG) window.CONFIG.AURA = val;
+        const valEl = document.getElementById('debug-aura-val');
+        if (valEl) valEl.textContent = val.toFixed(2);
+        if (window.__updateAvatarAura) window.__updateAvatarAura();
+      });
+    }
+
+    const bgSlider = document.getElementById('debug-bg-slider');
+    if (bgSlider) {
+      bgSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (window.CONFIG) window.CONFIG.BG_WORD_OPACITY = val;
+        const valEl = document.getElementById('debug-bg-val');
+        if (valEl) valEl.textContent = val.toFixed(2);
+        if (window.__applyBgWordOpacity) window.__applyBgWordOpacity();
+      });
+    }
 
     // Live state updater
     const statusPre = document.getElementById('debug-live-status');

@@ -2187,6 +2187,22 @@
     document.documentElement.style.setProperty('--bg-word-opacity', CONFIG.BG_WORD_OPACITY);
   }
 
+  function fitBgWords() {
+    const targetWidth = window.innerWidth * 0.88;
+    const bgWords = document.querySelectorAll('.section-bg-word');
+    bgWords.forEach((el) => {
+      el.style.fontSize = '100px';
+      const measuredWidth = el.scrollWidth || el.offsetWidth;
+      if (measuredWidth > 0) {
+        const fittedPx = (targetWidth / measuredWidth) * 100;
+        el.style.fontSize = `${fittedPx.toFixed(1)}px`;
+      }
+    });
+  }
+
+  window.__applyBgWordOpacity = applyBgWordOpacity;
+  window.__fitBgWords = fitBgWords;
+
   function runFrameFlightTick(nowSec, dt) {
     // 1. Determine target scroll fraction
     const targetF = (manualF !== null) ? manualF : targetScrollF;
@@ -2532,11 +2548,13 @@
     if (strength <= 0.01) {
       canvas.style.filter = 'none';
     } else {
-      const a1 = (0.26 * strength).toFixed(3);
-      const a2 = (0.13 * strength).toFixed(3);
+      const a1 = (0.16 * strength).toFixed(3);
+      const a2 = (0.10 * strength).toFixed(3);
       canvas.style.filter = `drop-shadow(0 0 14px rgba(94, 168, 255, ${a1})) drop-shadow(0 0 40px rgba(139, 108, 255, ${a2}))`;
     }
   }
+
+  window.__updateAvatarAura = updateAvatarAura;
 
   function getAvatarFingertipWorld(tipDistance = CONFIG.ARM_TIP) {
     if (!skinViewer || !skinViewer.playerObject || !skinViewer.playerObject.skin || !skinViewer.camera) {
@@ -3627,6 +3645,7 @@
     // Re-anchor home avatar on language change & update cached dimensions
     updateCachedDimensions();
     computeSlotKeyframes();
+    fitBgWords();
 
     // Update nav indicator position after text changes
     setTimeout(() => {
@@ -3706,9 +3725,11 @@
     // Initial Indicator & cached dimensions update
     updateCachedDimensions();
     updateNavIndicator(activeSectionId);
+    fitBgWords();
     window.addEventListener('resize', () => {
       updateCachedDimensions();
       updateNavIndicator(activeSectionId);
+      fitBgWords();
     }, { passive: true });
 
     // Passive scroll listener for continuous scroll-driven flight
@@ -3727,6 +3748,19 @@
     const mobileLinks = document.querySelectorAll('.mobile-link');
 
     if (menuToggleBtn && mobileMenu) {
+      const mqMobile = window.matchMedia('(max-width: 768px)');
+      const updateMenuA11y = (e) => {
+        if (e.matches) {
+          menuToggleBtn.removeAttribute('tabindex');
+          menuToggleBtn.setAttribute('aria-hidden', 'false');
+        } else {
+          menuToggleBtn.setAttribute('tabindex', '-1');
+          menuToggleBtn.setAttribute('aria-hidden', 'true');
+        }
+      };
+      mqMobile.addEventListener('change', updateMenuA11y);
+      updateMenuA11y(mqMobile);
+
       menuToggleBtn.addEventListener('click', () => {
         mobileMenu.classList.toggle('open');
         const isOpen = mobileMenu.classList.contains('open');
@@ -4172,6 +4206,7 @@
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(() => {
         computeSlotKeyframes();
+        fitBgWords();
       });
     }
   });

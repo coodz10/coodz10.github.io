@@ -652,10 +652,12 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  box-sizing: border-box;
   z-index: 20;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   padding: var(--s4) var(--page-pad);
   background: transparent;
   font-size: var(--fs-mono);
@@ -663,7 +665,15 @@ html, body {
   transition: background-color var(--dur-fast) ease;
 }
 
-.nav-left, .nav-right {
+.nav-left {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.nav-right {
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: var(--s3);
@@ -693,6 +703,7 @@ html, body {
 }
 
 .nav-center {
+  justify-self: center;
   position: relative;
   display: flex;
   align-items: center;
@@ -795,8 +806,11 @@ html, body {
   100% { transform: scaleY(1); }
 }
 
-.menu-btn {
-  display: none;
+.menu-btn,
+.mobile-only {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 /* Mobile Fullscreen Menu */
@@ -864,7 +878,7 @@ html, body {
   align-items: center;
   justify-items: center;
   text-align: center;
-  padding-top: 6vh;
+  padding-top: max(110px, 8vh);
   padding-bottom: 4vh;
   position: relative;
   z-index: 10;
@@ -1030,11 +1044,11 @@ html, body {
   z-index: 10;
 }
 
-/* Header Zone: 6vh to 24vh, Centered above middle column */
+/* Header Zone: Centered above middle column, keeping >= 60px from nav */
 .about-head {
   height: 18vh;
   min-height: 110px;
-  margin-top: 6vh;
+  margin-top: max(110px, 8vh);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1101,7 +1115,7 @@ html, body {
   grid-template-columns: 36vw 1fr;
   column-gap: var(--gutter, clamp(24px, 3vw, 56px));
   align-items: start;
-  padding-top: 6vh;
+  padding-top: max(110px, 8vh);
   padding-bottom: 6vh;
   position: relative;
   z-index: 10;
@@ -1109,21 +1123,19 @@ html, body {
 
 /* Left Column: Header centered above slot column + Slot below */
 .experiences-head-col {
-  height: 88vh;
+  height: calc(88vh - max(110px, 8vh));
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .experiences-head-col .exp-head {
-  height: 18vh;
-  min-height: 110px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   text-align: center;
   width: 100%;
+  margin-bottom: 2vh;
 }
 
 .exp-avatar-slot {
@@ -1135,12 +1147,15 @@ html, body {
 
 /* Right Column: Filter Tabs + Experience List / Detail View */
 .experiences-content-col {
-  height: 88vh;
+  height: calc(88vh - max(110px, 8vh));
+  max-height: calc(88vh - max(110px, 8vh));
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
   padding-right: var(--s2);
+  display: flex;
+  flex-direction: column;
 }
 
 .experiences-content-col::-webkit-scrollbar {
@@ -1152,6 +1167,7 @@ html, body {
 
 .experiences-view {
   width: 100%;
+  margin-block: auto;
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 
@@ -1384,7 +1400,7 @@ html, body {
   align-items: center;
   justify-items: center;
   text-align: center;
-  padding-top: 6vh;
+  padding-top: max(110px, 8vh);
   padding-bottom: 4vh;
   position: relative;
   z-index: 10;
@@ -1573,14 +1589,16 @@ html, body {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 88vw;
+  max-width: 88vw;
+  box-sizing: border-box;
   text-align: center;
   font-family: var(--font-title);
-  font-size: clamp(3.5rem, 13vw, 11rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
-  color: rgba(196, 181, 255, 0.025);
-  -webkit-text-stroke: 1.5px rgba(196, 181, 255, 0.22);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1.5px rgba(196, 181, 255, 0.30);
   opacity: var(--bg-word-opacity, 1);
   pointer-events: none;
   user-select: none;
@@ -1733,12 +1751,18 @@ html, body {
 
 @media (max-width: 768px) {
   .desktop-only {
-    display: none;
+    display: none !important;
   }
-  .menu-btn {
-    display: inline-flex;
+  .menu-btn,
+  .mobile-only {
+    display: inline-flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
   .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: var(--s3) var(--page-pad);
   }
 
@@ -1796,7 +1820,7 @@ html, body {
   .about-block, .experiences-block, .contact-block, .home-grid {
     height: auto;
     min-height: 100vh;
-    padding-top: 6vh;
+    padding-top: max(80px, 9vh);
     padding-bottom: var(--s7);
     display: flex;
     flex-direction: column;
