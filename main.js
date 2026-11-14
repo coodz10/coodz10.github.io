@@ -26,7 +26,7 @@
     AVATAR_BASE_HEIGHT_PX_AT_ZOOM: 0, // Visual height of avatar at scale 1 (measured once via 3D bounding box)
     BG_WORD_OPACITY: 1.0,      // Opacity multiplier for stroke-only giant background words
 
-    // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180° to back)
+    // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180Â° to back)
     ROT_OFFSET: 0,             // Rotation offset (0 = face toward camera; Math.PI = back)
     ROT_ABOUT: 0,              // chi_sono: faces forward between the two balanced content columns
     ROT_EXP: 0.50,             // esperienze: turns toward cards on the right
@@ -102,7 +102,7 @@
   const TRANSLATIONS = {
     it: {
       gateText: 'ENTRA',
-      audioSkip: '[ ⏭ ]',
+      audioSkip: '[ â­ ]',
       musicOn: '[ MUSICA ON ]',
       musicOff: '[ MUSICA OFF ]',
       musicOnShort: '[ ON ]',
@@ -145,15 +145,15 @@
       expSyndicateStatus: 'ATTIVO',
       expMeowtoolsRole: '[ In Lavorazione ]',
       expMeowtoolsStatus: 'ATTIVO',
-      expMetaRole: 'Helper ★★★★☆',
+      expMetaRole: 'Helper â˜…â˜…â˜…â˜…â˜†',
       expMetaStatus: 'DIMESSO',
-      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
+      expPixyRole: 'Owner [ SS Manager ] â˜…â˜…â˜…â˜…â˜†',
       expPixyStatus: 'DIMESSO',
       contactTag: 'LOG_ENTRY_03 // CONTATTI',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
       footerEnd: 'END_TRANSMISSION // COODZ_10',
-      backToExperiences: '[ ← torna alle esperienze ]',
+      backToExperiences: '[ â† torna alle esperienze ]',
       openProofs: '[ APRI PROVE ]',
       proofsTitle: 'Link e Prove',
       btnAbout: '[ CHI SONO ]',
@@ -164,7 +164,7 @@
     },
     en: {
       gateText: 'ENTER',
-      audioSkip: '[ ⏭ ]',
+      audioSkip: '[ â­ ]',
       musicOn: '[ MUSIC ON ]',
       musicOff: '[ MUSIC OFF ]',
       musicOnShort: '[ ON ]',
@@ -185,7 +185,7 @@
       aboutStatusLabel: 'STATUS:',
       aboutStatusVal: '[ OPERATIONAL ]',
       aboutPillarTitle0: '[ PROFILE // BIO ]',
-      aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
+      aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360Â° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
       aboutPillarTitle1: '[ SOFTWARE & SECURITY ]',
       aboutPillarDesc1: "On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.",
       aboutPillarTitle2: '[ ARTIFICIAL INTELLIGENCE ]',
@@ -207,15 +207,15 @@
       expSyndicateStatus: 'ACTIVE',
       expMeowtoolsRole: '[ In Progress ]',
       expMeowtoolsStatus: 'ACTIVE',
-      expMetaRole: 'Helper ★★★★☆',
+      expMetaRole: 'Helper â˜…â˜…â˜…â˜…â˜†',
       expMetaStatus: 'RESIGNED',
-      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
+      expPixyRole: 'Owner [ SS Manager ] â˜…â˜…â˜…â˜…â˜†',
       expPixyStatus: 'RESIGNED',
       contactTag: 'LOG_ENTRY_03 // CONTACT',
       contactTitle: "Let's Talk",
       contactSub: 'For collaborations, service requests or security investigations.',
       footerEnd: 'END_TRANSMISSION // COODZ_10',
-      backToExperiences: '[ ← back to experiences ]',
+      backToExperiences: '[ â† back to experiences ]',
       openProofs: '[ OPEN PROOFS ]',
       proofsTitle: 'Links & Proofs',
       btnAbout: '[ ABOUT ME ]',
@@ -254,7 +254,7 @@
       title: 'MetaMc',
       category: 'minecraft',
       role: { it: 'Helper', en: 'Helper' },
-      stars: '★★★★☆',
+      stars: 'â˜…â˜…â˜…â˜…â˜†',
       status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
       period: { it: '[ Periodo: Agosto - Settembre 2026 ]', en: '[ Period: August - September 2026 ]' },
       experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
@@ -262,11 +262,11 @@
         it: [
           'Sono stato membro dello staff di MetaMC per circa due mesi, periodo durante il quale ho potuto apprezzare un ambiente ben strutturato e professionale.',
           'Subito dopo aver superato il provino, sono stato affiancato e formato con chiarezza sui compiti da svolgere.',
-          'In gioco l\'organizzazione e i comandi sono configurati in modo quasi impeccabile; inoltre, il team è accogliente e affiatato, rendendo il lavoro stimolante e mai pesante.',
-          'Trattandosi di un network di grandi dimensioni, MetaMC richiede presenza costante e alta attenzione: nello specifico, operando nelle modalità PvP, gestivo controlli su un bacino di oltre 600 utenti al giorno, a cui si sommava il supporto su Discord tra ticket, chat e assistenza vocale.',
+          'In gioco l\'organizzazione e i comandi sono configurati in modo quasi impeccabile; inoltre, il team Ã¨ accogliente e affiatato, rendendo il lavoro stimolante e mai pesante.',
+          'Trattandosi di un network di grandi dimensioni, MetaMC richiede presenza costante e alta attenzione: nello specifico, operando nelle modalitÃ  PvP, gestivo controlli su un bacino di oltre 600 utenti al giorno, a cui si sommava il supporto su Discord tra ticket, chat e assistenza vocale.',
           'Un aspetto critico riguarda la comunicazione interna: ho riscontrato uno scambio scarso o insufficiente sia all\'interno dei gradi superiori, sia tra questi ultimi e lo staff di livello medio-basso.',
-          'A questo si aggiunge la mia esperienza con la candidatura per il ruolo di SS Verified: nonostante l\'esito positivo della candidatura scritta, a distanza di due settimane non ho più ricevuto alcun riscontro da parte del responsabile SS.',
-          'Sebbene non si tratti di una responsabilità diretta di MetaMC, dato che il percorso formativo è delegato all\'hub della Tierlist italiana, questo passaggio rappresenta comunque una nota dolente e un ostacolo per chiunque desideri specializzarsi nei controlli hack sul server.'
+          'A questo si aggiunge la mia esperienza con la candidatura per il ruolo di SS Verified: nonostante l\'esito positivo della candidatura scritta, a distanza di due settimane non ho piÃ¹ ricevuto alcun riscontro da parte del responsabile SS.',
+          'Sebbene non si tratti di una responsabilitÃ  diretta di MetaMC, dato che il percorso formativo Ã¨ delegato all\'hub della Tierlist italiana, questo passaggio rappresenta comunque una nota dolente e un ostacolo per chiunque desideri specializzarsi nei controlli hack sul server.'
         ],
         en: [
           'I was a staff member of MetaMC for about two months, during which I appreciated a well-structured and professional environment.',
@@ -280,7 +280,7 @@
       },
       strengthsTitle: { it: 'Punti di Forza', en: 'Strengths' },
       strengths: {
-        it: ['Professionalità', 'Organizzazione'],
+        it: ['ProfessionalitÃ ', 'Organizzazione'],
         en: ['Professionalism', 'Organization']
       },
       weaknessesTitle: { it: 'Punti Deboli', en: 'Weaknesses' },
@@ -298,17 +298,17 @@
       title: 'PixyMC',
       category: 'minecraft',
       role: { it: 'Owner [ SS Manager ]', en: 'Owner [ SS Manager ]' },
-      stars: '★★★★☆',
+      stars: 'â˜…â˜…â˜…â˜…â˜†',
       status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
       period: { it: '[ Periodo: Agosto 2025 - Luglio 2026 ]', en: '[ Period: August 2025 - July 2026 ]' },
       experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
       experienceParagraphs: {
         it: [
-          'Sono stato membro dello staff per più di un anno, crescendo da Helper fino a diventare Owner. Nel corso del tempo ho potuto notare come il server offra una community sana e divertente, caratterizzata da ottimi rapporti tra player e staff.',
-          'L\'ambiente di lavoro è uno dei migliori che io abbia mai visto: ti fa sentire parte di una famiglia, prima ancora che di un\'azienda. L\'headstaff e i founder sono molto comprensivi, amichevoli e capaci di metterti subito a tuo agio.',
-          'L\'utenza del server è uno degli aspetti che apprezzo di più: sono tutti educati, corretti, pensano a divertirsi e non creano mai problemi.',
-          'Tuttavia, questa atmosfera fin troppo familiare porta a una scarsa professionalità, con continui "sconti" sul regolamento da parte dell\'headstaff e scherzi eccessivi.',
-          'In definitiva, PixyMC è un server ideale per chi vuole fare lo staffer senza troppo impegno e senza stress.'
+          'Sono stato membro dello staff per piÃ¹ di un anno, crescendo da Helper fino a diventare Owner. Nel corso del tempo ho potuto notare come il server offra una community sana e divertente, caratterizzata da ottimi rapporti tra player e staff.',
+          'L\'ambiente di lavoro Ã¨ uno dei migliori che io abbia mai visto: ti fa sentire parte di una famiglia, prima ancora che di un\'azienda. L\'headstaff e i founder sono molto comprensivi, amichevoli e capaci di metterti subito a tuo agio.',
+          'L\'utenza del server Ã¨ uno degli aspetti che apprezzo di piÃ¹: sono tutti educati, corretti, pensano a divertirsi e non creano mai problemi.',
+          'Tuttavia, questa atmosfera fin troppo familiare porta a una scarsa professionalitÃ , con continui "sconti" sul regolamento da parte dell\'headstaff e scherzi eccessivi.',
+          'In definitiva, PixyMC Ã¨ un server ideale per chi vuole fare lo staffer senza troppo impegno e senza stress.'
         ],
         en: [
           'I was a staff member for over a year, progressing from Helper up to Owner. Over time, I\'ve observed that the server fosters a healthy and highly enjoyable community, with excellent relationships between players and staff.',
@@ -325,7 +325,7 @@
       },
       weaknessesTitle: { it: 'Punti Deboli', en: 'Weaknesses' },
       weaknesses: {
-        it: ['Scarsa organizzazione iniziale', 'Poca professionalità'],
+        it: ['Scarsa organizzazione iniziale', 'Poca professionalitÃ '],
         en: ['Lack of initial organization', 'Lack of professionalism']
       },
       proofs: [
@@ -388,23 +388,25 @@
     }
   };
 
-  function safeStorageGet(storage, key) {
+  function safeStorageGet(type, key) {
     try {
+      const storage = type === 'session' ? window.sessionStorage : window.localStorage;
       return storage.getItem(key);
     } catch (e) {
       return null;
     }
   }
 
-  function safeStorageSet(storage, key, val) {
+  function safeStorageSet(type, key, val) {
     try {
+      const storage = type === 'session' ? window.sessionStorage : window.localStorage;
       storage.setItem(key, val);
     } catch (e) {
       // Ignore storage errors (blocked, private mode, quota)
     }
   }
 
-  let currentLang = safeStorageGet(localStorage, 'coodz_lang') || 'it';
+  let currentLang = safeStorageGet('local', 'coodz_lang') || 'it';
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Global state references
@@ -467,7 +469,7 @@
       events.forEach((evt) => {
         window.removeEventListener(evt, onFirstUserGesture, true);
       });
-      const isMuted = safeStorageGet(localStorage, 'coodz_muted') === 'true';
+      const isMuted = safeStorageGet('local', 'coodz_muted') === 'true';
       if (!isMuted && audioEl) {
         initWebAudioGraph(audioEl);
         if (webAudioCtx && webAudioCtx.state === 'suspended') {
@@ -981,7 +983,7 @@
     }
 
     const isDeepLink = window.location.hash && window.location.hash !== '#home';
-    const isRepeatSession = !!safeStorageGet(sessionStorage, 'coodz_intro_seen');
+    const isRepeatSession = !!safeStorageGet('session', 'coodz_intro_seen');
 
     function attachAudioRetryListener() {
       if (audioRetryAttached) return;
@@ -990,7 +992,7 @@
       function onRetryInteraction() {
         retryEvents.forEach((evt) => window.removeEventListener(evt, onRetryInteraction, true));
         audioRetryAttached = false;
-        if (audio && safeStorageGet(localStorage, 'coodz_muted') !== 'true') {
+        if (audio && safeStorageGet('local', 'coodz_muted') !== 'true') {
           initWebAudioGraph(audio);
           if (webAudioCtx && webAudioCtx.state === 'suspended') {
             webAudioCtx.resume().catch(() => {});
@@ -1077,9 +1079,9 @@
       window.removeEventListener('wheel', lockScrollHandler);
       window.removeEventListener('touchmove', lockScrollHandler);
 
-      safeStorageSet(sessionStorage, 'coodz_intro_seen', 'true');
+      safeStorageSet('session', 'coodz_intro_seen', 'true');
 
-      if (startMusic && audio && !audio.muted && safeStorageGet(localStorage, 'coodz_muted') !== 'true') {
+      if (startMusic && audio && !audio.muted && safeStorageGet('local', 'coodz_muted') !== 'true') {
         initWebAudioGraph(audio);
         safePlayAudio(audio).then(() => {
           fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1200);
@@ -1122,7 +1124,7 @@
         if (!audio.src) {
           audio.src = CONFIG.PLAYLIST[playlistIndex || 0].src;
         }
-        const isMuted = safeStorageGet(localStorage, 'coodz_muted') === 'true';
+        const isMuted = safeStorageGet('local', 'coodz_muted') === 'true';
         if (!isMuted) {
           audio.muted = false;
           if (webAudioMasterGain && webAudioCtx) {
@@ -1851,7 +1853,7 @@
                 }
                 setTimeout(() => {
                   const isGainLow = webAudioMasterGain ? (webAudioMasterGain.gain.value < 0.05) : (audio.volume < 0.05);
-                  if (audio && (audio.paused || isGainLow) && safeStorageGet(localStorage, 'coodz_muted') !== 'true') {
+                  if (audio && (audio.paused || isGainLow) && safeStorageGet('local', 'coodz_muted') !== 'true') {
                     audioNeedsRetry = true;
                     attachAudioRetryListener();
                   }
@@ -3375,17 +3377,17 @@
         <div class="detail-pros-cons-grid">
           ${exp.strengths ? `
             <div class="detail-pros-col">
-              <div class="detail-group-tag mono"><span class="item-num">01 — </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
+              <div class="detail-group-tag mono"><span class="item-num">01 â€” </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
               <ul class="detail-list mono">
-                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
+                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">â–¹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
           ${exp.weaknesses ? `
             <div class="detail-cons-col">
-              <div class="detail-group-tag mono"><span class="item-num">02 — </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
+              <div class="detail-group-tag mono"><span class="item-num">02 â€” </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
               <ul class="detail-list mono">
-                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
+                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">â–¹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -3409,7 +3411,7 @@
     if (exp.inProgress) {
       noticeHtml = `
         <div class="detail-notice mono">
-          <span class="status-dot-accent">●</span>
+          <span class="status-dot-accent">â—</span>
           <span class="detail-notice-tag">[ ${exp.noticeTag[currentLang]} ]</span>
           <span class="detail-notice-text">${exp.noticeText[currentLang]}</span>
         </div>
@@ -3419,7 +3421,7 @@
     detailEl.innerHTML = `
       <div class="detail-top-nav">
         <button id="btn-back-to-experiences" class="btn btn--secondary mono cursor-pointer" aria-label="Torna alle esperienze">
-          ${dict.backToExperiences || '[ ← torna alle esperienze ]'}
+          ${dict.backToExperiences || '[ â† torna alle esperienze ]'}
         </button>
       </div>
 
@@ -3434,7 +3436,7 @@
         <div class="detail-header-right mono">
           ${exp.stars ? `<span class="detail-stars">${exp.stars}</span>` : ''}
           <span class="status-indicator-tag ${exp.inProgress ? 'status--active' : 'status--dimesso'}">
-            <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}">${exp.inProgress ? '●' : '○'}</span>
+            <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}">${exp.inProgress ? 'â—' : 'â—‹'}</span>
             <span>${exp.inProgress ? (currentLang === 'it' ? 'ATTIVO' : 'ACTIVE') : (currentLang === 'it' ? 'DIMESSO' : 'RESIGNED')}</span>
           </span>
           <span class="detail-period">${exp.period[currentLang]}</span>
@@ -3758,7 +3760,7 @@
   function applyLanguage(lang) {
     currentLang = lang;
     document.documentElement.lang = lang;
-    safeStorageSet(localStorage, 'coodz_lang', lang);
+    safeStorageSet('local', 'coodz_lang', lang);
 
     const langBtn = document.getElementById('lang-toggle-btn');
     if (langBtn) {
@@ -3913,13 +3915,13 @@
       menuToggleBtn.addEventListener('click', () => {
         mobileMenu.classList.toggle('open');
         const isOpen = mobileMenu.classList.contains('open');
-        menuToggleBtn.textContent = isOpen ? '[ × ]' : '[ ☰ ]';
+        menuToggleBtn.textContent = isOpen ? '[ Ã— ]' : '[ â˜° ]';
       });
 
       mobileLinks.forEach((link) => {
         link.addEventListener('click', () => {
           mobileMenu.classList.remove('open');
-          menuToggleBtn.textContent = '[ ☰ ]';
+          menuToggleBtn.textContent = '[ â˜° ]';
         });
       });
     }
@@ -3957,7 +3959,7 @@
         webAudioCompressor.release.setValueAtTime(0.25, webAudioCtx.currentTime);
 
         webAudioMasterGain = webAudioCtx.createGain();
-        const isMuted = audioEl.muted || safeStorageGet(localStorage, 'coodz_muted') === 'true';
+        const isMuted = audioEl.muted || safeStorageGet('local', 'coodz_muted') === 'true';
         const defaultGain = (CONFIG.AUDIO_VOLUME || 0.9) * (CONFIG.AUDIO_GAIN || 1.4);
         webAudioMasterGain.gain.setValueAtTime(isMuted ? 0 : defaultGain, webAudioCtx.currentTime);
 
@@ -4084,14 +4086,14 @@
     }
 
     // Mute preference
-    const isMutedPref = safeStorageGet(localStorage, 'coodz_muted') === 'true';
+    const isMutedPref = safeStorageGet('local', 'coodz_muted') === 'true';
     audio.loop = false;
     audio.muted = isMutedPref;
 
     // Restore saved audio track index and mute state from sessionStorage if available (always restart from 0:00)
     let wasPlayingBeforeRefresh = false;
     try {
-      const savedStateStr = safeStorageGet(sessionStorage, 'coodz_audio_state');
+      const savedStateStr = safeStorageGet('session', 'coodz_audio_state');
       if (savedStateStr) {
         const saved = JSON.parse(savedStateStr);
         if (typeof saved.trackIndex === 'number') {
@@ -4099,10 +4101,10 @@
         }
         if (saved.muted === true) {
           audio.muted = true;
-          safeStorageSet(localStorage, 'coodz_muted', 'true');
+          safeStorageSet('local', 'coodz_muted', 'true');
         } else if (saved.muted === false) {
           audio.muted = false;
-          safeStorageSet(localStorage, 'coodz_muted', 'false');
+          safeStorageSet('local', 'coodz_muted', 'false');
         }
         wasPlayingBeforeRefresh = !!saved.playing;
       }
@@ -4130,7 +4132,7 @@
 
     updateMuteBtnState = function () {
       if (!muteBtn) return;
-      const isMutedNow = audio.muted || safeStorageGet(localStorage, 'coodz_muted') === 'true';
+      const isMutedNow = audio.muted || safeStorageGet('local', 'coodz_muted') === 'true';
       const isPlaying = !audio.paused && !isMutedNow;
       const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
 
@@ -4160,17 +4162,17 @@
         if (webAudioCtx && webAudioCtx.state === 'suspended') {
           webAudioCtx.resume().catch(() => {});
         }
-        const isMutedNow = audio.muted || safeStorageGet(localStorage, 'coodz_muted') === 'true';
+        const isMutedNow = audio.muted || safeStorageGet('local', 'coodz_muted') === 'true';
         if (isMutedNow || audio.paused) {
           audio.muted = false;
-          safeStorageSet(localStorage, 'coodz_muted', 'false');
+          safeStorageSet('local', 'coodz_muted', 'false');
           safePlayAudio(audio).then(() => {
             fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 500);
             updateMuteBtnState();
           });
           updateMuteBtnState();
         } else {
-          safeStorageSet(localStorage, 'coodz_muted', 'true');
+          safeStorageSet('local', 'coodz_muted', 'true');
           fadeAudioVolume(audio, 0, 300, () => {
             audio.muted = true;
             updateMuteBtnState();
@@ -4187,7 +4189,7 @@
         webAudioCtx.resume().catch(() => {});
       }
 
-      const isMutedNow = audio.muted || safeStorageGet(localStorage, 'coodz_muted') === 'true';
+      const isMutedNow = audio.muted || safeStorageGet('local', 'coodz_muted') === 'true';
       const wasPlaying = !audio.paused && !isMutedNow;
 
       // Increment playlistIndex immediately so rapid clicks advance cleanly
@@ -4204,7 +4206,7 @@
           skipDebounceTimer = null;
           loadTrack(playlistIndex);
           safePlayAudio(audio).then(() => {
-            if (!audio.muted && safeStorageGet(localStorage, 'coodz_muted') !== 'true') {
+            if (!audio.muted && safeStorageGet('local', 'coodz_muted') !== 'true') {
               fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 200);
             }
             updateMuteBtnState();
@@ -4228,7 +4230,7 @@
     audio.addEventListener('ended', () => {
       playlistIndex = (playlistIndex + 1) % CONFIG.PLAYLIST.length;
       loadTrack(playlistIndex);
-      const isMutedNow = audio.muted || safeStorageGet(localStorage, 'coodz_muted') === 'true';
+      const isMutedNow = audio.muted || safeStorageGet('local', 'coodz_muted') === 'true';
       if (!isMutedNow) {
         safePlayAudio(audio).then(() => {
           fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 800);
@@ -4244,7 +4246,7 @@
     // Never stop by itself: do NOT pause on tab hidden; resume on visible/pageshow/focus if browser paused it
     function tryResumeAudioPlayback() {
       if (!audio) return;
-      const isMutedNow = safeStorageGet(localStorage, 'coodz_muted') === 'true';
+      const isMutedNow = safeStorageGet('local', 'coodz_muted') === 'true';
       if (isMutedNow) return;
       if (webAudioCtx && webAudioCtx.state === 'suspended') {
         webAudioCtx.resume().catch(() => {});
@@ -4278,7 +4280,7 @@
     function saveAudioSessionState() {
       if (!audio) return;
       try {
-        const isCurrentlyMuted = audio.muted || safeStorageGet(localStorage, 'coodz_muted') === 'true';
+        const isCurrentlyMuted = audio.muted || safeStorageGet('local', 'coodz_muted') === 'true';
         const isCurrentlyPlaying = !audio.paused && !isCurrentlyMuted;
 
         const state = {
@@ -4286,7 +4288,7 @@
           muted: isCurrentlyMuted,
           playing: isCurrentlyPlaying
         };
-        safeStorageSet(sessionStorage, 'coodz_audio_state', JSON.stringify(state));
+        safeStorageSet('session', 'coodz_audio_state', JSON.stringify(state));
       } catch (e) {}
     }
 
