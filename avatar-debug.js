@@ -1,27 +1,6 @@
-// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
-/**
- * ============================================================================
- * AVATAR DEBUG MODULE (avatar-debug.js)
- * ============================================================================
- * Loaded ONLY dynamically when URL contains ?debug, ?layout, ?autotest or ?perf.
- * Production builds do not parse or execute any of this code.
- *
- * Capabilities:
- * - ?debug: Interactive sliders, camera/material tuners, gesture triggers, status readouts
- * - ?layout: Bounding box overlap analysis and element centering audit
- * - ?autotest: Automated scripted validation scenario (0.5x speed)
- * - AvatarRig.validate(): Offline pose, blend & dynamics verification suite
- * - Visual debug rays & target dots for gaze and arm aiming
- * - ?perf: Per-frame cost profiler (avg and p95 ms for AvatarRig, guard, Director, Audio, Stars)
- * ============================================================================
- */
-
 (function () {
   'use strict';
 
-  // ==========================================================================
-  // 1. PERFORMANCE MONITORING ENGINE (?perf)
-  // ==========================================================================
   const PERF_SAMPLES_MAX = 300; // ~5-10 seconds of frame history
   const perfData = {
     avatarRigUpdate: [],
@@ -72,10 +51,10 @@
     perfHudEl.style.right = '1rem';
     perfHudEl.style.zIndex = '999999';
     perfHudEl.style.background = 'rgba(5, 6, 15, 0.92)';
-    perfHudEl.style.border = '1px solid rgba(94, 168, 255, 0.5)';
+    perfHudEl.style.border = '1px solid rgba(51, 115, 255, 0.5)';
     perfHudEl.style.padding = '0.75rem 1rem';
     perfHudEl.style.color = '#e8eaff';
-    perfHudEl.style.fontFamily = 'monospace';
+    perfHudEl.style.fontFamily = "'Martian Mono', ui-monospace, monospace";
     perfHudEl.style.fontSize = '0.75rem';
     perfHudEl.style.lineHeight = '1.6';
     perfHudEl.style.pointerEvents = 'none';
@@ -87,7 +66,7 @@
       const r = getPerfReport();
       const f = (n) => n.toFixed(3) + ' ms';
       perfHudEl.innerHTML = `
-        <div style="color:#5ea8ff;font-weight:bold;margin-bottom:0.25rem;">[ PERF MONITOR ] (avg / p95)</div>
+        <div style="color:#3373ff;font-weight:bold;margin-bottom:0.25rem;">[ PERF MONITOR ] (avg / p95)</div>
         <div>AvatarRig.update:    ${f(r.avatarRigUpdate.avg)} / ${f(r.avatarRigUpdate.p95)}</div>
         <div>Collision Guard:     ${f(r.collisionGuard.avg)} / ${f(r.collisionGuard.p95)}</div>
         <div>AvatarDirector:      ${f(r.avatarDirectorUpdate.avg)} / ${f(r.avatarDirectorUpdate.p95)}</div>
@@ -140,9 +119,6 @@
     }
   }
 
-  // ==========================================================================
-  // 2. OFFLINE VALIDATION SUITE (AvatarRig.validate())
-  // ==========================================================================
   function validateRig() {
     console.log('\n======================================================');
     console.log(' [AvatarRig.validate()] - Rig Verification & Acceptance');
@@ -308,9 +284,6 @@
     return { passes: allPassed, report: reportRows };
   }
 
-  // ==========================================================================
-  // 3. VISUAL DEBUG RAYS & DOTS (?debug)
-  // ==========================================================================
   let debugOverlayCanvas = null;
   let debugOverlayCtx = null;
 
@@ -357,7 +330,7 @@
       const hx = (headPos.x * 0.5 + 0.5) * w;
       const hy = (-headPos.y * 0.5 + 0.5) * h;
 
-      debugOverlayCtx.strokeStyle = 'rgba(94, 168, 255, 0.7)';
+      debugOverlayCtx.strokeStyle = 'rgba(51, 115, 255, 0.7)';
       debugOverlayCtx.lineWidth = 2;
       debugOverlayCtx.setLineDash([4, 4]);
       debugOverlayCtx.beginPath();
@@ -366,16 +339,13 @@
       debugOverlayCtx.stroke();
       debugOverlayCtx.setLineDash([]);
 
-      debugOverlayCtx.fillStyle = '#5ea8ff';
+      debugOverlayCtx.fillStyle = '#3373ff';
       debugOverlayCtx.beginPath();
       debugOverlayCtx.arc(status.targetScreen.x, status.targetScreen.y, 4, 0, Math.PI * 2);
       debugOverlayCtx.fill();
     }
   }
 
-  // ==========================================================================
-  // 4. AUTOTEST SUITE (?autotest)
-  // ==========================================================================
   const autotestMetrics = {
     running: false,
     startTime: 0,
@@ -564,7 +534,7 @@
       resEl.style.background = pass ? 'rgba(10, 30, 20, 0.95)' : 'rgba(30, 10, 10, 0.95)';
       resEl.style.border = pass ? '1px solid #44ff88' : '1px solid #ff4444';
       resEl.style.color = pass ? '#44ff88' : '#ff4444';
-      resEl.style.fontFamily = 'monospace';
+      resEl.style.fontFamily = "'Martian Mono', ui-monospace, monospace";
       resEl.style.fontSize = '0.85rem';
       resEl.style.zIndex = '999999';
       resEl.innerHTML = `[ AUTOTEST: ${pass ? 'PASSED (0 COLLISIONS, 0 POPS)' : 'FAILED'} ]<br>Collisions: ${autotestMetrics.collisions} · Gestures: ${autotestMetrics.gestureCount} · MaxJump: ${autotestMetrics.maxFrameJump.toFixed(3)} rad`;
@@ -572,9 +542,6 @@
     })();
   }
 
-  // ==========================================================================
-  // 5. LAYOUT AUDIT ENGINE (?layout)
-  // ==========================================================================
   function runLayoutAudit(sectionId) {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -665,7 +632,7 @@
         }
       } else if (id === 'contatti') {
         const contactHead = el.querySelector('.contact-head');
-        const contactRows = el.querySelector('.contact-rows');
+        const contactRows = el.querySelector('.contact-rows-wrap');
         if (contactHead && contactRows) {
           const ht = contactHead.getBoundingClientRect().top;
           const rt = contactRows.getBoundingClientRect().top;
@@ -673,7 +640,7 @@
         }
       }
 
-      const textNodes = Array.from(el.querySelectorAll('h1, h2, h3, p, a, button, .section-head, .lead, .about-item, .exp-row, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot'))
+      const textNodes = Array.from(el.querySelectorAll('h1, h2, h3, p, a, button, .section-head, .lead, .about-item, .row-link, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot'))
         .filter((node) => {
           if (node.closest('.section-bg-word') || node.closest('.avatar-slot')) return false;
           const r = node.getBoundingClientRect();
@@ -810,19 +777,16 @@
     const slots = document.querySelectorAll('.avatar-slot');
     slots.forEach((slot) => {
       const r = slot.getBoundingClientRect();
-      ctx.strokeStyle = 'rgba(94, 168, 255, 0.7)';
+      ctx.strokeStyle = 'rgba(51, 115, 255, 0.7)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       ctx.strokeRect(r.left, r.top, r.width, r.height);
       ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(94, 168, 255, 0.08)';
+      ctx.fillStyle = 'rgba(51, 115, 255, 0.08)';
       ctx.fillRect(r.left, r.top, r.width, r.height);
     });
   }
 
-  // ==========================================================================
-  // 6. DEBUG HELPER PANEL (?debug)
-  // ==========================================================================
   function initDebugHelper() {
     if (document.getElementById('avatar-debug-panel')) return;
 
@@ -844,14 +808,14 @@
 
     panel.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;border-bottom:1px solid rgba(124,131,168,0.25);padding-bottom:0.5rem;">
-        <span style="color:#5ea8ff;font-weight:bold;">[ AVATAR DEBUG ]</span>
-        <button id="debug-close-btn" style="background:transparent;border:none;color:#7c83a8;cursor:pointer;font-family:monospace;">[ X ]</button>
+        <span style="color:#3373ff;font-weight:bold;">[ AVATAR DEBUG ]</span>
+        <button id="debug-close-btn" style="background:transparent;border:none;color:#7c83a8;cursor:pointer;font-family:'Martian Mono', ui-monospace, monospace;">[ X ]</button>
       </div>
 
       <div style="margin-bottom:0.75rem;">
         <div style="color:#7c83a8;font-size:0.7rem;margin-bottom:0.35rem;">GESTURES:</div>
         <div style="display:flex;flex-wrap:wrap;gap:0.3rem;" id="debug-gesture-buttons">
-          ${['wave', 'point', 'present', 'nod', 'tilt', 'lookAround', 'stretch', 'settle', 'spin'].map(g => `<button class="debug-g-btn cursor-pointer" data-gesture="${g}" style="background:rgba(94,168,255,0.12);border:1px solid rgba(94,168,255,0.3);color:#e8eaff;padding:0.2rem 0.4rem;font-size:0.68rem;font-family:monospace;">[ ${g} ]</button>`).join('')}
+          ${['wave', 'point', 'present', 'nod', 'tilt', 'lookAround', 'stretch', 'settle', 'spin'].map(g => `<button class="debug-g-btn cursor-pointer" data-gesture="${g}" style="background:rgba(51,115,255,0.12);border:1px solid rgba(51,115,255,0.3);color:#e8eaff;padding:0.2rem 0.4rem;font-size:0.68rem;font-family:'Martian Mono', ui-monospace, monospace;">[ ${g} ]</button>`).join('')}
         </div>
       </div>
 
@@ -865,8 +829,8 @@
           </label>
           <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
             <span>BG Word Opacity:</span>
-            <span id="debug-bg-val">${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY.toFixed(2) : '1.00'}</span>
-            <input type="range" id="debug-bg-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY : 1.0}" style="width:90px;">
+            <span id="debug-bg-val">${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY.toFixed(2) : '0.22'}</span>
+            <input type="range" id="debug-bg-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY : 0.22}" style="width:90px;">
           </label>
           <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
             <span>BG Word Width (vw):</span>
@@ -879,9 +843,9 @@
       <div style="margin-bottom:0.75rem;">
         <div style="color:#7c83a8;font-size:0.7rem;margin-bottom:0.35rem;">TESTS & TOOLS:</div>
         <div style="display:flex;gap:0.4rem;">
-          <button id="debug-run-val-btn" style="background:rgba(94,168,255,0.15);border:1px solid #5ea8ff;color:#5ea8ff;padding:0.25rem 0.5rem;font-family:monospace;cursor:pointer;">[ Validate Rig ]</button>
-          <button id="debug-run-auto-btn" style="background:rgba(94,168,255,0.15);border:1px solid #5ea8ff;color:#5ea8ff;padding:0.25rem 0.5rem;font-family:monospace;cursor:pointer;">[ Run Autotest ]</button>
-          <button id="debug-toggle-rays-btn" style="background:rgba(94,168,255,0.15);border:1px solid #5ea8ff;color:#5ea8ff;padding:0.25rem 0.5rem;font-family:monospace;cursor:pointer;">[ Toggle Rays ]</button>
+          <button id="debug-run-val-btn" style="background:rgba(51,115,255,0.15);border:1px solid #3373ff;color:#3373ff;padding:0.25rem 0.5rem;font-family:'Martian Mono', ui-monospace, monospace;cursor:pointer;">[ Validate Rig ]</button>
+          <button id="debug-run-auto-btn" style="background:rgba(51,115,255,0.15);border:1px solid #3373ff;color:#3373ff;padding:0.25rem 0.5rem;font-family:'Martian Mono', ui-monospace, monospace;cursor:pointer;">[ Run Autotest ]</button>
+          <button id="debug-toggle-rays-btn" style="background:rgba(51,115,255,0.15);border:1px solid #3373ff;color:#3373ff;padding:0.25rem 0.5rem;font-family:'Martian Mono', ui-monospace, monospace;cursor:pointer;">[ Toggle Rays ]</button>
         </div>
       </div>
 
@@ -973,9 +937,6 @@
     }, 250);
   }
 
-  // ==========================================================================
-  // EXPORT TO WINDOW.AvatarDebug
-  // ==========================================================================
   window.AvatarDebug = {
     validateRig,
     runAutoTest,

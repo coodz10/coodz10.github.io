@@ -1,27 +1,35 @@
-<!-- ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. -->
 <!DOCTYPE html>
 <html lang="it">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>coodz_10 // INCOMING TRANSMISSION</title>
+  <title>coodz_10 · minecraft screensharer</title>
   <meta name="description" content="Portfolio personale di coodz_10. System Administrator, Screen Share Analyst e sviluppatore di soluzioni custom.">
-  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="author" content="coodz_10">
+  <meta name="theme-color" content="#05060f">
+  <link rel="canonical" href="https://coodz10.github.io/">
 
-  <!-- Open Graph -->
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://coodz10.github.io/">
-  <meta property="og:title" content="coodz_10 // INCOMING TRANSMISSION">
-  <meta property="og:description" content="Portfolio personale di coodz_10. System Administrator e sviluppatore custom.">
-  <meta property="og:image" content="https://coodz10.github.io/favicon.png">
+  <meta property="og:title" content="coodz_10 · minecraft screensharer">
+  <meta property="og:description" content="Portfolio personale di coodz_10. System Administrator e Screen Share Analyst.">
+  <meta property="og:image" content="https://coodz10.github.io/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
-  <!-- Google Fonts: Space Grotesk & JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="coodz_10 · minecraft screensharer">
+  <meta name="twitter:description" content="Portfolio personale di coodz_10. System Administrator e Screen Share Analyst.">
+  <meta name="twitter:image" content="https://coodz10.github.io/assets/og-image.png">
 
-  <!-- Pre-paint hiding for intro sequence -->
+  <link rel="preload" href="assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+
   <script>
     (function () {
       try {
@@ -36,13 +44,8 @@
     })();
   </script>
 
-  <!-- Unified Stylesheet -->
   <link rel="stylesheet" href="style.css">
-
-  <!-- Single Pinned Library: skinview3d bundle -->
   <script src="https://cdn.jsdelivr.net/npm/skinview3d@3.0.1/bundles/skinview3d.bundle.js"></script>
-
-  <!-- Debug Module Dynamic Injection (?debug, ?layout, ?autotest, ?perf) -->
   <script>
     (function () {
       if (/[?&](debug|layout|autotest|perf)\b/i.test(window.location.search)) {
@@ -57,25 +60,20 @@
 
 <body>
 
-  <!-- Top Scroll Progress Bar -->
   <div id="scroll-progress-bar" class="scroll-progress-bar"></div>
 
-  <!-- GATE SCREEN (Click / Tap / Enter to unlock audio & start intro) -->
   <div id="gate-screen" class="gate-screen" role="dialog" aria-label="Access Gate">
     <button id="gate-btn" class="gate-btn mono" aria-label="Entra nel sito">
-      <span class="gate-bracket">[ </span><span id="gate-text" data-i18n="gateText">ENTRA</span><span class="gate-bracket"> ]</span><span class="gate-cursor" aria-hidden="true">_</span>
+      <span class="gate-bracket">[ </span><span id="gate-text" data-i18n="gateText">ENTRA</span><span class="gate-bracket"> ]</span><span class="gate-cursor" aria-hidden="true"></span>
     </button>
   </div>
 
-  <!-- 2D INTRO WRITING CANVAS (Avatar writes the name) -->
   <canvas id="intro-canvas" class="intro-canvas" aria-hidden="true"></canvas>
 
-  <!-- 3. BEHIND THE AVATAR: CANVAS STARS & FIXED BG WORD -->
   <div class="vignette-overlay" aria-hidden="true"></div>
   <canvas id="stars-canvas" class="stars-canvas"></canvas>
   <div id="bg-word" class="section-bg-word" aria-hidden="true"></div>
 
-  <!-- 2. AVATAR: FIXED FULL-SCREEN CONTAINER #avatar-stage -->
   <div id="avatar-stage" class="avatar-stage state-home">
     <div id="avatar-float" class="avatar-float">
       <div id="avatar-aura-fallback" class="avatar-aura-fallback" aria-hidden="true"></div>
@@ -84,27 +82,26 @@
     </div>
   </div>
 
-  <!-- 4. FIXED MINIMAL TOP NAVIGATION -->
   <nav class="nav-bar mono">
     <div class="nav-left">
       <span class="status-indicator">
-        <span class="status-dot"></span>
-        <span data-i18n="onlineStatus">coodz_10 // ONLINE</span>
+        <span class="status-dot-accent status-dot-pulse" aria-hidden="true">●</span>
+        <span data-i18n="onlineStatus">coodz_10 · online</span>
       </span>
     </div>
 
     <div class="nav-center desktop-only">
       <a href="#home" class="nav-link active" data-i18n="navHome">[ home ]</a>
-      <a href="#chi_sono" class="nav-link" data-i18n="navAbout">[ chi_sono ]</a>
+      <a href="#chi_sono" class="nav-link" data-i18n="navAbout">[ chi sono ]</a>
       <a href="#esperienze" class="nav-link" data-i18n="navExp">[ esperienze ]</a>
       <a href="#contatti" class="nav-link" data-i18n="navContact">[ contatti ]</a>
       <span id="nav-indicator" class="nav-indicator"></span>
     </div>
 
     <div class="nav-right">
-      <button id="lang-toggle-btn" class="btn btn--chip nav-btn" aria-label="Cambia Lingua">[ EN ]</button>
+      <button id="lang-toggle-btn" class="btn btn--chip nav-btn" aria-label="Cambia lingua">[ EN ]</button>
 
-      <button id="mute-btn" class="btn btn--chip nav-btn audio-toggle-btn" aria-label="Disattiva Musica" title="Musica">
+      <button id="mute-btn" class="btn btn--chip nav-btn audio-toggle-btn" aria-label="Disattiva musica" title="Musica">
         <span class="eq-icon" aria-hidden="true">
           <span class="eq-bar"></span>
           <span class="eq-bar"></span>
@@ -114,46 +111,37 @@
         <span class="audio-label-mobile">[ ON ]</span>
       </button>
 
-      <button id="audio-skip-btn" class="btn btn--chip nav-btn skip-btn mono" aria-label="Brano successivo" data-i18n="audioSkip">[ ⏭ ]</button>
+      <button id="audio-skip-btn" class="btn btn--chip nav-btn skip-btn mono" aria-label="Brano successivo" data-i18n="audioSkip">[ >> ]</button>
 
       <button id="menu-toggle-btn" class="btn btn--chip nav-btn mobile-only menu-btn" aria-label="Menu" tabindex="-1" aria-hidden="true">[ ☰ ]</button>
     </div>
   </nav>
 
-  <!-- Mobile Fullscreen Menu Overlay -->
   <div id="mobile-menu" class="mobile-menu mono">
     <div class="mobile-menu-links">
       <a href="#home" class="mobile-link" data-i18n="navHome">[ home ]</a>
-      <a href="#chi_sono" class="mobile-link" data-i18n="navAbout">[ chi_sono ]</a>
+      <a href="#chi_sono" class="mobile-link" data-i18n="navAbout">[ chi sono ]</a>
       <a href="#esperienze" class="mobile-link" data-i18n="navExp">[ esperienze ]</a>
       <a href="#contatti" class="mobile-link" data-i18n="navContact">[ contatti ]</a>
     </div>
   </div>
 
-  <!-- SCROLL CONTAINER WITH SCROLL-SNAP-TYPE: Y MANDATORY -->
   <div id="scroll-container" class="scroll-container">
 
-    <!-- ======================================================================
-         SECTION 1: HOME
-         ====================================================================== -->
     <section id="home" class="snap-section section-home">
       <div class="home-grid">
-        <!-- Avatar Slot above title -->
         <div class="avatar-slot home-avatar-slot" aria-hidden="true"></div>
 
-        <!-- Title coodz_10 centered by INK/visual center -->
         <h1 id="hero-title" class="hero-title" aria-label="coodz_10">
           <span class="ch">c</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">z</span><span class="ch">_</span><span class="ch">1</span><span class="ch">0</span>
         </h1>
 
-        <!-- Subtitle centered by INK center -->
         <div class="hero-subtitle-wrap mono">
           <span class="sub-line sub-line-left" aria-hidden="true"></span>
           <span class="hero-subtitle">MINECRAFT SCREENSHARER</span>
           <span class="sub-line sub-line-right" aria-hidden="true"></span>
         </div>
 
-        <!-- Bottom Actions: Bracket buttons and scroll line -->
         <div class="home-bottom-actions mono">
           <div class="home-buttons-row">
             <a href="#chi_sono" class="btn btn--primary mono" data-i18n="btnAbout">[ CHI SONO ]</a>
@@ -166,31 +154,23 @@
       </div>
     </section>
 
-    <!-- ======================================================================
-         SECTION 2: CHI_SONO (ABOUT ME)
-         Symmetric 3-column CSS Grid: Left column (lead + 01) | Slot | Right column (02 + 03)
-         ====================================================================== -->
     <section id="chi_sono" class="snap-section section-about">
       <div class="section-block about-block">
 
-        <!-- Header: Centered above middle column (6vh to 24vh) -->
         <header class="section-head section-head--center about-head">
-          <span class="section-head__tag mono" data-i18n="aboutTag">LOG_ENTRY_01 // CHI_SONO</span>
-          <h2 class="section-head__title" data-i18n="aboutTitle">Chi Sono</h2>
+          <span class="section-head__tag mono" data-i18n="aboutTag">01 · chi sono</span>
+          <h2 class="section-head__title" data-i18n="aboutTitle">Chi sono</h2>
 
-          <!-- Single mono metadata line under title -->
           <div class="about-meta mono">
-            <span class="meta-item"><span class="meta-label" data-i18n="aboutHandleLabel">HANDLE:</span> <span class="meta-val">coodz_10</span></span>
-            <span class="meta-sep">·</span>
-            <span class="meta-item"><span class="meta-label" data-i18n="aboutRoleLabel">RUOLO:</span> <span class="meta-val" data-i18n="aboutRoleVal">SysAdmin · Security</span></span>
-            <span class="meta-sep">·</span>
-            <span class="meta-item meta-status"><span class="status-dot-accent">●</span> <span class="meta-label" data-i18n="aboutStatusLabel">STATO:</span> <span class="meta-val" data-i18n="aboutStatusVal">OPERATIVO</span></span>
+            <span class="meta-item"><span class="meta-label" data-i18n="aboutHandleLabel">handle</span> <span class="meta-val">coodz_10</span></span>
+            <span class="meta-sep" aria-hidden="true">·</span>
+            <span class="meta-item"><span class="meta-label" data-i18n="aboutRoleLabel">ruolo</span> <span class="meta-val" data-i18n="aboutRoleVal">sysadmin · security</span></span>
+            <span class="meta-sep" aria-hidden="true">·</span>
+            <span class="meta-item meta-status"><span class="meta-label" data-i18n="aboutStatusLabel">stato</span> <span class="status-dot-accent" aria-hidden="true">●</span> <span class="meta-val" data-i18n="aboutStatusVal">operativo</span></span>
           </div>
         </header>
 
-        <!-- Symmetric 3-column Grid: Left column | Avatar Slot | Right column -->
         <div class="about-grid">
-          <!-- LEFT column: lead paragraph + item 01 -->
           <div class="about-col about-col--left">
             <p class="lead" data-i18n="aboutIntro">
               Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.
@@ -205,10 +185,8 @@
             </div>
           </div>
 
-          <!-- MIDDLE column: Avatar Slot -->
           <div class="avatar-slot about-avatar-slot" aria-hidden="true"></div>
 
-          <!-- RIGHT column: item 02 + item 03 -->
           <div class="about-col about-col--right">
             <div class="about-item">
               <div class="about-item__header mono">
@@ -233,136 +211,117 @@
       </div>
     </section>
 
-    <!-- ======================================================================
-         SECTION 3: ESPERIENZE (EXPERIENCES)
-         CSS Grid: [Slot column 36vw | gutter | List column]
-         Header centered above the slot column and fully visible (never covered).
-         Minecraft servers ALWAYS FIRST per AGENTS.md Rule 1.
-         ====================================================================== -->
     <section id="esperienze" class="snap-section section-experiences">
       <div class="section-block experiences-block">
 
-        <!-- Left Column: Header centered above slot column + Avatar Slot below -->
         <div class="experiences-head-col">
           <header class="section-head section-head--center exp-head">
-            <span class="section-head__tag mono" data-i18n="expTag">LOG_ENTRY_02 // ESPERIENZE</span>
+            <span class="section-head__tag mono" data-i18n="expTag">02 · esperienze</span>
             <h2 class="section-head__title" data-i18n="expTitle">Esperienze</h2>
           </header>
-          <!-- Avatar Slot directly under header in left column -->
           <div class="avatar-slot exp-avatar-slot" aria-hidden="true"></div>
         </div>
 
-        <!-- Right Column: Filter Tabs + Experience List / Detail View -->
         <div class="experiences-content-col">
-          <!-- Cards List View -->
           <div id="experiences-cards-view" class="experiences-view experiences-cards-view">
-            <!-- Category Filter Tabs (Plain mono text tabs, animated underline, no boxes) -->
             <div class="exp-category-tabs mono">
               <button type="button" class="filter-tab active cursor-pointer" data-filter="all" data-i18n="expTabAll">[ TUTTO ]</button>
               <button type="button" class="filter-tab cursor-pointer" data-filter="minecraft" data-i18n="expCatMinecraft">[ MINECRAFT ]</button>
               <button type="button" class="filter-tab cursor-pointer" data-filter="ds" data-i18n="expCatDiscord">[ DISCORD ]</button>
             </div>
 
-            <!-- GROUP 1: MINECRAFT (Rule 1: Minecraft servers ALWAYS FIRST) -->
             <div class="exp-group" data-category="minecraft">
               <div class="exp-group-header mono">
-                <span class="exp-group-tag" data-i18n="expGroupMinecraft">[ MINECRAFT ]</span>
+                <span class="exp-group-tag" data-i18n="expGroupMinecraft">MINECRAFT</span>
               </div>
               <div class="cards-list">
-                <!-- Card 01: RedisMC -->
                 <a href="#esperienze/redismc" class="row-link card-minimal" data-exp="redismc">
                   <div class="row-link__left">
                     <span class="row-link__index mono">01</span>
-                    <div>
+                    <div class="row-link__meta">
                       <h2 class="row-link__title">RedisMC</h2>
                       <p class="row-link__sub mono" data-i18n="expRedisRole">Helper</p>
                     </div>
                   </div>
                   <div class="row-link__right mono">
-                    <span class="status-indicator-tag status--active"><span class="status-dot-accent">●</span> <span data-i18n="expRedisStatus">ATTIVO</span></span>
+                    <span class="status-indicator-tag status--active"><span class="status-dot-accent" aria-hidden="true">●</span> <span data-i18n="expRedisStatus">attivo</span></span>
                     <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
                   </div>
                 </a>
 
-                <!-- Card 02: MetaMc -->
                 <a href="#esperienze/metamc" class="row-link card-minimal" data-exp="metamc">
                   <div class="row-link__left">
                     <span class="row-link__index mono">02</span>
-                    <div>
+                    <div class="row-link__meta">
                       <h2 class="row-link__title">MetaMc</h2>
                       <p class="row-link__sub mono" data-i18n="expMetaRole">Helper ★★★★☆</p>
                     </div>
                   </div>
                   <div class="row-link__right mono">
-                    <span class="status-indicator-tag status--dimesso"><span class="status-dot-muted">○</span> <span data-i18n="expMetaStatus">DIMESSO</span></span>
+                    <span class="status-indicator-tag status--dimesso"><span class="status-dot-muted" aria-hidden="true">○</span> <span data-i18n="expMetaStatus">dimesso</span></span>
                     <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
                   </div>
                 </a>
 
-                <!-- Card 03: PixyMC -->
                 <a href="#esperienze/pixymc" class="row-link card-minimal" data-exp="pixymc">
                   <div class="row-link__left">
                     <span class="row-link__index mono">03</span>
-                    <div>
+                    <div class="row-link__meta">
                       <h2 class="row-link__title">PixyMC</h2>
-                      <p class="row-link__sub mono" data-i18n="expPixyRole">Owner [ SS Manager ] ★★★★☆</p>
+                      <p class="row-link__sub mono" data-i18n="expPixyRole">Owner · SS Manager ★★★★☆</p>
                     </div>
                   </div>
                   <div class="row-link__right mono">
-                    <span class="status-indicator-tag status--dimesso"><span class="status-dot-muted">○</span> <span data-i18n="expPixyStatus">DIMESSO</span></span>
+                    <span class="status-indicator-tag status--dimesso"><span class="status-dot-muted" aria-hidden="true">○</span> <span data-i18n="expPixyStatus">dimesso</span></span>
                     <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
                   </div>
                 </a>
               </div>
             </div>
 
-            <!-- GROUP 2: DISCORD (DS) -->
             <div class="exp-group" data-category="ds">
               <div class="exp-group-header mono">
-                <span class="exp-group-tag" data-i18n="expGroupDiscord">[ DISCORD // DS ]</span>
+                <span class="exp-group-tag" data-i18n="expGroupDiscord">DISCORD · DS</span>
               </div>
               <div class="cards-list">
-                <!-- Card 01: Elysian Tierlist -->
                 <a href="#esperienze/elysian" class="row-link card-minimal" data-exp="elysian">
                   <div class="row-link__left">
                     <span class="row-link__index mono">01</span>
-                    <div>
+                    <div class="row-link__meta">
                       <h2 class="row-link__title">Elysian Tierlist</h2>
                       <p class="row-link__sub mono" data-i18n="expElysianRole">SS Verified</p>
                     </div>
                   </div>
                   <div class="row-link__right mono">
-                    <span class="status-indicator-tag status--active"><span class="status-dot-accent">●</span> <span data-i18n="expElysianStatus">ATTIVO</span></span>
+                    <span class="status-indicator-tag status--active"><span class="status-dot-accent" aria-hidden="true">●</span> <span data-i18n="expElysianStatus">attivo</span></span>
                     <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
                   </div>
                 </a>
 
-                <!-- Card 02: ScreenShare Syndicate -->
                 <a href="#esperienze/syndicate" class="row-link card-minimal" data-exp="syndicate">
                   <div class="row-link__left">
                     <span class="row-link__index mono">02</span>
-                    <div>
+                    <div class="row-link__meta">
                       <h2 class="row-link__title">ScreenShare Syndicate</h2>
                       <p class="row-link__sub mono" data-i18n="expSyndicateRole">Support Team</p>
                     </div>
                   </div>
                   <div class="row-link__right mono">
-                    <span class="status-indicator-tag status--active"><span class="status-dot-accent">●</span> <span data-i18n="expSyndicateStatus">ATTIVO</span></span>
+                    <span class="status-indicator-tag status--active"><span class="status-dot-accent" aria-hidden="true">●</span> <span data-i18n="expSyndicateStatus">attivo</span></span>
                     <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
                   </div>
                 </a>
 
-                <!-- Card 03: MeowTools & Community -->
                 <a href="#esperienze/meowtools" class="row-link card-minimal" data-exp="meowtools">
                   <div class="row-link__left">
                     <span class="row-link__index mono">03</span>
-                    <div>
+                    <div class="row-link__meta">
                       <h2 class="row-link__title">MeowTools &amp; Community</h2>
-                      <p class="row-link__sub mono" data-i18n="expMeowtoolsRole">[ In Lavorazione ]</p>
+                      <p class="row-link__sub mono" data-i18n="expMeowtoolsRole">in lavorazione</p>
                     </div>
                   </div>
                   <div class="row-link__right mono">
-                    <span class="status-indicator-tag status--active"><span class="status-dot-accent">●</span> <span data-i18n="expMeowtoolsStatus">ATTIVO</span></span>
+                    <span class="status-indicator-tag status--active"><span class="status-dot-accent" aria-hidden="true">●</span> <span data-i18n="expMeowtoolsStatus">attivo</span></span>
                     <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
                   </div>
                 </a>
@@ -370,82 +329,77 @@
             </div>
           </div>
 
-          <!-- Experience Detail View (Dynamic in-page presentation) -->
           <div id="experience-detail-view" class="experiences-view experience-detail-view view-hidden" style="display: none;" aria-hidden="true"></div>
         </div>
 
       </div>
     </section>
 
-    <!-- ======================================================================
-         SECTION 4: CONTATTI (CONTACT)
-         A single centered column (max-width 560px, margin-inline auto) with grid rows:
-         Header -> Avatar Slot (min-height 24vh) -> Rows -> Footer line.
-         ====================================================================== -->
     <section id="contatti" class="snap-section section-contact">
       <div class="section-block contact-block">
         <header class="section-head section-head--center contact-head">
-          <span class="section-head__tag mono" data-i18n="contactTag">LOG_ENTRY_03 // CONTATTI</span>
+          <span class="section-head__tag mono" data-i18n="contactTag">03 · contatti</span>
           <h2 class="section-head__title" data-i18n="contactTitle">Parliamo</h2>
-          <p class="contact-sub mono" data-i18n="contactSub">
+          <p class="contact-sub" data-i18n="contactSub">
             Per collaborazioni, richieste di servizi o investigazioni di sicurezza.
           </p>
         </header>
 
-        <!-- Avatar Slot in center between header and rows -->
         <div class="avatar-slot contact-avatar-slot" aria-hidden="true"></div>
 
-        <!-- 3 Contact Rows (max-width 560px, centered) -->
         <div class="contact-rows-wrap">
-          <!-- Discord -->
-          <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="contact-row">
-            <span class="contact-row__name">Discord // @coodz_10</span>
-            <span class="contact-row__arrow" aria-hidden="true">&rarr;</span>
+          <a href="https://discord.com/users/951554850867519548" target="_blank" rel="noopener noreferrer" class="row-link contact-row">
+            <div class="row-link__left">
+              <span class="row-link__title">Discord</span>
+            </div>
+            <div class="row-link__right mono">
+              <span class="row-link__handle">@coodz_10</span>
+              <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
+            </div>
           </a>
 
-          <!-- GitHub -->
-          <a href="https://github.com/coodz10" target="_blank" rel="noopener noreferrer" class="contact-row">
-            <span class="contact-row__name">GitHub // coodz10</span>
-            <span class="contact-row__arrow" aria-hidden="true">&rarr;</span>
+          <a href="https://github.com/coodz10" target="_blank" rel="noopener noreferrer" class="row-link contact-row">
+            <div class="row-link__left">
+              <span class="row-link__title">GitHub</span>
+            </div>
+            <div class="row-link__right mono">
+              <span class="row-link__handle">coodz10</span>
+              <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
+            </div>
           </a>
 
-          <!-- Email -->
-          <a href="mailto:cood_ita@zohomail.eu" class="contact-row">
-            <span class="contact-row__name">Email // cood_ita@zohomail.eu</span>
-            <span class="contact-row__arrow" aria-hidden="true">&rarr;</span>
+          <a href="mailto:cood_ita@zohomail.eu" class="row-link contact-row">
+            <div class="row-link__left">
+              <span class="row-link__title">Email</span>
+            </div>
+            <div class="row-link__right mono">
+              <span class="row-link__handle" title="cood_ita@zohomail.eu">cood_ita@zohomail.eu</span>
+              <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
+            </div>
           </a>
         </div>
 
-        <!-- Footer Line -->
-        <footer class="footer-line mono" data-i18n="footerEnd">
-          END_TRANSMISSION // COODZ_10
-        </footer>
+        <footer class="footer-line mono" data-i18n="footerEnd">coodz_10 · 2026</footer>
       </div>
     </section>
 
-  </div><!-- /scroll-container -->
+  </div>
 
-  <!-- Cyberpunk Minimal Proofs Modal -->
   <div id="proofs-modal" class="proofs-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display: none;">
     <div class="proofs-backdrop"></div>
     <div class="proofs-card mono">
       <div class="proofs-header">
-        <h3 id="proofs-modal-title" class="proofs-title">[ Link e Prove ]</h3>
-        <button id="proofs-modal-close" class="btn btn--secondary cursor-pointer" aria-label="Chiudi">[ × ] CHIUDI</button>
+        <h3 id="proofs-modal-title" class="proofs-title">Link e prove</h3>
+        <button id="proofs-modal-close" class="btn btn--secondary cursor-pointer" aria-label="Chiudi" data-i18n="proofsClose">[ chiudi ]</button>
       </div>
-      <div id="proofs-modal-links" class="proofs-links-list">
-        <!-- Injected dynamically -->
-      </div>
+      <div id="proofs-modal-links" class="proofs-links-list"></div>
     </div>
   </div>
 
-  <!-- Audio Element with playlist wired in main.js -->
   <audio id="bg-audio" preload="auto"></audio>
 
-  <!-- Avatar Rig & Director Engines -->
   <script defer src="avatar-rig.js"></script>
   <script defer src="avatar-director.js"></script>
-  <!-- Application Engine -->
   <script defer src="main.js"></script>
 </body>
 

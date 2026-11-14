@@ -1,21 +1,11 @@
-// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
-
-/**
- * ============================================================================
- * PORTFOLIO COODZ_10 - STEP 2 & 3 ENGINE
- * Ultra-minimal "Incoming Transmission" with 3D Avatar State Machine & In-Page Experience Details
- * ============================================================================
- */
+console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su discord: coodz_10');
 
 (function () {
   'use strict';
 
-  // ==========================================================================
-  // CONFIGURATION CONSTANTS (All tunable values)
-  // ==========================================================================
   const CONFIG = {
     SKIN_URL: 'assets/skin.png',
-    bg: '#03040a',
+    bg: '#05060f',
     text: '#e8eaff',
     muted: '#7c83a8',
 
@@ -25,7 +15,7 @@
     AVATAR_Y_OFFSET: -25,      // Vertical stage nudge in px (top of head ~10vh, feet ~84vh)
     AVATAR_BASE_HEIGHT_PX_AT_ZOOM: 0, // Visual height of avatar at scale 1 (measured once via 3D bounding box)
     BG_WORD_WIDTH_VW: 88,      // Target width in vw for fitted giant background word
-    BG_WORD_OPACITY: 1.0,      // Opacity multiplier for stroke-only giant background word
+    BG_WORD_OPACITY: 0.22,
 
     // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180° to back)
     ROT_OFFSET: 0,             // Rotation offset (0 = face toward camera; Math.PI = back)
@@ -36,7 +26,7 @@
     // Lighting & Emissive Luminous Skin (Dark navy black texels, vivid blues)
     GLOBAL_LIGHT: 5.5,         // Global ambient light intensity
     CAMERA_LIGHT: 2.8,         // Directional camera light intensity
-    AVATAR_EMISSIVE: '#182442', // Rich midnight navy emissive so pure black texels read deep charcoal/navy, blues stay vivid
+    AVATAR_EMISSIVE: '#0b1536',
     AVATAR_EMISSIVE_INTENSITY: 1.0, // Emissive intensity in 3D materials
     AURA: 1.0,                 // Aura drop-shadow strength (0 to 1)
 
@@ -103,7 +93,7 @@
   const TRANSLATIONS = {
     it: {
       gateText: 'ENTRA',
-      audioSkip: '[ ⏭ ]',
+      audioSkip: '[ >> ]',
       musicOn: '[ MUSICA ON ]',
       musicOff: '[ MUSICA OFF ]',
       musicOnShort: '[ ON ]',
@@ -111,18 +101,18 @@
       musicAriaMute: 'Disattiva Musica',
       musicAriaUnmute: 'Attiva Musica',
       navHome: '[ home ]',
-      navAbout: '[ chi_sono ]',
+      navAbout: '[ chi sono ]',
       navExp: '[ esperienze ]',
       navContact: '[ contatti ]',
-      onlineStatus: 'coodz_10 // ONLINE',
+      onlineStatus: 'coodz_10 · online',
       scrollHint: '[ SCROLL ]',
-      aboutTag: 'LOG_ENTRY_01 // CHI_SONO',
-      aboutTitle: 'Chi Sono',
-      aboutHandleLabel: 'HANDLE:',
-      aboutRoleLabel: 'RUOLO:',
-      aboutRoleVal: 'SysAdmin · Security',
-      aboutStatusLabel: 'STATO:',
-      aboutStatusVal: 'OPERATIVO',
+      aboutTag: '01 · chi sono',
+      aboutTitle: 'Chi sono',
+      aboutHandleLabel: 'handle',
+      aboutRoleLabel: 'ruolo',
+      aboutRoleVal: 'sysadmin · security',
+      aboutStatusLabel: 'stato',
+      aboutStatusVal: 'operativo',
       aboutIntro: "Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.",
       aboutPillarTitle1: 'SOFTWARE & SICUREZZA',
       aboutPillarDesc1: "Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.",
@@ -130,32 +120,33 @@
       aboutPillarDesc2: "Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.",
       aboutPillarTitle3: 'HARDWARE & CUSTOM PC',
       aboutPillarDesc3: "Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.",
-      expTag: 'LOG_ENTRY_02 // ESPERIENZE',
+      expTag: '02 · esperienze',
       expTitle: 'Esperienze',
       expTabAll: '[ TUTTO ]',
       expCatMinecraft: '[ MINECRAFT ]',
       expCatDiscord: '[ DISCORD ]',
-      expGroupMinecraft: '[ MINECRAFT ]',
-      expGroupDiscord: '[ DISCORD // DS ]',
+      expGroupMinecraft: 'MINECRAFT',
+      expGroupDiscord: 'DISCORD · DS',
       expRedisRole: 'Helper',
-      expRedisStatus: 'ATTIVO',
+      expRedisStatus: 'attivo',
       expElysianRole: 'SS Verified',
-      expElysianStatus: 'ATTIVO',
+      expElysianStatus: 'attivo',
       expSyndicateRole: 'Support Team',
-      expSyndicateStatus: 'ATTIVO',
-      expMeowtoolsRole: '[ In Lavorazione ]',
-      expMeowtoolsStatus: 'ATTIVO',
+      expSyndicateStatus: 'attivo',
+      expMeowtoolsRole: 'in lavorazione',
+      expMeowtoolsStatus: 'attivo',
       expMetaRole: 'Helper ★★★★☆',
-      expMetaStatus: 'DIMESSO',
-      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
-      expPixyStatus: 'DIMESSO',
-      contactTag: 'LOG_ENTRY_03 // CONTATTI',
+      expMetaStatus: 'dimesso',
+      expPixyRole: 'Owner · SS Manager ★★★★☆',
+      expPixyStatus: 'dimesso',
+      contactTag: '03 · contatti',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
-      footerEnd: 'END_TRANSMISSION // COODZ_10',
+      footerEnd: 'coodz_10 · 2026',
       backToExperiences: '[ ← torna alle esperienze ]',
       openProofs: '[ APRI PROVE ]',
-      proofsTitle: 'Link e Prove',
+      proofsTitle: 'Link e prove',
+      proofsClose: '[ chiudi ]',
       btnAbout: '[ CHI SONO ]',
       btnExp: '[ LE MIE ESPERIENZE ]',
       bgWordAbout: 'CHI SONO',
@@ -164,7 +155,7 @@
     },
     en: {
       gateText: 'ENTER',
-      audioSkip: '[ ⏭ ]',
+      audioSkip: '[ >> ]',
       musicOn: '[ MUSIC ON ]',
       musicOff: '[ MUSIC OFF ]',
       musicOnShort: '[ ON ]',
@@ -172,18 +163,18 @@
       musicAriaMute: 'Mute Music',
       musicAriaUnmute: 'Unmute Music',
       navHome: '[ home ]',
-      navAbout: '[ about_me ]',
-      navExp: '[ experiences ]',
+      navAbout: '[ about me ]',
+      navExp: '[ experience ]',
       navContact: '[ contact ]',
-      onlineStatus: 'coodz_10 // ONLINE',
+      onlineStatus: 'coodz_10 · online',
       scrollHint: '[ SCROLL ]',
-      aboutTag: 'LOG_ENTRY_01 // ABOUT_ME',
-      aboutTitle: 'About Me',
-      aboutHandleLabel: 'HANDLE:',
-      aboutRoleLabel: 'ROLE:',
-      aboutRoleVal: 'SysAdmin · Security',
-      aboutStatusLabel: 'STATUS:',
-      aboutStatusVal: 'OPERATIONAL',
+      aboutTag: '01 · about',
+      aboutTitle: 'About me',
+      aboutHandleLabel: 'handle',
+      aboutRoleLabel: 'role',
+      aboutRoleVal: 'sysadmin · security',
+      aboutStatusLabel: 'status',
+      aboutStatusVal: 'operational',
       aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
       aboutPillarTitle1: 'SOFTWARE & SECURITY',
       aboutPillarDesc1: "On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.",
@@ -191,34 +182,35 @@
       aboutPillarDesc2: "In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.",
       aboutPillarTitle3: 'HARDWARE & CUSTOM PC',
       aboutPillarDesc3: "On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.",
-      expTag: 'LOG_ENTRY_02 // EXPERIENCES',
-      expTitle: 'Experiences',
+      expTag: '02 · experience',
+      expTitle: 'Experience',
       expTabAll: '[ ALL ]',
       expCatMinecraft: '[ MINECRAFT ]',
       expCatDiscord: '[ DISCORD ]',
-      expGroupMinecraft: '[ MINECRAFT ]',
-      expGroupDiscord: '[ DISCORD // DS ]',
+      expGroupMinecraft: 'MINECRAFT',
+      expGroupDiscord: 'DISCORD · DS',
       expRedisRole: 'Helper',
-      expRedisStatus: 'ACTIVE',
+      expRedisStatus: 'active',
       expElysianRole: 'SS Verified',
-      expElysianStatus: 'ACTIVE',
+      expElysianStatus: 'active',
       expSyndicateRole: 'Support Team',
-      expSyndicateStatus: 'ACTIVE',
-      expMeowtoolsRole: '[ In Progress ]',
-      expMeowtoolsStatus: 'ACTIVE',
+      expSyndicateStatus: 'active',
+      expMeowtoolsRole: 'in progress',
+      expMeowtoolsStatus: 'active',
       expMetaRole: 'Helper ★★★★☆',
-      expMetaStatus: 'RESIGNED',
-      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
-      expPixyStatus: 'RESIGNED',
-      contactTag: 'LOG_ENTRY_03 // CONTACT',
-      contactTitle: "Let's Talk",
+      expMetaStatus: 'resigned',
+      expPixyRole: 'Owner · SS Manager ★★★★☆',
+      expPixyStatus: 'resigned',
+      contactTag: '03 · contact',
+      contactTitle: "Let's talk",
       contactSub: 'For collaborations, service requests or security investigations.',
-      footerEnd: 'END_TRANSMISSION // COODZ_10',
-      backToExperiences: '[ ← back to experiences ]',
+      footerEnd: 'coodz_10 · 2026',
+      backToExperiences: '[ ← back to experience ]',
       openProofs: '[ OPEN PROOFS ]',
-      proofsTitle: 'Links & Proofs',
+      proofsTitle: 'Links & proofs',
+      proofsClose: '[ close ]',
       btnAbout: '[ ABOUT ME ]',
-      btnExp: '[ MY EXPERIENCES ]',
+      btnExp: '[ MY EXPERIENCE ]',
       bgWordAbout: 'ABOUT',
       bgWordExp: 'EXPERIENCE',
       bgWordContact: 'CONTACT'
@@ -226,9 +218,6 @@
   };
   window.CONFIG = CONFIG;
 
-  // ==========================================================================
-  // COMPLETE EXPERIENCE DETAILS (Ported exactly from servers/*.html)
-  // ==========================================================================
   const EXPERIENCE_DETAILS = {
     redismc: {
       index: '01',
@@ -236,10 +225,10 @@
       category: 'minecraft',
       role: { it: 'Helper', en: 'Helper' },
       stars: '',
-      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
-      period: { it: '[ Periodo: Ottobre 2026 - ]', en: '[ Period: October 2026 - ]' },
+      status: { it: 'attivo', en: 'active' },
+      period: { it: 'ottobre 2026 -', en: 'october 2026 -' },
       inProgress: true,
-      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
@@ -254,8 +243,8 @@
       category: 'minecraft',
       role: { it: 'Helper', en: 'Helper' },
       stars: '★★★★☆',
-      status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
-      period: { it: '[ Periodo: Agosto - Settembre 2026 ]', en: '[ Period: August - September 2026 ]' },
+      status: { it: 'dimesso', en: 'resigned' },
+      period: { it: 'agosto - settembre 2026', en: 'august - september 2026' },
       experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
       experienceParagraphs: {
         it: [
@@ -296,10 +285,10 @@
       index: '03',
       title: 'PixyMC',
       category: 'minecraft',
-      role: { it: 'Owner [ SS Manager ]', en: 'Owner [ SS Manager ]' },
+      role: { it: 'Owner · SS Manager', en: 'Owner · SS Manager' },
       stars: '★★★★☆',
-      status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
-      period: { it: '[ Periodo: Agosto 2025 - Luglio 2026 ]', en: '[ Period: August 2025 - July 2026 ]' },
+      status: { it: 'dimesso', en: 'resigned' },
+      period: { it: 'agosto 2025 - luglio 2026', en: 'august 2025 - july 2026' },
       experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
       experienceParagraphs: {
         it: [
@@ -339,10 +328,10 @@
       category: 'ds',
       role: { it: 'SS Verified', en: 'SS Verified' },
       stars: '',
-      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
-      period: { it: '[ Periodo: Ottobre 2026 - ]', en: '[ Period: October 2026 - ]' },
+      status: { it: 'attivo', en: 'active' },
+      period: { it: 'ottobre 2026 -', en: 'october 2026 -' },
       inProgress: true,
-      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
@@ -357,10 +346,10 @@
       category: 'ds',
       role: { it: 'Support Team', en: 'Support Team' },
       stars: '',
-      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
-      period: { it: '[ Periodo: 2026 - ]', en: '[ Period: 2026 - ]' },
+      status: { it: 'attivo', en: 'active' },
+      period: { it: '2026 -', en: '2026 -' },
       inProgress: true,
-      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
@@ -371,12 +360,12 @@
       index: '03',
       title: 'MeowTools & Community',
       category: 'ds',
-      role: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      role: { it: 'in lavorazione', en: 'in progress' },
       stars: '',
-      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
-      period: { it: '[ Periodo: In Corso ]', en: '[ Period: Ongoing ]' },
+      status: { it: 'attivo', en: 'active' },
+      period: { it: 'in corso', en: 'ongoing' },
       inProgress: true,
-      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
@@ -531,9 +520,6 @@
     window.AvatarRig.setQualityTier(qualityTier);
   }
 
-  // ==========================================================================
-  // ZERO-GRAVITY POSES REFERENCE (Delegates to window.AvatarRig)
-  // ==========================================================================
   const POSES = (typeof window !== 'undefined' && window.AvatarRig && window.AvatarRig.POSES)
     ? window.AvatarRig.POSES
     : {};
@@ -809,16 +795,10 @@
     }, delay);
   }
 
-  // ==========================================================================
-  // AVATAR ANIMATION ENGINE (Delegates to window.AvatarRig.RigAnimation)
-  // ==========================================================================
   const FloatAnimation = (typeof window !== 'undefined' && window.AvatarRig && window.AvatarRig.RigAnimation)
     ? window.AvatarRig.RigAnimation
     : class { };
 
-  // ==========================================================================
-  // TITLE & SUBTITLE DECRYPT EFFECT (Random glyphs resolving left to right)
-  // ==========================================================================
   function decryptTitle(el, targetText, duration) {
     if (!el) return;
     const chars = '01!<>-_/[]{}*#+=';
@@ -871,9 +851,6 @@
     requestAnimationFrame(update);
   }
 
-  // ==========================================================================
-  // TITLE HOVER RE-SCRAMBLE (Scrambles glyphs on hover)
-  // ==========================================================================
   function initTitleHoverScramble() {
     const titleEl = document.getElementById('hero-title');
     if (!titleEl) return;
@@ -904,9 +881,6 @@
     });
   }
 
-  // ==========================================================================
-  // 1. GATE & INTRO SEQUENCE (INTRO V2: Avatar writes the name 'coodz_10')
-  // ==========================================================================
   let isIntroActive = false;
   let introCancelRequested = false;
   let introRafId = null;
@@ -1137,7 +1111,7 @@
             updateMuteBtnState();
           }).catch((err) => {
             audioLastError = err ? (err.message || String(err)) : 'gate play rejected';
-            console.warn('[Audio] play rejected at gate:', err);
+            if (window.AvatarDebug) console.warn('[Audio] play rejected at gate:', err);
             audioNeedsRetry = true;
             attachAudioRetryListener();
           });
@@ -1218,13 +1192,11 @@
         }
       }, 100);
 
-      // Wait for fonts to be ready before reading text metrics
-      const fontsReady = (document.fonts && document.fonts.ready)
-        ? Promise.race([document.fonts.ready, new Promise((res) => setTimeout(res, 1200))])
-        : Promise.resolve();
+      const fontsReady = waitForSiteFonts();
 
       fontsReady.then(() => {
         if (!isIntroActive || introCancelRequested) return;
+        fitHeroTitle();
 
         try {
           if (!introCanvas || spans.length < 8) {
@@ -1264,7 +1236,7 @@
 
           // Get computed typography
           const titleStyle = window.getComputedStyle(titleEl);
-          const fontFamily = titleStyle.fontFamily || "'Space Grotesk', sans-serif";
+          const fontFamily = titleStyle.fontFamily || "'Bricolage Grotesque', system-ui, sans-serif";
           const fontWeight = titleStyle.fontWeight || '800';
           const fontStyle = titleStyle.fontStyle || 'normal';
           const computedFontSize = parseFloat(titleStyle.fontSize) || 96;
@@ -1383,9 +1355,8 @@
           const finalInkRight = Math.max(...letterData.map((l) => (l.inkRight !== undefined ? l.inkRight : (l.inkLeft || 0) + (l.inkWidth || 10))));
           const safeRight = (isFinite(finalInkRight) && finalInkRight > finalInkLeft) ? finalInkRight : (finalInkLeft + 100);
           const grad = offGlyphsCtx.createLinearGradient(isFinite(finalInkLeft) ? finalInkLeft : 0, 0, safeRight, 0);
-          grad.addColorStop(0, '#5ea8ff');
-          grad.addColorStop(0.5, '#8b6cff');
-          grad.addColorStop(1, '#c4b5ff');
+          grad.addColorStop(0, '#1d4ed8');
+          grad.addColorStop(1, '#7aa4ff');
           offGlyphsCtx.fillStyle = grad;
           letterData.forEach((ld) => {
             offGlyphsCtx.fillText(ld.char, ld.charX, ld.baselineY);
@@ -1942,7 +1913,7 @@
                   const progress = k / cometTrail.length;
                   const alpha = progress * 0.7;
                   const width = Math.max(1.5, penRadius * 0.7 * progress);
-                  introCtx.strokeStyle = `rgba(196, 181, 255, ${alpha.toFixed(3)})`;
+                  introCtx.strokeStyle = `rgba(122, 164, 255, ${alpha.toFixed(3)})`;
                   introCtx.lineWidth = width;
                   introCtx.lineCap = 'round';
                   introCtx.beginPath();
@@ -1955,17 +1926,17 @@
               // Glowing pen point
               const glowRadius = penRadius * 3.5;
               const glow = introCtx.createRadialGradient(activePenX, activePenY, 1, activePenX, activePenY, glowRadius);
-              glow.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-              glow.addColorStop(0.3, 'rgba(196, 181, 255, 0.85)');
-              glow.addColorStop(0.7, 'rgba(139, 108, 255, 0.35)');
-              glow.addColorStop(1, 'rgba(139, 108, 255, 0)');
+              glow.addColorStop(0, 'rgba(232, 234, 255, 0.95)');
+              glow.addColorStop(0.3, 'rgba(122, 164, 255, 0.85)');
+              glow.addColorStop(0.7, 'rgba(51, 115, 255, 0.35)');
+              glow.addColorStop(1, 'rgba(29, 78, 216, 0)');
               introCtx.fillStyle = glow;
               introCtx.beginPath();
               introCtx.arc(activePenX, activePenY, glowRadius, 0, Math.PI * 2);
               introCtx.fill();
 
               // Bright core dot
-              introCtx.fillStyle = '#ffffff';
+              introCtx.fillStyle = '#e8eaff';
               introCtx.beginPath();
               introCtx.arc(activePenX, activePenY, Math.max(2, penRadius * 0.45), 0, Math.PI * 2);
               introCtx.fill();
@@ -1993,7 +1964,7 @@
               if (sp.life <= 0) {
                 sparkles.splice(i, 1);
               } else {
-                introCtx.fillStyle = `rgba(225, 215, 255, ${(sp.life * 0.85).toFixed(3)})`;
+                introCtx.fillStyle = `rgba(122, 164, 255, ${(sp.life * 0.85).toFixed(3)})`;
                 introCtx.fillRect(sp.x - sp.size * 0.5, sp.y - sp.size * 0.5, sp.size, sp.size);
               }
             }
@@ -2002,7 +1973,7 @@
             if (debugShowIntroPoints) {
               introCtx.save();
               // 1. Viewport Center Lines
-              introCtx.strokeStyle = 'rgba(255, 255, 0, 0.45)';
+              introCtx.strokeStyle = 'rgba(122, 164, 255, 0.45)';
               introCtx.lineWidth = 1;
               introCtx.setLineDash([4, 4]);
               introCtx.beginPath();
@@ -2012,8 +1983,8 @@
               introCtx.lineTo(curVw, halfH);
               introCtx.stroke();
               introCtx.setLineDash([]);
-              introCtx.fillStyle = '#ffff00';
-              introCtx.font = '11px monospace';
+              introCtx.fillStyle = '#7aa4ff';
+              introCtx.font = '11px "Martian Mono", ui-monospace, monospace';
               introCtx.fillText('VIEWPORT CENTER (50vw, 50vh)', halfW + 6, halfH - 8);
 
               // 2. Ink bounds & Ink center
@@ -2023,37 +1994,37 @@
               const tInkBottom = Math.max(...letterData.map((l) => l.inkBottom));
               const midInkX = (tInkLeft + tInkRight) * 0.5;
 
-              introCtx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+              introCtx.strokeStyle = 'rgba(51, 115, 255, 0.6)';
               introCtx.strokeRect(tInkLeft, tInkTop, tInkRight - tInkLeft, tInkBottom - tInkTop);
-              introCtx.strokeStyle = '#00ff88';
+              introCtx.strokeStyle = '#3373ff';
               introCtx.beginPath();
               introCtx.moveTo(midInkX, tInkTop - 12);
               introCtx.lineTo(midInkX, tInkBottom + 12);
               introCtx.stroke();
-              introCtx.fillStyle = '#00ff88';
+              introCtx.fillStyle = '#3373ff';
               introCtx.fillText(`INK CENTER: ${midInkX.toFixed(1)}px (diff: ${(midInkX - halfW).toFixed(1)}px)`, tInkLeft, tInkTop - 14);
 
               letterData.forEach((ld) => {
-                introCtx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+                introCtx.strokeStyle = 'rgba(122, 164, 255, 0.3)';
                 introCtx.strokeRect(ld.inkLeft, ld.inkTop, ld.inkWidth, ld.inkHeight);
               });
 
               // 3. Target point
-              introCtx.fillStyle = '#ff8800';
+              introCtx.fillStyle = '#7aa4ff';
               introCtx.beginPath();
               introCtx.arc(targetPenX, targetPenY, 5, 0, Math.PI * 2);
               introCtx.fill();
               introCtx.fillText('TARGET', targetPenX + 8, targetPenY - 4);
 
               // 4. Computed fingertip
-              introCtx.fillStyle = '#ff00ff';
+              introCtx.fillStyle = '#e8eaff';
               introCtx.beginPath();
               introCtx.arc(activePenX, activePenY, 6, 0, Math.PI * 2);
               introCtx.fill();
               introCtx.fillText(`FINGERTIP [${CONFIG.PEN_ARM}] (tip=${CONFIG.ARM_TIP})`, activePenX + 8, activePenY + 12);
 
               // Line between target and fingertip
-              introCtx.strokeStyle = '#ff0055';
+              introCtx.strokeStyle = '#3373ff';
               introCtx.beginPath();
               introCtx.moveTo(activePenX, activePenY);
               introCtx.lineTo(targetPenX, targetPenY);
@@ -2063,12 +2034,12 @@
 
             if (debugShowWaypointsMask) {
               letterData.forEach((ld) => {
-                introCtx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+                introCtx.strokeStyle = 'rgba(122, 164, 255, 0.5)';
                 introCtx.lineWidth = 1;
                 introCtx.strokeRect(ld.inkLeft, ld.inkTop, ld.inkWidth, ld.inkHeight);
                 ld.strokes.forEach((st) => {
                   st.points.forEach((pt) => {
-                    introCtx.fillStyle = '#00ff88';
+                    introCtx.fillStyle = '#3373ff';
                     introCtx.beginPath();
                     introCtx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
                     introCtx.fill();
@@ -2082,19 +2053,16 @@
 
           introRafId = requestAnimationFrame(introTick);
         } catch (err) {
-          console.warn('[Intro V2] Initialization error, falling back to wipe:', err);
+          if (window.AvatarDebug) console.warn('[Intro V2] Initialization error, falling back to wipe:', err);
           runFallbackWipe();
         }
       }).catch((err) => {
-        console.warn('[Intro V2] Font load error, falling back to wipe:', err);
+        if (window.AvatarDebug) console.warn('[Intro V2] Font load error, falling back to wipe:', err);
         runFallbackWipe();
       });
     }
   }
 
-  // ==========================================================================
-  // VIEWPORT & LAYOUT CACHING
-  // ==========================================================================
   function updateCachedDimensions() {
     cachedWindowWidth = window.innerWidth;
     cachedWindowHeight = window.innerHeight;
@@ -2166,7 +2134,7 @@
         return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
       }
     } catch (e) {
-      console.warn('[Avatar] Failed to measure base height:', e);
+      if (window.AvatarDebug) console.warn('[Avatar] Failed to measure base height:', e);
     }
 
     CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM = window.innerHeight * (isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP) * 0.82;
@@ -2350,6 +2318,107 @@
 
   window.__applyBgWordOpacity = applyBgWordOpacity;
   window.__fitBgWords = fitBgWords;
+
+  function waitForSiteFonts() {
+    if (!document.fonts) return Promise.resolve();
+    const loads = [
+      document.fonts.load('800 100px "Bricolage Grotesque"'),
+      document.fonts.load('400 12px "Martian Mono"'),
+      document.fonts.ready
+    ];
+    return Promise.race([
+      Promise.all(loads),
+      new Promise((res) => setTimeout(res, 1500))
+    ]).catch(() => { });
+  }
+
+  function fitHeroTitle() {
+    const titleEl = document.getElementById('hero-title');
+    if (!titleEl) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const isMob = vw <= 768;
+    const targetWidth = vw * (isMob ? 0.86 : 0.68);
+    const prevTransform = titleEl.style.transform;
+
+    titleEl.style.transform = '';
+    titleEl.style.left = '';
+    titleEl.style.maxWidth = 'none';
+    titleEl.style.position = 'relative';
+    titleEl.style.fontSize = '100px';
+
+    const rect = titleEl.getBoundingClientRect();
+    const measuredW = Math.max(rect.width, titleEl.offsetWidth || 0, titleEl.scrollWidth || 0);
+    let fittedPx = 100;
+    if (measuredW > 0) {
+      fittedPx = (targetWidth / measuredW) * 100;
+      const maxByHeight = vh * (isMob ? 0.16 : 0.27);
+      const minPx = isMob ? 40 : 56;
+      const maxPx = Math.max(minPx, Math.min(isMob ? 110 : 275, maxByHeight));
+      fittedPx = Math.max(minPx, Math.min(maxPx, fittedPx));
+      titleEl.style.fontSize = `${fittedPx.toFixed(1)}px`;
+    }
+
+    const spans = Array.from(titleEl.querySelectorAll('.ch'));
+    if (spans.length > 0) {
+      const style = window.getComputedStyle(titleEl);
+      const c = document.createElement('canvas').getContext('2d');
+      if (c) {
+        const measureInkSpanRange = () => {
+          const curStyle = window.getComputedStyle(titleEl);
+          c.font = `${curStyle.fontStyle} ${curStyle.fontWeight} ${curStyle.fontSize} ${curStyle.fontFamily}`;
+          let minInk = Infinity;
+          let maxInk = -Infinity;
+          spans.forEach((sp) => {
+            const r = sp.getBoundingClientRect();
+            const m = c.measureText(sp.textContent.trim());
+            const al = m.actualBoundingBoxLeft !== undefined ? m.actualBoundingBoxLeft : 0;
+            const ar = m.actualBoundingBoxRight !== undefined ? m.actualBoundingBoxRight : r.width;
+            minInk = Math.min(minInk, r.left - al);
+            maxInk = Math.max(maxInk, r.left + ar);
+          });
+          return { minInk, maxInk };
+        };
+
+        let { minInk, maxInk } = measureInkSpanRange();
+        const inkW = maxInk - minInk;
+        if (isFinite(inkW) && inkW > targetWidth) {
+          fittedPx = fittedPx * (targetWidth / inkW);
+          titleEl.style.fontSize = `${fittedPx.toFixed(1)}px`;
+          ({ minInk, maxInk } = measureInkSpanRange());
+        }
+        if (isFinite(minInk) && isFinite(maxInk)) {
+          const corrX = (vw * 0.5) - ((minInk + maxInk) * 0.5);
+          if (Math.abs(corrX) > 0.25) {
+            titleEl.style.left = `${corrX.toFixed(2)}px`;
+          }
+        }
+      }
+    }
+
+    titleEl.style.transform = prevTransform;
+  }
+
+  function updateDocumentTitle(secId) {
+    const map = {
+      it: {
+        home: 'coodz_10 · minecraft screensharer',
+        chi_sono: 'coodz_10 · chi sono',
+        esperienze: 'coodz_10 · esperienze',
+        'esperienze-detail': 'coodz_10 · esperienze',
+        contatti: 'coodz_10 · contatti'
+      },
+      en: {
+        home: 'coodz_10 · minecraft screensharer',
+        chi_sono: 'coodz_10 · about me',
+        esperienze: 'coodz_10 · experience',
+        'esperienze-detail': 'coodz_10 · experience',
+        contatti: 'coodz_10 · contact'
+      }
+    };
+    const langMap = map[currentLang] || map.it;
+    document.title = langMap[secId] || langMap.home;
+  }
 
   function runFrameFlightTick(nowSec, dt) {
     // 1. Determine target scroll fraction
@@ -2584,9 +2653,6 @@
     }
   }
 
-  // ==========================================================================
-  // 2. AVATAR STATE MACHINE & ZERO-GRAVITY FRAME TICK
-  // ==========================================================================
   function setAvatarState(state) {
     currentAvatarState = state;
 
@@ -2649,9 +2715,6 @@
     computeSlotKeyframes();
   }
 
-  // ==========================================================================
-  // AVATAR MATERIAL & AURA ENGINE (3D Emissive luminous skin + Silhouette aura)
-  // ==========================================================================
   let skinMaterialsConfigured = false;
 
   function applyAvatarMaterialSettings() {
@@ -2676,11 +2739,10 @@
       if (skinViewer.globalLight) skinViewer.globalLight.intensity = CONFIG.GLOBAL_LIGHT;
       if (skinViewer.cameraLight) skinViewer.cameraLight.intensity = CONFIG.CAMERA_LIGHT;
 
-      // Studio 3-point lighting setup: subtle cyan rim light and soft white fill light
       if (skinViewer.scene && !skinViewer._rimLight && skinViewer.cameraLight) {
         try {
           const LightClass = skinViewer.cameraLight.constructor;
-          const rimLight = new LightClass(0x38bdf8, 2.5);
+          const rimLight = new LightClass(0x3373ff, 2.5);
           rimLight.position.set(-25, 30, -30);
           skinViewer.scene.add(rimLight);
           skinViewer._rimLight = rimLight;
@@ -2690,11 +2752,11 @@
           skinViewer.scene.add(fillLight);
           skinViewer._fillLight = fillLight;
         } catch (lightErr) {
-          console.warn('[Avatar] Error adding studio rim/fill lights:', lightErr);
+          if (window.AvatarDebug) console.warn('[Avatar] Error adding studio rim/fill lights:', lightErr);
         }
       }
     } catch (err) {
-      console.warn('[Avatar] Error applying emissive material settings:', err);
+      if (window.AvatarDebug) console.warn('[Avatar] Error applying emissive material settings:', err);
     }
   }
 
@@ -2721,7 +2783,7 @@
     } else {
       const a1 = (0.16 * strength).toFixed(3);
       const a2 = (0.10 * strength).toFixed(3);
-      canvas.style.filter = `drop-shadow(0 0 14px rgba(94, 168, 255, ${a1})) drop-shadow(0 0 40px rgba(139, 108, 255, ${a2}))`;
+      canvas.style.filter = `drop-shadow(0 0 14px rgba(29, 78, 216, ${a1})) drop-shadow(0 0 40px rgba(29, 78, 216, ${a2}))`;
     }
   }
 
@@ -2947,14 +3009,11 @@
         }
       });
     } catch (err) {
-      console.warn('SkinViewer failed to initialize, using fallback image:', err);
+      if (window.AvatarDebug) console.warn('SkinViewer failed to initialize, using fallback image:', err);
       showFallback();
     }
   }
 
-  // ==========================================================================
-  // CLICK / TAP INTERACTION & HOME REACTIONS (Wave + 360 Spin, Hover Pointing)
-  // ==========================================================================
   let avatarSpinCurrent = 0;
   let avatarSpinTarget = 0;
   let homeReactionActive = false;
@@ -3085,9 +3144,6 @@
     }
   }
 
-  // ==========================================================================
-  // 3. CANVAS STARS & CYBER-RAIN WITH SHOOTING STARS (METEORS)
-  // ==========================================================================
   function initStars() {
     const canvas = document.getElementById('stars-canvas');
     if (!canvas) return;
@@ -3116,7 +3172,7 @@
           twinkleSpeed: Math.random() * 1.6 + 0.8,
           phase: Math.random() * Math.PI * 2,
           depth: Math.random() * 0.8 + 0.2, // Depth z (0.2..1.0) for radial warp streaks
-          color: Math.random() > 0.4 ? '#e8eaff' : (Math.random() > 0.5 ? '#5ea8ff' : '#c4b5ff')
+          color: Math.random() > 0.4 ? '#e8eaff' : (Math.random() > 0.5 ? '#7aa4ff' : '#3373ff')
         });
       }
     }
@@ -3237,7 +3293,7 @@
             ctx.beginPath();
             ctx.moveTo(s.x, s.y);
             ctx.lineTo(tailX, tailY);
-            ctx.strokeStyle = 'rgba(196, 181, 255, 0.35)';
+            ctx.strokeStyle = 'rgba(122, 164, 255, 0.35)';
             ctx.lineWidth = s.radius * 1.6;
             ctx.stroke();
 
@@ -3301,14 +3357,14 @@
 
           const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
           if (m.isBig) {
-            grad.addColorStop(0, `rgba(255, 255, 255, ${m.alpha})`);
-            grad.addColorStop(0.2, `rgba(94, 168, 255, ${(m.alpha * 0.9).toFixed(2)})`);
-            grad.addColorStop(0.6, `rgba(139, 108, 255, ${(m.alpha * 0.5).toFixed(2)})`);
-            grad.addColorStop(1, 'rgba(139, 108, 255, 0)');
+            grad.addColorStop(0, `rgba(232, 234, 255, ${m.alpha})`);
+            grad.addColorStop(0.2, `rgba(122, 164, 255, ${(m.alpha * 0.9).toFixed(2)})`);
+            grad.addColorStop(0.6, `rgba(51, 115, 255, ${(m.alpha * 0.5).toFixed(2)})`);
+            grad.addColorStop(1, 'rgba(29, 78, 216, 0)');
           } else {
-            grad.addColorStop(0, `rgba(94, 168, 255, ${m.alpha})`);
-            grad.addColorStop(0.35, `rgba(139, 108, 255, ${(m.alpha * 0.6).toFixed(2)})`);
-            grad.addColorStop(1, 'rgba(94, 168, 255, 0)');
+            grad.addColorStop(0, `rgba(122, 164, 255, ${m.alpha})`);
+            grad.addColorStop(0.35, `rgba(51, 115, 255, ${(m.alpha * 0.6).toFixed(2)})`);
+            grad.addColorStop(1, 'rgba(29, 78, 216, 0)');
           }
 
           ctx.strokeStyle = grad;
@@ -3320,7 +3376,7 @@
 
           ctx.beginPath();
           ctx.arc(m.x, m.y, m.isBig ? 2.5 : 1.2, 0, Math.PI * 2);
-          ctx.fillStyle = m.isBig ? `rgba(255, 255, 255, ${m.alpha})` : `rgba(232, 234, 255, ${m.alpha})`;
+          ctx.fillStyle = `rgba(232, 234, 255, ${m.alpha})`;
           ctx.fill();
         }
 
@@ -3338,7 +3394,7 @@
               vy: Math.random() * 0.7 + 0.5,
               radius: Math.random() * 0.8 + 0.6,
               alpha: 0.55,
-              color: Math.random() > 0.5 ? '#5ea8ff' : '#c4b5ff'
+              color: Math.random() > 0.5 ? '#7aa4ff' : '#3373ff'
             });
           }
         }
@@ -3380,9 +3436,6 @@
     }, { passive: true });
   }
 
-  // ==========================================================================
-  // 4. IN-PAGE EXPERIENCE DETAILS ENGINE & ROUTING
-  // ==========================================================================
   function renderExperienceDetail(key) {
     const exp = EXPERIENCE_DETAILS[key];
     const detailEl = document.getElementById('experience-detail-view');
@@ -3407,17 +3460,17 @@
         <div class="detail-pros-cons-grid">
           ${exp.strengths ? `
             <div class="detail-pros-col">
-              <div class="detail-group-tag mono"><span class="item-num">01 — </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
+              <div class="detail-group-tag mono"><span class="item-num">01 · </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
               <ul class="detail-list mono">
-                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
+                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">·</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
           ${exp.weaknesses ? `
             <div class="detail-cons-col">
-              <div class="detail-group-tag mono"><span class="item-num">02 — </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
+              <div class="detail-group-tag mono"><span class="item-num">02 · </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
               <ul class="detail-list mono">
-                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
+                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">·</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -3442,7 +3495,7 @@
       noticeHtml = `
         <div class="detail-notice mono">
           <span class="status-dot-accent">●</span>
-          <span class="detail-notice-tag">[ ${exp.noticeTag[currentLang]} ]</span>
+          <span class="detail-notice-tag">${exp.noticeTag[currentLang]}</span>
           <span class="detail-notice-text">${exp.noticeText[currentLang]}</span>
         </div>
       `;
@@ -3467,7 +3520,7 @@
           ${exp.stars ? `<span class="detail-stars">${exp.stars}</span>` : ''}
           <span class="status-indicator-tag ${exp.inProgress ? 'status--active' : 'status--dimesso'}">
             <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}">${exp.inProgress ? '●' : '○'}</span>
-            <span>${exp.inProgress ? (currentLang === 'it' ? 'ATTIVO' : 'ACTIVE') : (currentLang === 'it' ? 'DIMESSO' : 'RESIGNED')}</span>
+            <span>${exp.inProgress ? (currentLang === 'it' ? 'attivo' : 'active') : (currentLang === 'it' ? 'dimesso' : 'resigned')}</span>
           </span>
           <span class="detail-period">${exp.period[currentLang]}</span>
         </div>
@@ -3582,9 +3635,6 @@
     }, 500);
   }
 
-  // ==========================================================================
-  // PROOFS MODAL CONTROLS
-  // ==========================================================================
   function openProofsModal(key) {
     const exp = EXPERIENCE_DETAILS[key];
     const modal = document.getElementById('proofs-modal');
@@ -3593,12 +3643,12 @@
     if (!exp || !modal || !titleEl || !linksEl) return;
 
     const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
-    titleEl.textContent = `${dict.proofsTitle || 'Link e Prove'} (${exp.title})`;
+    titleEl.textContent = `${dict.proofsTitle || 'Link e prove'} · ${exp.title}`;
 
     linksEl.innerHTML = exp.proofs.map((p) => `
       <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="row-link proof-link-item mono">
-        <span class="row-link__title truncate">${p.url}</span>
-        <span class="row-link__arrow">&rarr;</span>
+        <span class="row-link__left"><span class="row-link__title truncate">${p.url}</span></span>
+        <span class="row-link__right"><span class="row-link__arrow" aria-hidden="true">&rarr;</span></span>
       </a>
     `).join('');
 
@@ -3726,10 +3776,10 @@
         closeExperienceDetail(false);
       }
       updateNavIndicator('home');
+      updateDocumentTitle('home');
       return;
     }
 
-    // Check deep links like #esperienze/pixymc
     if (hash.startsWith('#esperienze/')) {
       const key = hash.replace('#esperienze/', '').toLowerCase();
       if (EXPERIENCE_DETAILS[key]) {
@@ -3739,11 +3789,11 @@
         }
         openExperienceDetail(key, false);
         updateNavIndicator('esperienze');
+        updateDocumentTitle('esperienze');
         return;
       }
     }
 
-    // Top-level sections (#home, #chi_sono, #esperienze, #contatti)
     const secId = hash.replace('#', '');
     const targetSec = document.getElementById(secId);
     if (targetSec) {
@@ -3752,12 +3802,10 @@
       }
       targetSec.scrollIntoView({ behavior: 'smooth' });
       updateNavIndicator(secId);
+      updateDocumentTitle(secId);
     }
   }
 
-  // ==========================================================================
-  // 5. NAVIGATION, UNDERLINE INDICATOR, i18n & SCROLL-SNAP INTERSECTIONOBSERVER
-  // ==========================================================================
   function updateNavIndicator(activeId) {
     const navIndicator = document.getElementById('nav-indicator');
     const lookupId = (activeId === 'esperienze-detail') ? 'esperienze' : activeId;
@@ -3823,12 +3871,12 @@
       renderExperienceDetail(activeDetailId);
     }
 
-    // Re-anchor home avatar on language change & update cached dimensions
     updateCachedDimensions();
     computeSlotKeyframes();
+    fitHeroTitle();
     fitBgWords();
+    updateDocumentTitle(activeSectionId);
 
-    // Update nav indicator position after text changes
     setTimeout(() => {
       updateNavIndicator(activeSectionId);
       computeSlotKeyframes();
@@ -3841,7 +3889,6 @@
 
     if (!sections.length) return;
 
-    // Use IntersectionObserver with threshold 0.6 as specified
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -3855,6 +3902,7 @@
           }
 
           updateNavIndicator(activeSectionId);
+          updateDocumentTitle(activeSectionId);
         } else {
           entry.target.classList.remove('section-active');
         }
@@ -3903,13 +3951,14 @@
     }
     applyLanguage(currentLang);
 
-    // Initial Indicator & cached dimensions update
     updateCachedDimensions();
     updateNavIndicator(activeSectionId);
+    fitHeroTitle();
     fitBgWords();
     window.addEventListener('resize', () => {
       updateCachedDimensions();
       updateNavIndicator(activeSectionId);
+      if (!isIntroActive) fitHeroTitle();
       fitBgWords();
     }, { passive: true });
 
@@ -3961,9 +4010,6 @@
     window.addEventListener('hashchange', handleRoute);
   }
 
-  // ==========================================================================
-  // 6. AUDIO CONTROLS & WEB AUDIO DYNAMICS COMPRESSOR PIPELINE
-  // ==========================================================================
   function initWebAudioGraph(audioEl) {
     if (webAudioReady && webAudioMasterGain && webAudioCtx) {
       if (webAudioCtx.state === 'suspended') {
@@ -4006,14 +4052,14 @@
             window.AvatarDirector.setAudioAnalyser(webAudioAnalyser, webAudioCtx, audioEl);
           }
         } catch (e) {
-          console.warn('[Web Audio] AnalyserNode setup error:', e);
+          if (window.AvatarDebug) console.warn('[Web Audio] AnalyserNode setup error:', e);
         }
         audioEl.volume = 1.0; // Audio element volume at 1.0 so GainNode manages master volume
         webAudioReady = true;
       }
       return true;
     } catch (err) {
-      console.warn('[Web Audio] Graph initialization failed, fallback to element.volume:', err);
+      if (window.AvatarDebug) console.warn('[Web Audio] Graph initialization failed, fallback to element.volume:', err);
       webAudioReady = false;
       return false;
     }
@@ -4038,12 +4084,12 @@
             return;
           }
           audioLastError = err ? (err.message || String(err)) : 'play error';
-          console.warn('[Audio] play error:', err);
+          if (window.AvatarDebug) console.warn('[Audio] play error:', err);
         });
       }
     } catch (err) {
       audioLastError = err ? (err.message || String(err)) : 'sync play error';
-      console.warn('[Audio] sync play error:', err);
+      if (window.AvatarDebug) console.warn('[Audio] sync play error:', err);
     }
     return Promise.resolve();
   }
@@ -4338,9 +4384,6 @@
     updateMuteBtnState();
   }
 
-  // ==========================================================================
-  // 7. SCROLL PROGRESS BAR (ACCENT GRADIENT AT VERY TOP)
-  // ==========================================================================
   function initScrollProgress() {
     const scrollContainer = document.getElementById('scroll-container');
     const progressBar = document.getElementById('scroll-progress-bar');
@@ -4357,9 +4400,6 @@
     updateProgress();
   }
 
-  // ==========================================================================
-  // 8. KEYBOARD NAVIGATION & ESCAPE KEY HANDLER
-  // ==========================================================================
   function initKeyboardNav() {
     const sectionIds = ['home', 'chi_sono', 'esperienze', 'contatti'];
     let isNavigating = false;
@@ -4429,9 +4469,6 @@
     });
   }
 
-  // ==========================================================================
-  // INITIALIZATION ON DOMContentLoaded
-  // ==========================================================================
   document.addEventListener('DOMContentLoaded', () => {
     initAudio();
     initGateAndIntro();
@@ -4452,12 +4489,11 @@
       if (typeof window.AvatarDebug.initLayoutAuditOverlay === 'function') window.AvatarDebug.initLayoutAuditOverlay();
     }
 
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => {
-        computeSlotKeyframes();
-        fitBgWords();
-      });
-    }
+    waitForSiteFonts().then(() => {
+      if (!isIntroActive) fitHeroTitle();
+      computeSlotKeyframes();
+      fitBgWords();
+    });
   });
 
 })();

@@ -1,46 +1,6 @@
-// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
-
-/**
- * ============================================================================
- * AVATAR DIRECTOR - GAZE, AIM, GESTURES AND CONTEXT BEHAVIOR ENGINE
- * ============================================================================
- * Namespace: window.AvatarDirector
- * Built on top of window.AvatarRig.
- *
- * Responsibilities:
- * 1. Solvers:
- *    - screenToModelDirection(screenPoint, jointObject): Inverts stage CSS transform,
- *      unprojects through skinViewer.camera onto plane parallel to camera, transforms
- *      to joint parent local space.
- *    - aimArm(side, screenPoint): Closed-form 2 DOF solver for pointing arm (Euler XYZ, Ry=0),
- *      converted to anatomical (raise, spread).
- *    - lookAt(screenPoint): Head yaw & pitch solver with 120ms torso sharing when head yaw > 25°.
- * 2. Gesture Clips:
- *    - Priority queue with joint masks, anticipation, minimum-jerk curves, decaying oscillations,
- *      and soft release easing.
- *    - Library: wave, point, present, nod, tilt, look-around, stretch, settle, spin.
- * 3. Context Behavior Engine:
- *    - Intro: fly-in, pen writing gaze & aim, glide-settle, arrival wave.
- *    - Home: float idle, periodic micro-gestures (look-around, tilt, stretch, wave),
- *      button hover look+point, title hover look, avatar click wave+spin.
- *    - Flight: velocity debouncing (80ms start, 150ms end), brake lean, landing settle,
- *      arrival gestures per section (chi_sono wave, esperienze nod, contatti wave).
- *    - Chi Sono: paragraph reading gaze scanning (left/right column), column switch presentation.
- *    - Esperienze: row hover aim+look, detail open nod, detail close settle.
- *    - Contatti: row hover aim+look, link click nod.
- *    - Music reactive sway via Web Audio AnalyserNode (low-band FFT).
- * 4. Debug & Autotest:
- *    - Visual debug rays for gaze & arm aim.
- *    - Scripted 0.5x automated validation scenario (?autotest).
- * ============================================================================
- */
-
 (function () {
   'use strict';
 
-  // ==========================================================================
-  // CONFIGURATION CONSTANTS
-  // ==========================================================================
   const CONFIG = {
     TORSO_SHARING: {
       thresholdRad: (25 * Math.PI) / 180, // 25 degrees = 0.4363 rad
@@ -222,9 +182,6 @@
     right: []
   };
 
-  // ==========================================================================
-  // HELPER: ACCESS RIG & VIEWER
-  // ==========================================================================
   function getRig() {
     return (typeof window !== 'undefined') ? window.AvatarRig : null;
   }
@@ -254,10 +211,6 @@
     const c = Math.max(0, Math.min(1, t));
     return c * c * c * (10 + c * (-15 + 6 * c));
   }
-
-  // ==========================================================================
-  // 1. SOLVERS
-  // ==========================================================================
 
   /**
    * screenToModelDirection(screenPoint, jointObject, relativeToBody = false)
@@ -461,10 +414,6 @@
     sharedLookResult.bodyYaw = currentBodyYaw;
     return sharedLookResult;
   }
-
-  // ==========================================================================
-  // 2. GESTURE CLIPS LIBRARY
-  // ==========================================================================
 
   const GESTURE_DEFINITIONS = {
     /**
@@ -886,7 +835,7 @@
   function triggerGesture(name, options = {}) {
     const def = GESTURE_DEFINITIONS[name];
     if (!def) {
-      console.warn(`[AvatarDirector] Unknown gesture: ${name}`);
+      if (window.AvatarDebug) console.warn(`[AvatarDirector] Unknown gesture: ${name}`);
       return false;
     }
 
@@ -927,10 +876,6 @@
 
     return true;
   }
-
-  // ==========================================================================
-  // 3. DIRECTOR EVENT & INTENT HANDLERS
-  // ==========================================================================
 
   function onIntroStep(step, data = {}) {
     if (step === 'fly-in') {
@@ -1087,9 +1032,6 @@
     }
   }
 
-  // ==========================================================================
-  // 4. FLIGHT COUPLING
-  // ==========================================================================
   function updateFlightMotion(vx, vy, ax, ay, dt) {
     stageSpeed = Math.hypot(vx, vy);
 
@@ -1127,9 +1069,6 @@
     }
   }
 
-  // ==========================================================================
-  // 5. READING GAZE & MUSIC SWAY
-  // ==========================================================================
   function updateReadingRects() {
     cachedReadingTargets.left.length = 0;
     cachedReadingTargets.right.length = 0;
@@ -1256,9 +1195,6 @@
     }
   }
 
-  // ==========================================================================
-  // 6. MAIN UPDATE TICK (Executed before AvatarRig.update)
-  // ==========================================================================
   function update(dtRaw) {
     const t0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
     const dt = Math.max(0.001, Math.min(0.1, dtRaw));
@@ -1428,12 +1364,9 @@
     if (window.AvatarDebug && typeof window.AvatarDebug.runAutoTest === 'function') {
       return window.AvatarDebug.runAutoTest();
     }
-    console.warn('[AvatarDirector] AvatarDebug module not loaded. Load with ?autotest or include avatar-debug.js');
+    if (window.AvatarDebug) console.warn('[AvatarDirector] AvatarDebug module not loaded. Load with ?autotest or include avatar-debug.js');
   }
 
-  // ==========================================================================
-  // EXPORT TO NAMESPACE
-  // ==========================================================================
   const AvatarDirector = {
     CONFIG,
     update,

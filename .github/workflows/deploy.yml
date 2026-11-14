@@ -1,4 +1,3 @@
-# ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
 name: Deploy GitHub Pages
 
 on:
@@ -25,13 +24,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Prepare site
+        run: |
+          mkdir -p _site/assets
+          cp index.html 404.html style.css main.js avatar-rig.js avatar-director.js avatar-debug.js _site/
+          [ -f robots.txt ] && cp robots.txt _site/ || true
+          [ -f sitemap.xml ] && cp sitemap.xml _site/ || true
+          [ -f security.txt ] && cp security.txt _site/ || true
+          [ -d .well-known ] && cp -r .well-known _site/ || true
+          cp -r servers music _site/
+          cp assets/skin.png assets/favicon-16.png assets/favicon-32.png assets/favicon-48.png assets/apple-touch-icon.png assets/og-image.png _site/assets/
+          cp -r assets/fonts _site/assets/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,31 +1,6 @@
-// ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie.
-
-/**
- * ============================================================================
- * AVATAR RIG CORE - FLUID, HUMAN-FEELING, COLLISION-FREE 3D SKELETAL ENGINE
- * ============================================================================
- * Namespace: window.AvatarRig
- *
- * Design:
- * - Single Animation Owner: RigAnimation owns all joint rotations and root transforms.
- * - Anatomical authoring: arm(side, {raise, spread, twist}), leg(side, {swing, spread}),
- *   head({yaw, pitch, roll}), body({lean, twist, roll}).
- * - Runtime outward sign: derived via Math.sign(joint.position.x), never hardcoded.
- * - Critically / slightly under-damped springs with semi-implicit Euler substeps (<= 1/120s).
- * - Rate limiters & soft limits with smooth compression near bounds.
- * - Procedural layers: breathing, 3-frequency organic drift, secondary motion lag & lean.
- * - 3-level collision resolution with bounding box sampling, offline target cleaning,
- *   and a smoothed 30Hz runtime guard spring.
- * - Built-in validation suite (AvatarRig.validate()).
- * ============================================================================
- */
-
 (function () {
   'use strict';
 
-  // ==========================================================================
-  // CONFIGURATION CONSTANTS (All tunable values in CONFIG.RIG)
-  // ==========================================================================
   const CONFIG = {
     // Spring dynamics: natural frequency (Hz) and damping ratio (zeta)
     SPRINGS: {
@@ -112,10 +87,6 @@
     }
   };
 
-  // ==========================================================================
-  // JOINT INDEX DEFINITIONS & PREALLOCATED BUFFERS
-  // ==========================================================================
-  // 6 joints: 0:head, 1:body, 2:leftArm, 3:rightArm, 4:leftLeg, 5:rightLeg
   const JOINT_NAMES = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
   const JOINT_COUNT = 6;
   const DOF_COUNT = JOINT_COUNT * 3; // 18 DOFs (X=0, Y=1, Z=2 per joint)
@@ -149,7 +120,7 @@
   const rootVelocities         = new Float32Array(3);
   const targetRootAngles       = new Float32Array(3);
 
-  // Organic drift pre-generated phases (3 sines per DOF)
+  // Organic drift initial phases (3 sines per DOF)
   const driftPhases = new Float32Array(DOF_COUNT * 3);
   for (let i = 0; i < driftPhases.length; i++) {
     driftPhases[i] = Math.random() * Math.PI * 2;
@@ -212,9 +183,6 @@
   const ARM_PIVOTS_LOCAL = new Array(JOINT_COUNT).fill(null);
   const TORSO_SOCKETS = new Array(JOINT_COUNT).fill(null);
 
-  // ==========================================================================
-  // RIG FACTS VERIFICATION & LOGGING
-  // ==========================================================================
   function verifyRigFacts(player) {
     if (!player || !player.skin) return;
     const skin = player.skin;
@@ -302,9 +270,6 @@
     }
   }
 
-  // ==========================================================================
-  // ANATOMICAL POSE AUTHORING HELPERS
-  // ==========================================================================
   function outwardSign(jointName) {
     return AvatarRig.outwardSigns[jointName] !== undefined ? AvatarRig.outwardSigns[jointName] : (jointName.startsWith('left') ? 1 : -1);
   }
@@ -357,9 +322,6 @@
     return arr;
   }
 
-  // ==========================================================================
-  // POSE LIBRARY (Authored in anatomical units with deliberate asymmetry)
-  // ==========================================================================
   const RAW_POSES = {
     neutral: {
       head:     head({ yaw: 0, pitch: 0, roll: 0 }),
@@ -464,9 +426,6 @@
     AvatarRig.POSES[key] = packPose(RAW_POSES[key]);
   });
 
-  // ==========================================================================
-  // LEVEL 3: SELF-COLLISION RESOLVER ENGINE
-  // ==========================================================================
   // Pairs to test: [partA, partB, limbJointToAdjust]
   const COLLISION_PAIRS = [
     { a: 'leftArm',  b: 'body',     limb: J_LEFT_ARM },
@@ -605,9 +564,6 @@
     });
   }
 
-  // ==========================================================================
-  // SPRING MOTION CORE (Semi-implicit Euler with substeps)
-  // ==========================================================================
   function smoothSoftLimit(x, min, max, margin = 0.08) {
     if (x > max) {
       const excess = x - max;
@@ -656,9 +612,6 @@
     return 6.0;
   }
 
-  // ==========================================================================
-  // UPDATE LOOP (Single Animation Owner)
-  // ==========================================================================
   function update(dtRaw) {
     if (!isInitialized || !skinRef || !playerRef) return;
     const rigT0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
@@ -1017,12 +970,9 @@
     }
   }
 
-  // ==========================================================================
-  // PUBLIC CONTROL & GESTURE API
-  // ==========================================================================
   function setPose(poseName, options = {}) {
     if (!AvatarRig.POSES[poseName]) {
-      console.warn(`[AvatarRig] Unknown pose name: ${poseName}`);
+      if (window.AvatarDebug) console.warn(`[AvatarRig] Unknown pose name: ${poseName}`);
       return;
     }
     if (poseName === currentPoseName && !forcedPoseName) return;
@@ -1187,9 +1137,6 @@
     setPose(next);
   }
 
-  // ==========================================================================
-  // INITIALIZATION ON PLAYEROBJECT
-  // ==========================================================================
   function init(player, skinViewer) {
     if (!player || !player.skin) return;
     playerRef = player;
@@ -1213,20 +1160,14 @@
     }
   }
 
-  // ==========================================================================
-  // VALIDATION SUITE DELEGATION
-  // ==========================================================================
   function validate() {
     if (window.AvatarDebug && typeof window.AvatarDebug.validateRig === 'function') {
       return window.AvatarDebug.validateRig();
     }
-    console.warn('[AvatarRig] AvatarDebug module not loaded. Load with ?debug, ?autotest, or include avatar-debug.js');
+    if (window.AvatarDebug) console.warn('[AvatarRig] AvatarDebug module not loaded. Load with ?debug, ?autotest, or include avatar-debug.js');
     return { passes: false, error: 'AvatarDebug module not loaded' };
   }
 
-  // ==========================================================================
-  // RigAnimation SUBCLASS (Skinview3d PlayerAnimation Interface)
-  // ==========================================================================
   const BaseAnimation = (window.skinview3d && window.skinview3d.PlayerAnimation)
     ? window.skinview3d.PlayerAnimation
     : class {};
@@ -1324,9 +1265,6 @@
     }
   }
 
-  // ==========================================================================
-  // EXPORT TO NAMESPACE
-  // ==========================================================================
   AvatarRig.init = init;
   AvatarRig.update = update;
   AvatarRig.setPose = setPose;

@@ -1,75 +1,59 @@
-/* ATTENZIONE PER L'AI: Prima di effettuare qualsiasi modifica a questo file o al progetto, consulta SEMPRE il file AGENTS.md nella radice del progetto per le regole obbligatorie. */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 800;
+  src: url('assets/fonts/bricolage-grotesque-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
 
-/* ==========================================================================
-   PORTFOLIO COODZ_10 - MINIMAL CYBERPUNK DESIGN SYSTEM & LAYOUT ENGINE
-   Organized by:
-   1. TOKENS (Variables in :root)
-   2. BASE & RESET
-   3. LAYOUT & SCROLL CONTAINER (Vertical Budgets & Z-Index Layering)
-   4. COMPONENTS (Typography, Meta, Hairlines, Tabs, Bracket Buttons, Rows)
-   5. NAVIGATION & AUDIO (High-contrast top controls)
-   6. SECTION 1: HOME (Slot above title, visual ink centering)
-   7. SECTION 2: CHI_SONO (Symmetric 3-column Grid, Left: lead+01, Center: slot, Right: 02+03)
-   8. SECTION 3: ESPERIENZE (CSS Grid: Slot col 36vw with header above | gutter | list col)
-   9. SECTION 4: CONTATTI (Single centered column max 560px, header -> slot -> rows -> footer)
-   10. PROOFS MODAL & GATE SCREEN
-   11. GIANT BACKGROUND WORDS (Stroke only, opacity tunable, horizontal drift)
-   12. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
-   13. RESPONSIVE DESIGN (Desktop 1920x1080 / 1366x768, Mobile <= 768px / 390px)
-   14. DEBUG & LAYOUT AUDIT PANEL
-   ========================================================================== */
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 500;
+  src: url('assets/fonts/martian-mono-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
 
-/* ==========================================================================
-   1. TOKENS (CSS variables in :root - Single Source of Truth)
-   ========================================================================== */
 :root {
-  /* Colors */
   --bg: #05060f;
-  --line: rgba(124, 131, 168, 0.22);
-  --line-strong: rgba(56, 189, 248, 0.5);
+  --navy: #0b1536;
+  --cobalt: #1d4ed8;
+  --accent: #3373ff;
+  --ice: #7aa4ff;
   --text: #e8eaff;
   --muted: #7c83a8;
-  --accent: #38bdf8;
-  --accent-blue: #38bdf8;
-  --text-muted: #64748b;
-  --accent-gradient: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c4b5ff 100%);
+  --line: rgba(124, 131, 168, 0.22);
+  --accent-gradient: linear-gradient(90deg, var(--cobalt) 0%, var(--ice) 100%);
 
-  /* Layout Variables */
   --gutter: clamp(24px, 3vw, 56px);
-  --bg-word-opacity: 1;
+  --bg-word-opacity: 0.22;
 
-  /* Typography (Strict 2-Font System) */
-  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-title: var(--font-sans);
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, monospace;
 
-  /* Strict Font Sizes (4-Size Hierarchy: display, h1, body, mono) */
   --fs-display: clamp(2.8rem, 8.5vw, 8.5rem);
-  --fs-h1: clamp(2rem, 3.5vw, 2.75rem);
-  --fs-h2: clamp(1.1rem, 1.5vw, 1.35rem);
+  --fs-h1: clamp(1.75rem, 3.2vw, 2.5rem);
+  --fs-h2: clamp(1.05rem, 1.4vw, 1.25rem);
   --fs-body: 0.9375rem;
-  --fs-mono: 0.75rem;
+  --fs-mono: 0.68rem;
 
-  /* Spacing scale */
-  --s1: 4px;
+  --s1: 8px;
   --s2: 8px;
-  --s3: 12px;
+  --s3: 16px;
   --s4: 16px;
   --s5: 24px;
   --s6: 32px;
   --s7: 48px;
-  --page-pad: clamp(20px, 5vw, 72px);
+  --page-pad: clamp(16px, 5vw, 72px);
 
-  /* Motion */
-  --dur-fast: 0.2s;
-  --dur: 0.5s;
-  --dur-slow: 0.9s;
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur: 350ms;
+  --dur-slow: 700ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ==========================================================================
-   2. BASE & RESET (Radius 0, No Boxes, No Glows/Shadows/Filters)
-   ========================================================================== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -77,6 +61,16 @@
   border-radius: 0 !important;
   box-shadow: none !important;
   text-shadow: none !important;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+*:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
 }
 
 html, body {
@@ -87,6 +81,8 @@ html, body {
   font-family: var(--font-sans);
   font-weight: 400;
   overflow: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -105,9 +101,6 @@ html, body {
   cursor: pointer;
 }
 
-/* ==========================================================================
-   3. LAYOUT & SCROLL CONTAINER (Content z-index: 10 > Avatar stage z-index: 6)
-   ========================================================================== */
 .scroll-container {
   height: 100vh;
   height: 100dvh;
@@ -118,17 +111,27 @@ html, body {
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   position: relative;
-  z-index: 10; /* Strictly above avatar-stage (z-index 6) */
+  z-index: 10;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg);
 }
 
-.scroll-container::-webkit-scrollbar {
+.scroll-container::-webkit-scrollbar,
+.experiences-content-col::-webkit-scrollbar,
+.proofs-links-list::-webkit-scrollbar {
   width: 4px;
 }
-.scroll-container::-webkit-scrollbar-track {
-  background: transparent;
+
+.scroll-container::-webkit-scrollbar-track,
+.experiences-content-col::-webkit-scrollbar-track,
+.proofs-links-list::-webkit-scrollbar-track {
+  background: var(--bg);
 }
-.scroll-container::-webkit-scrollbar-thumb {
-  background: var(--line);
+
+.scroll-container::-webkit-scrollbar-thumb,
+.experiences-content-col::-webkit-scrollbar-thumb,
+.proofs-links-list::-webkit-scrollbar-thumb {
+  background: var(--accent);
 }
 
 .snap-section {
@@ -145,7 +148,6 @@ html, body {
   overflow: hidden;
 }
 
-/* Scroll Progress Bar (Top Accent Gradient) */
 .scroll-progress-bar {
   position: fixed;
   top: 0;
@@ -157,16 +159,15 @@ html, body {
   transform-origin: left;
   transform: scaleX(0);
   pointer-events: none;
-  transition: transform 0.08s linear;
+  transition: transform var(--dur-fast) var(--ease);
 }
 
-/* Vignette & Stars behind avatar */
 .vignette-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(2, 2, 6, 0.8) 100%);
+  background: radial-gradient(circle at 50% 50%, transparent 60%, var(--bg) 100%);
 }
 
 .stars-canvas {
@@ -179,7 +180,6 @@ html, body {
   z-index: 0;
 }
 
-/* 2D Intro Writing Canvas (Z-Index 7: Above avatar stage during intro) */
 .intro-canvas {
   position: fixed;
   inset: 0;
@@ -188,10 +188,9 @@ html, body {
   height: 100dvh;
   pointer-events: none;
   z-index: 7;
-  transition: opacity var(--dur-fast) ease;
+  transition: opacity var(--dur-fast) var(--ease);
 }
 
-/* Avatar Fullscreen Stage (Z-Index 6: Below content container z-index 10) */
 .avatar-stage {
   position: fixed;
   inset: 0;
@@ -221,13 +220,11 @@ html, body {
   will-change: transform;
 }
 
-/* Low-tier static fallback aura */
 .avatar-aura-fallback {
   position: absolute;
   width: min(45vh, 45vw);
   height: min(65vh, 65vw);
-  border-radius: 50% !important;
-  background: radial-gradient(ellipse at center, rgba(94, 168, 255, 0.18) 0%, rgba(139, 108, 255, 0.08) 45%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(29, 78, 216, 0.22) 0%, rgba(29, 78, 216, 0.08) 45%, transparent 70%);
   pointer-events: none;
   z-index: 0;
   display: none;
@@ -254,7 +251,6 @@ html, body {
   filter: none;
 }
 
-/* Avatar Slots: Take physical space in the section CSS grid, text never overlaps */
 .avatar-slot {
   pointer-events: none;
   background: transparent;
@@ -262,11 +258,6 @@ html, body {
   box-sizing: border-box;
 }
 
-/* ==========================================================================
-   4. COMPONENTS (Minimal Design - Zero Boxes, Hairline Dividers Only)
-   ========================================================================== */
-
-/* Section Head Component */
 .section-head {
   display: flex;
   flex-direction: column;
@@ -284,7 +275,7 @@ html, body {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--accent-blue);
+  color: var(--accent);
 }
 
 .section-head__title {
@@ -292,22 +283,20 @@ html, body {
   font-size: var(--fs-h1);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #FFFFFF;
+  color: var(--text);
   line-height: 1.15;
 }
 
-/* Lead Paragraph / Bio */
 .lead {
   font-family: var(--font-sans);
-  font-size: clamp(0.84rem, 1.55vh, 0.9375rem);
+  font-size: var(--fs-body);
   font-weight: 400;
   color: var(--text);
-  line-height: 1.6;
+  line-height: 1.55;
   text-wrap: pretty;
   max-width: 360px;
 }
 
-/* Single Mono Metadata Line (HANDLE // RUOLO // STATO) */
 .about-meta {
   display: flex;
   flex-wrap: wrap;
@@ -316,57 +305,45 @@ html, body {
   gap: var(--s2);
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-top: 4px;
+  margin-top: var(--s2);
 }
 
 .meta-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s2);
 }
 
 .meta-label {
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 .meta-val {
-  color: rgba(226, 232, 240, 0.78);
+  color: var(--text);
 }
 
 .meta-sep {
-  color: var(--text-muted);
+  color: var(--muted);
   user-select: none;
-  font-weight: 500;
-  margin: 0 4px;
+  font-weight: 400;
 }
 
 .meta-status {
-  color: rgba(226, 232, 240, 0.78);
+  color: var(--text);
 }
 
-/* Symmetric Items in Chi Sono: Technical accent border-left */
 .about-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--s2);
   max-width: 360px;
   width: 100%;
-  border-left: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 0 0 0 1rem;
-  border-bottom: none;
+  border-left: 1px solid var(--line);
+  padding: 0 0 0 var(--s4);
   background: transparent;
-}
-
-.about-item:first-child {
-  padding-top: 0;
-}
-
-.about-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
 }
 
 .about-item__header {
@@ -378,18 +355,18 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: var(--s2);
   white-space: nowrap;
 }
 
 .item-num {
-  color: var(--accent-blue);
+  color: var(--accent);
   font-weight: 500;
   white-space: nowrap;
 }
 
 .item-title {
-  color: var(--text-muted);
+  color: var(--muted);
   font-weight: 500;
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -397,9 +374,9 @@ html, body {
 
 .about-item__body {
   font-family: var(--font-sans);
-  font-size: clamp(0.84rem, 1.55vh, 0.9375rem);
+  font-size: var(--fs-body);
   font-weight: 400;
-  line-height: 1.6;
+  line-height: 1.55;
   color: var(--muted);
   max-width: 360px;
   margin: 0;
@@ -407,11 +384,10 @@ html, body {
 
 .about-item__body strong,
 .lead strong {
-  color: #FFFFFF;
+  color: var(--text);
   font-weight: 500;
 }
 
-/* Status Indicator Tag (Plain mono text with dot: ● ATTIVO / ○ DIMESSO) */
 .status-indicator-tag {
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
@@ -420,23 +396,40 @@ html, body {
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s2);
   white-space: nowrap;
   user-select: none;
   background: transparent;
   border: none;
 }
 
-.status-dot-accent {
-  color: #10B981;
-  font-size: 0.85rem;
+.status-dot-accent,
+.status-dot-muted {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 6px;
+  height: 6px;
+  font-size: var(--fs-mono);
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.status-dot-accent {
+  color: var(--accent);
 }
 
 .status-dot-muted {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1;
+  color: var(--muted);
+}
+
+.status-dot-pulse {
+  animation: statusPulse var(--dur-slow) var(--ease) infinite alternate;
+}
+
+@keyframes statusPulse {
+  0% { opacity: 0.45; }
+  100% { opacity: 1; }
 }
 
 .status--active {
@@ -447,7 +440,6 @@ html, body {
   color: var(--muted);
 }
 
-/* Category Filter Tabs (Plain mono text, animated 1px underline, no boxes) */
 .exp-category-tabs {
   display: flex;
   align-items: center;
@@ -458,16 +450,18 @@ html, body {
 .filter-tab {
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   background: transparent;
   border: none;
   color: var(--muted);
-  padding: 6px 2px;
+  padding: var(--s2) 0;
   position: relative;
   cursor: pointer;
+  white-space: nowrap;
   user-select: none;
-  transition: color var(--dur-fast) ease;
+  transition: color var(--dur-fast) var(--ease);
 }
 
 .filter-tab::after {
@@ -480,7 +474,7 @@ html, body {
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.28s var(--ease);
+  transition: transform var(--dur) var(--ease);
 }
 
 .filter-tab:hover {
@@ -495,12 +489,12 @@ html, body {
   transform: scaleX(1);
 }
 
-/* Bracket Buttons [ ... ] (Text only, no box, animated underline, AGENTS.md Rule 4) */
 .btn {
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-decoration: none;
   cursor: pointer;
   background: transparent;
@@ -510,22 +504,9 @@ html, body {
   justify-content: center;
   white-space: nowrap;
   user-select: none;
-  padding: 6px 2px;
+  padding: var(--s2) 0;
   position: relative;
-  transition: color var(--dur-fast) ease;
-}
-
-.btn::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.28s var(--ease);
+  transition: color var(--dur-fast) var(--ease);
 }
 
 .btn--primary {
@@ -533,11 +514,7 @@ html, body {
 }
 
 .btn--primary:hover {
-  color: #fff;
-}
-
-.btn--primary:hover::after {
-  transform: scaleX(1);
+  color: var(--ice);
 }
 
 .btn--secondary {
@@ -548,119 +525,119 @@ html, body {
   color: var(--text);
 }
 
-.btn--secondary:hover::after {
-  transform: scaleX(1);
-}
-
-/* Experience Row Link (Hairline divider only, no box) */
+/* Shared hairline row component used across experiences, contacts and proofs */
 .row-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--s4);
   width: 100%;
+  min-height: 72px;
   border-bottom: 1px solid var(--line);
-  padding: clamp(14px, 1.8vh, 18px) var(--s2);
+  padding: var(--s4) var(--s2);
   text-decoration: none;
   color: var(--text);
   background: transparent;
-  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .row-link:hover {
-  border-color: var(--line-strong);
-  color: #fff;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .row-link__left {
   display: flex;
   align-items: center;
   gap: var(--s4);
+  min-width: 0;
+}
+
+.row-link__meta {
+  min-width: 0;
 }
 
 .row-link__index {
-  font-size: clamp(1.1rem, 1.8vw, 1.35rem);
-  font-weight: 700;
+  font-size: var(--fs-h2);
+  font-weight: 500;
   color: var(--muted);
-  opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .row-link__title {
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
   font-size: var(--fs-h2);
   font-weight: 700;
-  color: #fff;
-  margin-bottom: 2px;
+  color: var(--text);
+  line-height: 1.2;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.row-link:hover .row-link__title {
+  color: var(--accent);
 }
 
 .row-link__sub {
   font-size: var(--fs-mono);
+  font-weight: 400;
   color: var(--muted);
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 
 .row-link__right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--s4);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.contact-row .row-link__left {
+  flex-shrink: 0;
+}
+
+.contact-row .row-link__right {
+  flex: 1;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.row-link__handle {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  text-align: right;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.row-link:hover .row-link__handle {
+  color: var(--text);
 }
 
 .row-link__arrow {
-  font-size: 1.1rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-h2);
+  line-height: 1;
   color: var(--muted);
-  transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) ease;
+  flex-shrink: 0;
+  transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .row-link:hover .row-link__arrow {
-  transform: translateX(4px);
-  color: var(--accent);
-}
-
-/* Contact Rows (Name left, arrow right, hairline below; hover shifts name 6px & slides arrow) */
-.contact-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  border-bottom: 1px solid var(--line);
-  padding: clamp(14px, 2.0vh, 20px) var(--s2);
-  text-decoration: none;
-  color: var(--text);
-  background: transparent;
-  transition: border-color var(--dur-fast) ease;
-}
-
-.contact-row:hover {
-  border-color: var(--line-strong);
-}
-
-.contact-row__name {
-  font-family: var(--font-title);
-  font-size: var(--fs-h2);
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0.02em;
-  transition: transform 0.25s var(--ease), color 0.2s ease;
-  will-change: transform;
-}
-
-.contact-row:hover .contact-row__name {
   transform: translateX(6px);
-  color: #fff;
-}
-
-.contact-row__arrow {
-  font-size: 1.15rem;
-  color: var(--muted);
-  transition: transform 0.25s var(--ease), color 0.2s ease;
-  will-change: transform;
-}
-
-.contact-row:hover .contact-row__arrow {
-  transform: translateX(4px);
   color: var(--accent);
 }
 
-/* Divider Component */
 .divider {
   width: 100%;
   height: 1px;
@@ -668,9 +645,6 @@ html, body {
   border: none;
 }
 
-/* ==========================================================================
-   5. NAVIGATION & AUDIO (High-contrast, readable controls)
-   ========================================================================== */
 .nav-bar {
   position: fixed;
   top: 0;
@@ -685,15 +659,16 @@ html, body {
   padding: var(--s4) var(--page-pad);
   background: transparent;
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
-  transition: background-color var(--dur-fast) ease;
+  letter-spacing: 0.08em;
+  transition: background-color var(--dur-fast) var(--ease);
 }
 
 .nav-left {
   justify-self: start;
   display: flex;
   align-items: center;
-  gap: var(--s3);
+  gap: var(--s2);
+  min-width: 0;
 }
 
 .nav-right {
@@ -704,26 +679,14 @@ html, body {
 }
 
 .status-indicator {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--s2);
   color: var(--muted);
   text-transform: uppercase;
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--accent);
-  display: inline-block;
-  animation: statusPulse 2s ease-in-out infinite;
-}
-
-@keyframes statusPulse {
-  0%, 100% { opacity: 0.35; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.15); }
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .nav-center {
@@ -742,8 +705,9 @@ html, body {
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: var(--s1) var(--s2);
-  transition: color var(--dur-fast) ease;
+  padding: var(--s2);
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease);
   cursor: pointer;
 }
 
@@ -752,13 +716,12 @@ html, body {
 }
 
 .nav-link.active {
-  color: var(--accent-blue);
+  color: var(--accent);
 }
 
-/* Active Nav Indicator (Reserved Accent Gradient) */
 .nav-indicator {
   position: absolute;
-  bottom: -4px;
+  bottom: 0;
   left: 0;
   height: 2px;
   background: var(--accent-gradient);
@@ -767,34 +730,34 @@ html, body {
   will-change: transform, width;
 }
 
-/* Top-Right Controls: Bright & High-Contrast (>= 4.5:1 ratio) */
 .nav-right .nav-btn,
 .nav-right button {
-  color: var(--text) !important;
-  opacity: 0.9 !important;
-  background: transparent !important;
-  border: none !important;
+  color: var(--text);
+  background: transparent;
+  border: none;
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
-  padding: 6px 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: var(--s2);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: opacity 0.2s ease, color 0.2s ease;
+  gap: var(--s2);
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease);
   user-select: none;
 }
 
 .nav-right .nav-btn:hover,
 .nav-right button:hover {
-  color: #fff !important;
-  opacity: 1 !important;
+  color: var(--accent);
 }
 
 .audio-label-desktop {
   display: inline;
 }
+
 .audio-label-mobile {
   display: none;
 }
@@ -814,17 +777,19 @@ html, body {
   background: currentColor;
   transform-origin: bottom;
   transform: scaleY(0.25);
-  transition: transform var(--dur-fast) ease;
+  transition: transform var(--dur-fast) var(--ease);
 }
 
 .audio-toggle-btn.playing .eq-bar:nth-child(1) {
-  animation: eqJump 0.75s ease-in-out infinite alternate;
+  animation: eqJump var(--dur-slow) var(--ease) infinite alternate;
 }
+
 .audio-toggle-btn.playing .eq-bar:nth-child(2) {
-  animation: eqJump 0.55s ease-in-out infinite alternate 0.15s;
+  animation: eqJump var(--dur) var(--ease) infinite alternate var(--dur-fast);
 }
+
 .audio-toggle-btn.playing .eq-bar:nth-child(3) {
-  animation: eqJump 0.95s ease-in-out infinite alternate 0.35s;
+  animation: eqJump var(--dur-slow) var(--ease) infinite alternate var(--dur);
 }
 
 @keyframes eqJump {
@@ -839,7 +804,6 @@ html, body {
   pointer-events: none !important;
 }
 
-/* Mobile Fullscreen Menu */
 .mobile-menu {
   position: fixed;
   inset: 0;
@@ -869,20 +833,20 @@ html, body {
 
 .mobile-link {
   color: var(--muted);
+  font-family: var(--font-mono);
   font-size: var(--fs-h2);
   text-decoration: none;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: color var(--dur-fast) ease;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease);
 }
 
-.mobile-link:hover, .mobile-link.active {
+.mobile-link:hover,
+.mobile-link.active {
   color: var(--accent);
 }
 
-/* ==========================================================================
-   6. SECTION 1: HOME (Slot above title, visual ink centering)
-   ========================================================================== */
 .section-home {
   height: 100vh;
   height: 100dvh;
@@ -906,8 +870,8 @@ html, body {
   align-items: center;
   justify-items: center;
   text-align: center;
-  padding-top: max(110px, 8vh);
-  padding-bottom: 4vh;
+  padding-top: max(96px, 8vh);
+  padding-bottom: var(--s5);
   position: relative;
   z-index: 10;
 }
@@ -921,18 +885,16 @@ html, body {
   align-self: center;
 }
 
-/* Centered "coodz_10" Title (Reserved Accent Gradient, visual ink centering) */
 .hero-title {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-inline: auto;
   width: fit-content;
-  max-width: 80vw;
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
   font-size: var(--fs-display);
   font-weight: 800;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.04em;
   line-height: 1;
   text-align: center;
   white-space: nowrap;
@@ -946,11 +908,11 @@ html, body {
   margin: 0 auto;
   padding: 0;
   will-change: transform, opacity;
-  transition: opacity var(--dur) ease;
+  transition: opacity var(--dur) var(--ease);
 }
 
 .hero-title.shimmer-active {
-  animation: titleShimmerOnce 1.8s ease-in-out 1;
+  animation: titleShimmerOnce var(--dur-slow) var(--ease) 1;
 }
 
 @keyframes titleShimmerOnce {
@@ -965,7 +927,7 @@ html, body {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--dur) var(--ease);
   will-change: transform, opacity;
 }
 
@@ -974,7 +936,6 @@ html, body {
   margin-right: 0 !important;
 }
 
-/* Subtitle under title (true ink centering with compensated margin) */
 .hero-subtitle-wrap {
   display: flex;
   align-items: center;
@@ -982,15 +943,15 @@ html, body {
   margin-inline: auto;
   gap: var(--s3);
   margin-top: var(--s4);
-  transition: opacity var(--dur) ease;
+  transition: opacity var(--dur) var(--ease);
 }
 
 .hero-subtitle {
   font-family: var(--font-mono);
-  font-size: clamp(0.7rem, 1.1vw, 0.92rem);
+  font-size: var(--fs-mono);
   color: var(--muted);
-  letter-spacing: 0.5em;
-  margin-right: -0.5em; /* Compensate trailing letter-spacing for true ink centering */
+  letter-spacing: 0.36em;
+  margin-right: -0.36em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1009,7 +970,6 @@ html, body {
   background: linear-gradient(90deg, var(--line), transparent);
 }
 
-/* Bottom Actions centered */
 .home-bottom-actions {
   display: flex;
   flex-direction: column;
@@ -1018,7 +978,7 @@ html, body {
   gap: var(--s2);
   margin-top: var(--s4);
   pointer-events: auto;
-  transition: opacity var(--dur) ease;
+  transition: opacity var(--dur) var(--ease);
 }
 
 .home-buttons-row {
@@ -1037,7 +997,7 @@ html, body {
   width: 1px;
   height: 32px;
   background: linear-gradient(180deg, var(--accent), transparent);
-  animation: scrollLineDrop 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: scrollLineDrop 2.1s var(--ease) infinite;
   will-change: transform, opacity;
 }
 
@@ -1048,9 +1008,6 @@ html, body {
   100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
 }
 
-/* ==========================================================================
-   7. SECTION 2: CHI_SONO (Symmetric 3-column CSS Grid: Left | Slot | Right)
-   ========================================================================== */
 .section-about {
   min-height: 100vh;
   min-height: 100dvh;
@@ -1074,20 +1031,18 @@ html, body {
   z-index: 10;
 }
 
-/* Header Zone: Centered above middle column, keeping >= 60px from nav */
 .about-head {
   height: 18vh;
-  min-height: 110px;
-  margin-top: max(110px, 8vh);
+  min-height: 104px;
+  margin-top: max(96px, 8vh);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: clamp(4px, 0.8vh, 8px);
+  gap: var(--s2);
 }
 
-/* Symmetric 3-column Grid Aligned with Content Band (26vh to 88vh) */
 .about-grid {
   --avatar-col: clamp(260px, 26vw, 520px);
   --gutter: clamp(24px, 3vw, 56px);
@@ -1095,15 +1050,15 @@ html, body {
   grid-template-columns: minmax(0, 1fr) var(--avatar-col) minmax(0, 1fr);
   column-gap: var(--gutter);
   align-items: center;
-  height: 62vh; /* Band: 26vh to 88vh */
+  height: 62vh;
   max-height: 62vh;
-  margin-top: 2vh;
+  margin-top: var(--s4);
 }
 
 .about-col {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: var(--s6);
   max-width: 360px;
   width: 100%;
 }
@@ -1119,14 +1074,11 @@ html, body {
 .about-avatar-slot {
   width: 100%;
   height: 100%;
-  min-height: 50vh;
+  min-height: 48vh;
   max-height: 60vh;
   align-self: stretch;
 }
 
-/* ==========================================================================
-   8. SECTION 3: ESPERIENZE (CSS Grid: Slot col 36vw with header | gutter | list col)
-   ========================================================================== */
 .section-experiences {
   min-height: 100vh;
   min-height: 100dvh;
@@ -1147,15 +1099,14 @@ html, body {
   grid-template-columns: 36vw 1fr;
   column-gap: var(--gutter, clamp(24px, 3vw, 56px));
   align-items: start;
-  padding-top: max(110px, 8vh);
-  padding-bottom: 6vh;
+  padding-top: max(96px, 8vh);
+  padding-bottom: var(--s6);
   position: relative;
   z-index: 10;
 }
 
-/* Left Column: Header centered above slot column + Slot below */
 .experiences-head-col {
-  height: calc(88vh - max(110px, 8vh));
+  height: calc(88vh - max(96px, 8vh));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1167,7 +1118,7 @@ html, body {
   align-items: center;
   text-align: center;
   width: 100%;
-  margin-bottom: 2vh;
+  margin-bottom: var(--s4);
 }
 
 .exp-avatar-slot {
@@ -1177,24 +1128,16 @@ html, body {
   max-height: 64vh;
 }
 
-/* Right Column: Filter Tabs + Experience List / Detail View */
 .experiences-content-col {
-  height: calc(88vh - max(110px, 8vh));
-  max-height: calc(88vh - max(110px, 8vh));
+  height: calc(88vh - max(96px, 8vh));
+  max-height: calc(88vh - max(96px, 8vh));
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
+  scrollbar-color: var(--accent) var(--bg);
   padding-right: var(--s2);
   display: flex;
   flex-direction: column;
-}
-
-.experiences-content-col::-webkit-scrollbar {
-  width: 4px;
-}
-.experiences-content-col::-webkit-scrollbar-thumb {
-  background: var(--line);
 }
 
 .experiences-view {
@@ -1239,10 +1182,12 @@ html, body {
 }
 
 .exp-group-tag {
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--accent);
-  font-weight: 600;
 }
 
 .cards-list {
@@ -1250,7 +1195,6 @@ html, body {
   flex-direction: column;
 }
 
-/* Minimal Experience Detail View */
 .experience-detail-view {
   display: flex;
   flex-direction: column;
@@ -1259,7 +1203,7 @@ html, body {
 }
 
 .detail-top-nav {
-  margin-bottom: var(--s1);
+  margin-bottom: var(--s2);
 }
 
 .detail-header {
@@ -1283,25 +1227,26 @@ html, body {
 }
 
 .detail-index {
-  font-size: clamp(1.4rem, 2.5vw, 2rem);
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: var(--fs-h1);
+  font-weight: 500;
   color: var(--muted);
-  opacity: 0.6;
 }
 
 .detail-title {
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
   font-size: var(--fs-h1);
   font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #fff;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
 }
 
 .detail-role {
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
   color: var(--muted);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -1315,13 +1260,13 @@ html, body {
 .detail-stars {
   font-size: var(--fs-mono);
   color: var(--accent);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 .detail-period {
   font-size: var(--fs-mono);
   color: var(--muted);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -1337,12 +1282,21 @@ html, body {
   gap: var(--s2);
   font-size: var(--fs-mono);
   color: var(--text);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .detail-notice-tag {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 500;
+}
+
+.detail-notice-text {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted);
 }
 
 .detail-review-section {
@@ -1352,10 +1306,10 @@ html, body {
 }
 
 .detail-review-title {
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
   font-size: var(--fs-h2);
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
 }
 
 .detail-paragraphs {
@@ -1370,18 +1324,20 @@ html, body {
   gap: var(--s6);
 }
 
-.detail-pros-col, .detail-cons-col {
+.detail-pros-col,
+.detail-cons-col {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
 }
 
 .detail-group-tag {
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
   border-bottom: 1px solid var(--line);
   padding-bottom: var(--s2);
 }
@@ -1391,6 +1347,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
+  font-family: var(--font-sans);
   font-size: var(--fs-body);
 }
 
@@ -1399,7 +1356,7 @@ html, body {
   align-items: baseline;
   gap: var(--s2);
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .detail-list .bullet {
@@ -1410,9 +1367,6 @@ html, body {
   margin-top: var(--s2);
 }
 
-/* ==========================================================================
-   9. SECTION 4: CONTATTI (Single centered column max-width 560px, all centered)
-   ========================================================================== */
 .section-contact {
   height: 100vh;
   height: 100dvh;
@@ -1434,13 +1388,12 @@ html, body {
   align-items: center;
   justify-items: center;
   text-align: center;
-  padding-top: max(110px, 8vh);
-  padding-bottom: 4vh;
+  padding-top: max(96px, 8vh);
+  padding-bottom: var(--s5);
   position: relative;
   z-index: 10;
 }
 
-/* Header Zone: 6vh to 24vh */
 .contact-head {
   display: flex;
   flex-direction: column;
@@ -1451,13 +1404,14 @@ html, body {
 }
 
 .contact-sub {
+  font-family: var(--font-sans);
   font-size: var(--fs-body);
   color: var(--muted);
+  line-height: 1.55;
   text-align: center;
   max-width: 52ch;
 }
 
-/* Avatar Slot between Header and Rows (min-height 24vh, flex 1) */
 .contact-avatar-slot {
   width: 100%;
   max-width: 380px;
@@ -1468,7 +1422,6 @@ html, body {
   align-self: center;
 }
 
-/* 3 Contact Rows: max 560px wide, centered */
 .contact-rows-wrap {
   width: 100%;
   max-width: 560px;
@@ -1478,19 +1431,17 @@ html, body {
   align-items: stretch;
 }
 
-/* Footer Line: Centered */
 .footer-line {
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
   color: var(--muted);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-align: center;
   width: 100%;
   padding-top: var(--s5);
 }
 
-/* ==========================================================================
-   10. PROOFS MODAL & GATE SCREEN
-   ========================================================================== */
 .gate-screen {
   position: fixed;
   inset: 0;
@@ -1517,10 +1468,10 @@ html, body {
   font-family: var(--font-mono);
   font-size: var(--fs-body);
   color: var(--muted);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   cursor: pointer;
   padding: var(--s3) var(--s4);
-  transition: color var(--dur-fast) ease;
+  transition: color var(--dur-fast) var(--ease);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1533,9 +1484,13 @@ html, body {
 
 .gate-cursor {
   display: inline-block;
-  color: var(--accent);
-  margin-left: 2px;
-  animation: gateBlink 1s step-end infinite;
+  width: 8px;
+  height: 2px;
+  background: var(--accent);
+  margin-left: var(--s2);
+  align-self: flex-end;
+  margin-bottom: 2px;
+  animation: gateBlink var(--dur-slow) steps(2, start) infinite;
 }
 
 @keyframes gateBlink {
@@ -1572,7 +1527,7 @@ html, body {
   width: 90%;
   max-width: 560px;
   background: var(--bg);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--accent);
   padding: var(--s5);
 }
 
@@ -1586,7 +1541,8 @@ html, body {
 }
 
 .proofs-title {
-  color: #fff;
+  font-family: var(--font-sans);
+  color: var(--text);
   font-size: var(--fs-h2);
   font-weight: 700;
 }
@@ -1596,27 +1552,15 @@ html, body {
   flex-direction: column;
   max-height: 280px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg);
 }
 
 .proof-link-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--s3) var(--s2);
-  border-bottom: 1px solid var(--line);
-  text-decoration: none;
-  color: var(--text);
+  font-family: var(--font-mono);
   font-size: var(--fs-mono);
 }
 
-.proof-link-item:hover {
-  border-color: var(--line-strong);
-  color: var(--accent);
-}
-
-/* ==========================================================================
-   11. GIANT BACKGROUND WORD (Single Fixed Layer Behind Avatar & Text)
-   ========================================================================== */
 .section-bg-word {
   position: fixed;
   top: 55vh;
@@ -1632,11 +1576,11 @@ html, body {
   line-height: 1;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.30);
+  -webkit-text-stroke: 1.5px var(--accent);
   opacity: 0;
   pointer-events: none;
   user-select: none;
-  z-index: 2; /* Behind #avatar-stage (6) and #scroll-container (10), above #stars-canvas (0) */
+  z-index: 2;
   white-space: nowrap;
   will-change: transform, opacity;
 }
@@ -1647,9 +1591,6 @@ html, body {
   }
 }
 
-/* ==========================================================================
-   12. REVEAL ANIMATIONS (Opacity + TranslateY 16px, 90ms Stagger, No Blur)
-   ========================================================================== */
 .section-block {
   opacity: 0;
   transform: translateY(16px);
@@ -1664,31 +1605,30 @@ html, body {
   transform: translateY(0);
 }
 
-/* Stagger child elements in active section */
 .snap-section.section-active .about-head,
 .snap-section.section-active .exp-head,
 .snap-section.section-active .contact-head {
-  animation: revealItem 0.45s var(--ease) forwards;
+  animation: revealItem var(--dur) var(--ease) forwards;
   animation-delay: 0ms;
 }
 
 .snap-section.section-active .about-meta,
 .snap-section.section-active .exp-category-tabs {
-  animation: revealItem 0.45s var(--ease) forwards;
+  animation: revealItem var(--dur) var(--ease) forwards;
   animation-delay: 90ms;
 }
 
 .snap-section.section-active .about-col--left,
 .snap-section.section-active .exp-group:nth-of-type(1),
 .snap-section.section-active .contact-rows-wrap {
-  animation: revealItem 0.45s var(--ease) forwards;
+  animation: revealItem var(--dur) var(--ease) forwards;
   animation-delay: 180ms;
 }
 
 .snap-section.section-active .about-col--right,
 .snap-section.section-active .exp-group:nth-of-type(2),
 .snap-section.section-active .footer-line {
-  animation: revealItem 0.45s var(--ease) forwards;
+  animation: revealItem var(--dur) var(--ease) forwards;
   animation-delay: 270ms;
 }
 
@@ -1697,7 +1637,6 @@ html, body {
   100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Scroll Lock During Intro */
 .intro-locked,
 .intro-locked body,
 .intro-locked .scroll-container {
@@ -1706,7 +1645,6 @@ html, body {
   user-select: none;
 }
 
-/* Pre-paint intro hidden state */
 .intro-pending .nav-bar:not(.intro-revealed),
 .intro-pending .hero-subtitle-wrap:not(.intro-revealed),
 .intro-pending .home-bottom-actions:not(.intro-revealed),
@@ -1719,56 +1657,52 @@ html, body {
 
 .slow-debug-badge {
   position: fixed;
-  top: 14px;
-  left: 18px;
+  top: 16px;
+  left: 16px;
   z-index: 9999;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
+  font-size: var(--fs-mono);
+  letter-spacing: 0.08em;
   color: var(--accent);
   background: var(--bg);
   border: 1px solid var(--line);
-  padding: 4px 8px;
+  padding: var(--s2);
   pointer-events: none;
   user-select: none;
 }
 
-/* ==========================================================================
-   13. RESPONSIVE DESIGN (1920x1080, 1366x768, 768px, 390px)
-   ========================================================================== */
 @media (max-height: 800px) and (min-width: 769px) {
+  :root {
+    --fs-body: 0.875rem;
+  }
   .about-head {
-    margin-top: max(76px, 8vh);
+    margin-top: max(72px, 8vh);
     height: auto;
     min-height: 0;
-    margin-bottom: 2vh;
+    margin-bottom: var(--s2);
   }
   .about-grid {
-    margin-top: 1vh;
+    margin-top: var(--s2);
     height: auto;
-    max-height: 72vh;
+    max-height: 74vh;
   }
   .about-col {
-    gap: clamp(14px, 2.2vh, 24px);
-  }
-  .about-item {
-    padding: 0 0 0 1rem;
+    gap: var(--s4);
   }
   .lead,
   .about-item__body {
-    font-size: clamp(0.8rem, 1.5vh, 0.875rem);
-    line-height: 1.52;
+    line-height: 1.48;
   }
   .experiences-block {
-    padding-top: 4vh;
-    padding-bottom: 4vh;
+    padding-top: max(72px, 8vh);
+    padding-bottom: var(--s5);
   }
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
   .about-grid {
     --avatar-col: clamp(220px, 24vw, 360px);
-    --gutter: 20px;
+    --gutter: 24px;
   }
   .about-col {
     max-width: 32vw;
@@ -1789,7 +1723,29 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--s3) var(--page-pad);
+    gap: var(--s2);
+    padding: var(--s3) var(--s3);
+  }
+  .nav-left {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .nav-right {
+    gap: var(--s1);
+    flex-shrink: 0;
+  }
+  .nav-right .nav-btn,
+  .nav-right button {
+    padding: var(--s1) 2px;
+    gap: 4px;
+    letter-spacing: 0.04em;
+  }
+  .status-indicator {
+    gap: 6px;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .audio-label-desktop {
@@ -1806,15 +1762,22 @@ html, body {
   }
 
   .section-home {
-    padding: 0 !important;
+    padding: 0 var(--page-pad) !important;
     align-items: center !important;
     justify-content: center !important;
     overflow: hidden;
   }
 
   .hero-title {
-    max-width: 92vw;
     font-size: clamp(2.2rem, 12vw, 4.8rem);
+  }
+
+  .about-meta {
+    flex-direction: column;
+    gap: var(--s1);
+  }
+  .about-meta .meta-sep {
+    display: none;
   }
 
   .hero-subtitle-wrap {
@@ -1822,9 +1785,8 @@ html, body {
   }
 
   .hero-subtitle {
-    letter-spacing: 0.3em;
-    margin-right: -0.3em;
-    font-size: 0.68rem;
+    letter-spacing: 0.24em;
+    margin-right: -0.24em;
   }
 
   .home-bottom-actions {
@@ -1838,24 +1800,31 @@ html, body {
     width: 100%;
   }
 
-  /* Mobile Flow: Header -> ~30vh Avatar Slot -> Content Column */
-  .about-block, .experiences-block, .contact-block, .home-grid {
+  .about-block,
+  .experiences-block,
+  .contact-block,
+  .home-grid {
     height: auto;
     min-height: 100vh;
-    padding-top: max(80px, 9vh);
+    padding-top: max(72px, 9vh);
     padding-bottom: var(--s7);
     display: flex;
     flex-direction: column;
     align-items: stretch;
   }
 
-  .about-head, .experiences-head-col .exp-head, .contact-head {
+  .about-head,
+  .experiences-head-col .exp-head,
+  .contact-head {
     height: auto;
     margin-top: 0;
     margin-bottom: var(--s3);
   }
 
-  .about-avatar-slot, .exp-avatar-slot, .contact-avatar-slot, .home-avatar-slot {
+  .about-avatar-slot,
+  .exp-avatar-slot,
+  .contact-avatar-slot,
+  .home-avatar-slot {
     display: block;
     height: 30vh;
     min-height: 180px;
@@ -1891,6 +1860,11 @@ html, body {
     margin-top: var(--s4);
   }
 
+  .exp-category-tabs {
+    gap: var(--s3);
+    flex-wrap: nowrap;
+  }
+
   .contact-rows-wrap {
     margin-top: var(--s4);
   }
@@ -1907,10 +1881,23 @@ html, body {
 
 @media (max-width: 480px) {
   .nav-bar {
-    padding: var(--s2) var(--page-pad);
+    padding: var(--s2) 10px;
+    gap: 4px;
   }
   .nav-right {
-    gap: var(--s1);
+    gap: 2px;
+  }
+  .nav-right .nav-btn,
+  .nav-right button {
+    padding: 6px 1px;
+    letter-spacing: 0.01em;
+  }
+  .nav-right .eq-icon {
+    display: none;
+  }
+  .status-indicator {
+    gap: 4px;
+    letter-spacing: 0.01em;
   }
 }
 
@@ -1931,7 +1918,8 @@ html, body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .status-dot, .scroll-line {
+  .status-dot-pulse,
+  .scroll-line {
     animation: none !important;
   }
   .section-block {
@@ -1941,20 +1929,18 @@ html, body {
   }
 }
 
-/* ==========================================================================
-   14. DEBUG & LAYOUT AUDIT PANEL (?debug and ?layout parameters)
-   ========================================================================== */
 .avatar-debug-panel {
   position: fixed;
-  top: 4.5rem;
-  left: 1.5rem;
+  top: 72px;
+  left: 24px;
   z-index: 1000;
   width: 290px;
-  max-height: calc(100vh - 6rem);
+  max-height: calc(100vh - 96px);
   overflow-y: auto;
   background: var(--bg);
   border: 1px solid var(--line);
   padding: var(--s3) var(--s4);
   color: var(--text);
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
 }

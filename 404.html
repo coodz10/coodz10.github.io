@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>coodz_10 · 404</title>
+  <meta name="theme-color" content="#05060f">
+  <meta name="author" content="coodz_10">
+  <link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <style>
+    @font-face {
+      font-family: 'Bricolage Grotesque';
+      font-style: normal;
+      font-display: swap;
+      font-weight: 400 800;
+      src: url('/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2') format('woff2');
+      unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+    @font-face {
+      font-family: 'Martian Mono';
+      font-style: normal;
+      font-display: swap;
+      font-weight: 400 500;
+      src: url('/assets/fonts/martian-mono-latin-wght-normal.woff2') format('woff2');
+      unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+    :root {
+      --bg: #05060f;
+      --navy: #0b1536;
+      --cobalt: #1d4ed8;
+      --accent: #3373ff;
+      --ice: #7aa4ff;
+      --text: #e8eaff;
+      --muted: #7c83a8;
+      --line: rgba(124, 131, 168, 0.22);
+      --font-sans: 'Bricolage Grotesque', system-ui, sans-serif;
+      --font-mono: 'Martian Mono', ui-monospace, monospace;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --t-fast: 150ms;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ::selection { background: var(--accent); color: var(--bg); }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .not-found {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 24px;
+      padding: 40px 24px;
+      border: 1px solid var(--line);
+      background: var(--navy);
+    }
+    .avatar-fallback {
+      width: 96px;
+      height: 96px;
+      border: 1px solid var(--line);
+      image-rendering: pixelated;
+      display: block;
+    }
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text);
+    }
+    .sub {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+    .home-link {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      padding: 12px 24px;
+      transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+    }
+    .home-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .home-link:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 3px;
+    }
+  </style>
+</head>
+<body>
+  <main class="not-found">
+    <img class="avatar-fallback" src="/assets/apple-touch-icon.png" alt="coodz_10" width="96" height="96">
+    <span class="tag">04 · 404</span>
+    <h1>pagina non trovata</h1>
+    <p class="sub">questa pagina non esiste o è stata spostata.</p>
+    <a class="home-link" href="/index.html">[ torna alla home ]</a>
+  </main>
+</body>
+</html>
+
