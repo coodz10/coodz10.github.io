@@ -19,7 +19,7 @@
   <!-- Google Fonts: Space Grotesk & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Pre-paint hiding for intro sequence -->
   <script>
@@ -70,9 +70,10 @@
   <!-- 2D INTRO WRITING CANVAS (Avatar writes the name) -->
   <canvas id="intro-canvas" class="intro-canvas" aria-hidden="true"></canvas>
 
-  <!-- 3. BEHIND THE AVATAR: CANVAS STARS -->
+  <!-- 3. BEHIND THE AVATAR: CANVAS STARS & FIXED BG WORD -->
   <div class="vignette-overlay" aria-hidden="true"></div>
   <canvas id="stars-canvas" class="stars-canvas"></canvas>
+  <div id="bg-word" class="section-bg-word" aria-hidden="true"></div>
 
   <!-- 2. AVATAR: FIXED FULL-SCREEN CONTAINER #avatar-stage -->
   <div id="avatar-stage" class="avatar-stage state-home">
@@ -170,50 +171,33 @@
          Symmetric 3-column CSS Grid: Left column (lead + 01) | Slot | Right column (02 + 03)
          ====================================================================== -->
     <section id="chi_sono" class="snap-section section-about">
-      <div class="section-bg-word mono" data-i18n="bgWordAbout" aria-hidden="true">CHI SONO</div>
       <div class="section-block about-block">
 
         <!-- Header: Centered above middle column (6vh to 24vh) -->
         <header class="section-head section-head--center about-head">
-          <span class="section-head__tag mono" data-i18n="aboutTag">01 // CHI_SONO</span>
-          <h1 class="section-head__title" data-i18n="aboutTitle">Chi Sono</h1>
           <span class="section-head__tag mono" data-i18n="aboutTag">LOG_ENTRY_01 // CHI_SONO</span>
           <h2 class="section-head__title" data-i18n="aboutTitle">Chi Sono</h2>
-          
+
           <!-- Single mono metadata line under title -->
           <div class="about-meta mono">
             <span class="meta-item"><span class="meta-label" data-i18n="aboutHandleLabel">HANDLE:</span> <span class="meta-val">coodz_10</span></span>
             <span class="meta-sep">·</span>
-            <span class="meta-sep">//</span>
-            <span class="meta-item"><span class="meta-label" data-i18n="aboutRoleLabel">RUOLO:</span> <span class="meta-val" data-i18n="aboutRoleVal">SysAdmin // Security</span></span>
+            <span class="meta-item"><span class="meta-label" data-i18n="aboutRoleLabel">RUOLO:</span> <span class="meta-val" data-i18n="aboutRoleVal">SysAdmin · Security</span></span>
             <span class="meta-sep">·</span>
-            <span class="meta-sep">//</span>
-            <span class="meta-item meta-status"><span class="status-dot-accent">●</span> <span class="meta-label" data-i18n="aboutStatusLabel">STATO:</span> <span class="meta-val" data-i18n="aboutStatusVal">[ OPERATIVO ]</span></span>
+            <span class="meta-item meta-status"><span class="status-dot-accent">●</span> <span class="meta-label" data-i18n="aboutStatusLabel">STATO:</span> <span class="meta-val" data-i18n="aboutStatusVal">OPERATIVO</span></span>
           </div>
         </header>
 
         <!-- Symmetric 3-column Grid: Left column | Avatar Slot | Right column -->
         <div class="about-grid">
-          <!-- LEFT column: lead paragraph + item 01 (~30vw max) -->
-          <!-- LEFT column: item 00 + item 01 (max-width: 360px) -->
+          <!-- LEFT column: lead paragraph + item 01 -->
           <div class="about-col about-col--left">
             <p class="lead" data-i18n="aboutIntro">
               Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.
             </p>
             <div class="about-item">
               <div class="about-item__header mono">
-                <span class="item-num">00 — </span>
-                <span class="item-title" data-i18n="aboutPillarTitle0">[ PROFILO // BIO ]</span>
-              </div>
-              <p class="about-item__body" data-i18n="aboutIntro">
-                Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.
-              </p>
-            </div>
-            <div class="about-item">
-              <div class="about-item__header mono">
-                <span class="item-num">01 — </span>
-                <span class="item-title" data-i18n="aboutPillarTitle1">SOFTWARE &amp; SICUREZZA</span>
-                <span class="item-title" data-i18n="aboutPillarTitle1">[ SOFTWARE &amp; SICUREZZA ]</span>
+                <span class="item-num">01 · </span><span class="item-title" data-i18n="aboutPillarTitle1">SOFTWARE &amp; SICUREZZA</span>
               </div>
               <p class="about-item__body" data-i18n="aboutPillarDesc1">
                 Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.
@@ -224,14 +208,11 @@
           <!-- MIDDLE column: Avatar Slot -->
           <div class="avatar-slot about-avatar-slot" aria-hidden="true"></div>
 
-          <!-- RIGHT column: item 02 + item 03 (~30vw max) -->
-          <!-- RIGHT column: item 02 + item 03 (max-width: 360px) -->
+          <!-- RIGHT column: item 02 + item 03 -->
           <div class="about-col about-col--right">
             <div class="about-item">
               <div class="about-item__header mono">
-                <span class="item-num">02 — </span>
-                <span class="item-title" data-i18n="aboutPillarTitle2">INTELLIGENZA ARTIFICIALE</span>
-                <span class="item-title" data-i18n="aboutPillarTitle2">[ INTELLIGENZA ARTIFICIALE ]</span>
+                <span class="item-num">02 · </span><span class="item-title" data-i18n="aboutPillarTitle2">INTELLIGENZA ARTIFICIALE</span>
               </div>
               <p class="about-item__body" data-i18n="aboutPillarDesc2">
                 Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.
@@ -240,9 +221,7 @@
 
             <div class="about-item">
               <div class="about-item__header mono">
-                <span class="item-num">03 — </span>
-                <span class="item-title" data-i18n="aboutPillarTitle3">HARDWARE &amp; CUSTOM PC</span>
-                <span class="item-title" data-i18n="aboutPillarTitle3">[ HARDWARE &amp; CUSTOM PC ]</span>
+                <span class="item-num">03 · </span><span class="item-title" data-i18n="aboutPillarTitle3">HARDWARE &amp; CUSTOM PC</span>
               </div>
               <p class="about-item__body" data-i18n="aboutPillarDesc3">
                 Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.
@@ -261,14 +240,11 @@
          Minecraft servers ALWAYS FIRST per AGENTS.md Rule 1.
          ====================================================================== -->
     <section id="esperienze" class="snap-section section-experiences">
-      <div class="section-bg-word mono" data-i18n="bgWordExp" aria-hidden="true">ESPERIENZE</div>
       <div class="section-block experiences-block">
 
         <!-- Left Column: Header centered above slot column + Avatar Slot below -->
         <div class="experiences-head-col">
           <header class="section-head section-head--center exp-head">
-            <span class="section-head__tag mono" data-i18n="expTag">02 // ESPERIENZE</span>
-            <h1 class="section-head__title" data-i18n="expTitle">Esperienze</h1>
             <span class="section-head__tag mono" data-i18n="expTag">LOG_ENTRY_02 // ESPERIENZE</span>
             <h2 class="section-head__title" data-i18n="expTitle">Esperienze</h2>
           </header>
@@ -407,11 +383,8 @@
          Header -> Avatar Slot (min-height 24vh) -> Rows -> Footer line.
          ====================================================================== -->
     <section id="contatti" class="snap-section section-contact">
-      <div class="section-bg-word mono" data-i18n="bgWordContact" aria-hidden="true">CONTATTI</div>
       <div class="section-block contact-block">
         <header class="section-head section-head--center contact-head">
-          <span class="section-head__tag mono" data-i18n="contactTag">03 // CONTATTI</span>
-          <h1 class="section-head__title" data-i18n="contactTitle">Parliamo</h1>
           <span class="section-head__tag mono" data-i18n="contactTag">LOG_ENTRY_03 // CONTATTI</span>
           <h2 class="section-head__title" data-i18n="contactTitle">Parliamo</h2>
           <p class="contact-sub mono" data-i18n="contactSub">

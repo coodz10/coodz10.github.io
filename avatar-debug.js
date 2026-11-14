@@ -697,8 +697,70 @@
         }
       });
 
+      // Duplicate content & structural count regression guard
+      const duplicates = [];
+      const i18nCounts = {};
+      el.querySelectorAll('[data-i18n]').forEach((node) => {
+        const key = node.getAttribute('data-i18n');
+        i18nCounts[key] = (i18nCounts[key] || 0) + 1;
+      });
+      Object.entries(i18nCounts).forEach(([key, count]) => {
+        if (count > 1) {
+          duplicates.push({ type: 'duplicate-i18n', key, count });
+        }
+      });
+
+      el.querySelectorAll('*').forEach((parent) => {
+        if (parent.closest('#hero-title') || parent.classList.contains('hero-title') || parent.classList.contains('eq-icon')) return;
+        const children = Array.from(parent.children);
+        const seenText = new Map();
+        children.forEach((child) => {
+          if (child.children.length > 0) return;
+          if (child.classList.contains('meta-sep') && child.textContent.trim() === '·') return;
+          const norm = (child.textContent || '').trim().replace(/\s+/g, ' ');
+          if (!norm) return;
+          if (seenText.has(norm)) {
+            duplicates.push({ type: 'duplicate-sibling', parent: parent.className || parent.tagName, text: norm });
+          } else {
+            seenText.set(norm, true);
+          }
+        });
+      });
+
+      el.querySelectorAll('.about-item__header, .item-title, .section-head__tag, .section-head__title, .meta-item').forEach((node) => {
+        if (node.classList.contains('about-item__header') && node.querySelectorAll('.item-title').length > 1) {
+          duplicates.push({ type: 'multiple-item-titles', text: (node.textContent || '').trim().replace(/\s+/g, ' ') });
+        }
+        const norm = (node.textContent || '').trim().replace(/\s+/g, ' ');
+        if (/^(.{3,}?)\s+\1$/i.test(norm)) {
+          duplicates.push({ type: 'repeated-label', text: norm });
+        }
+      });
+
+      const counts = {
+        headers: el.querySelectorAll('.section-head').length,
+        headerTags: el.querySelectorAll('.section-head__tag').length,
+        headerTitles: el.querySelectorAll('.section-head__title').length,
+        leads: el.querySelectorAll('.lead').length,
+        aboutItems: el.querySelectorAll('.about-item').length
+      };
+
+      if (id === 'chi_sono' || id === 'esperienze' || id === 'contatti') {
+        if (counts.headers !== 1 || counts.headerTags !== 1 || counts.headerTitles !== 1) {
+          duplicates.push({ type: 'header-count-mismatch', counts });
+        }
+      }
+      if (id === 'chi_sono' && (counts.leads !== 1 || counts.aboutItems !== 3)) {
+        duplicates.push({ type: 'chi-sono-structure-mismatch', counts });
+      }
+
+      if (duplicates.length > 0) {
+        console.error('[LayoutAudit] Duplicate content detected in #' + id, duplicates);
+      }
+
       const sectionPasses = (
         overlaps.length === 0 &&
+        duplicates.length === 0 &&
         headerCenteringError <= 2 &&
         columnTopAlignment <= 2 &&
         (vw <= 768 || navCenteringError <= 2) &&
@@ -716,6 +778,8 @@
         noColumnHigherThanHeader,
         overlaps,
         hasOverlaps: overlaps.length > 0,
+        duplicates,
+        counts,
         passesAudit: sectionPasses
       });
     });
@@ -802,7 +866,12 @@
           <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
             <span>BG Word Opacity:</span>
             <span id="debug-bg-val">${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY.toFixed(2) : '1.00'}</span>
-            <input type="range" id="debug-bg-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && window.CONFIG.BG_WORD_OPACITY) || 1.0}" style="width:90px;">
+            <input type="range" id="debug-bg-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY : 1.0}" style="width:90px;">
+          </label>
+          <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
+            <span>BG Word Width (vw):</span>
+            <span id="debug-bg-width-val">${(window.CONFIG && typeof window.CONFIG.BG_WORD_WIDTH_VW === 'number') ? window.CONFIG.BG_WORD_WIDTH_VW : 88}vw</span>
+            <input type="range" id="debug-bg-width-slider" min="50" max="96" step="1" value="${(window.CONFIG && typeof window.CONFIG.BG_WORD_WIDTH_VW === 'number') ? window.CONFIG.BG_WORD_WIDTH_VW : 88}" style="width:90px;">
           </label>
         </div>
       </div>
@@ -879,6 +948,17 @@
         const valEl = document.getElementById('debug-bg-val');
         if (valEl) valEl.textContent = val.toFixed(2);
         if (window.__applyBgWordOpacity) window.__applyBgWordOpacity();
+      });
+    }
+
+    const bgWidthSlider = document.getElementById('debug-bg-width-slider');
+    if (bgWidthSlider) {
+      bgWidthSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (window.CONFIG) window.CONFIG.BG_WORD_WIDTH_VW = val;
+        const valEl = document.getElementById('debug-bg-width-val');
+        if (valEl) valEl.textContent = val + 'vw';
+        if (window.__fitBgWords) window.__fitBgWords();
       });
     }
 

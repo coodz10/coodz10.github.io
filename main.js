@@ -24,9 +24,10 @@
     AVATAR_ZOOM_MOBILE: 0.52,  // Mobile camera zoom (fully visible, proportioned)
     AVATAR_Y_OFFSET: -25,      // Vertical stage nudge in px (top of head ~10vh, feet ~84vh)
     AVATAR_BASE_HEIGHT_PX_AT_ZOOM: 0, // Visual height of avatar at scale 1 (measured once via 3D bounding box)
-    BG_WORD_OPACITY: 1.0,      // Opacity multiplier for stroke-only giant background words
+    BG_WORD_WIDTH_VW: 88,      // Target width in vw for fitted giant background word
+    BG_WORD_OPACITY: 1.0,      // Opacity multiplier for stroke-only giant background word
 
-    // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180Â° to back)
+    // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180° to back)
     ROT_OFFSET: 0,             // Rotation offset (0 = face toward camera; Math.PI = back)
     ROT_ABOUT: 0,              // chi_sono: faces forward between the two balanced content columns
     ROT_EXP: 0.50,             // esperienze: turns toward cards on the right
@@ -76,10 +77,10 @@
 
     // Scroll-Driven Flight Keyframes (units: vw for x, vh for y, scale relative to 100% avatar)
     AVATAR_KEYFRAMES: [
-      { id: 'home',       x: 0,   y: -17, scale: 0.62, scaleMobile: 0.46, yaw: 0.1,  roll: 0, xMobile: 0, yMobile: -17 },
-      { id: 'chi_sono',   x: 0,   y: 7,   scale: 0.56, scaleMobile: 0.36, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -15 },
-      { id: 'esperienze', x: -25, y: 8,   scale: 0.50, scaleMobile: 0.36, yaw: 0.45, roll: 0, xMobile: 0, yMobile: -15 },
-      { id: 'contatti',   x: 0,   y: -8,  scale: 0.35, scaleMobile: 0.30, yaw: 0.0,  roll: 0, xMobile: 0, yMobile: -18 }
+      { id: 'home', x: 0, y: -17, scale: 0.62, scaleMobile: 0.46, yaw: 0.1, roll: 0, xMobile: 0, yMobile: -17 },
+      { id: 'chi_sono', x: 0, y: 7, scale: 0.56, scaleMobile: 0.36, yaw: 0.0, roll: 0, xMobile: 0, yMobile: -15 },
+      { id: 'esperienze', x: -25, y: 8, scale: 0.50, scaleMobile: 0.36, yaw: 0.45, roll: 0, xMobile: 0, yMobile: -15 },
+      { id: 'contatti', x: 0, y: -8, scale: 0.35, scaleMobile: 0.30, yaw: 0.0, roll: 0, xMobile: 0, yMobile: -18 }
     ],
     FLIGHT_ARC_X: 9,           // Extra arc horizontal offset in vw
     FLIGHT_ARC_Y: 4,           // Extra arc vertical lift in vh
@@ -102,7 +103,7 @@
   const TRANSLATIONS = {
     it: {
       gateText: 'ENTRA',
-      audioSkip: '[ â­ ]',
+      audioSkip: '[ ⏭ ]',
       musicOn: '[ MUSICA ON ]',
       musicOff: '[ MUSICA OFF ]',
       musicOnShort: '[ ON ]',
@@ -119,16 +120,15 @@
       aboutTitle: 'Chi Sono',
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'RUOLO:',
-      aboutRoleVal: 'SysAdmin // Security',
+      aboutRoleVal: 'SysAdmin · Security',
       aboutStatusLabel: 'STATO:',
-      aboutStatusVal: '[ OPERATIVO ]',
-      aboutPillarTitle0: '[ PROFILO // BIO ]',
+      aboutStatusVal: 'OPERATIVO',
       aboutIntro: "Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.",
-      aboutPillarTitle1: '[ SOFTWARE & SICUREZZA ]',
+      aboutPillarTitle1: 'SOFTWARE & SICUREZZA',
       aboutPillarDesc1: "Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.",
-      aboutPillarTitle2: '[ INTELLIGENZA ARTIFICIALE ]',
+      aboutPillarTitle2: 'INTELLIGENZA ARTIFICIALE',
       aboutPillarDesc2: "Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.",
-      aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
+      aboutPillarTitle3: 'HARDWARE & CUSTOM PC',
       aboutPillarDesc3: "Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.",
       expTag: 'LOG_ENTRY_02 // ESPERIENZE',
       expTitle: 'Esperienze',
@@ -145,15 +145,15 @@
       expSyndicateStatus: 'ATTIVO',
       expMeowtoolsRole: '[ In Lavorazione ]',
       expMeowtoolsStatus: 'ATTIVO',
-      expMetaRole: 'Helper â˜…â˜…â˜…â˜…â˜†',
+      expMetaRole: 'Helper ★★★★☆',
       expMetaStatus: 'DIMESSO',
-      expPixyRole: 'Owner [ SS Manager ] â˜…â˜…â˜…â˜…â˜†',
+      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'DIMESSO',
       contactTag: 'LOG_ENTRY_03 // CONTATTI',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
       footerEnd: 'END_TRANSMISSION // COODZ_10',
-      backToExperiences: '[ â† torna alle esperienze ]',
+      backToExperiences: '[ ← torna alle esperienze ]',
       openProofs: '[ APRI PROVE ]',
       proofsTitle: 'Link e Prove',
       btnAbout: '[ CHI SONO ]',
@@ -164,7 +164,7 @@
     },
     en: {
       gateText: 'ENTER',
-      audioSkip: '[ â­ ]',
+      audioSkip: '[ ⏭ ]',
       musicOn: '[ MUSIC ON ]',
       musicOff: '[ MUSIC OFF ]',
       musicOnShort: '[ ON ]',
@@ -181,16 +181,15 @@
       aboutTitle: 'About Me',
       aboutHandleLabel: 'HANDLE:',
       aboutRoleLabel: 'ROLE:',
-      aboutRoleVal: 'SysAdmin // Security',
+      aboutRoleVal: 'SysAdmin · Security',
       aboutStatusLabel: 'STATUS:',
-      aboutStatusVal: '[ OPERATIONAL ]',
-      aboutPillarTitle0: '[ PROFILE // BIO ]',
-      aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360Â° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
-      aboutPillarTitle1: '[ SOFTWARE & SECURITY ]',
+      aboutStatusVal: 'OPERATIONAL',
+      aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
+      aboutPillarTitle1: 'SOFTWARE & SECURITY',
       aboutPillarDesc1: "On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.",
-      aboutPillarTitle2: '[ ARTIFICIAL INTELLIGENCE ]',
+      aboutPillarTitle2: 'ARTIFICIAL INTELLIGENCE',
       aboutPillarDesc2: "In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.",
-      aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
+      aboutPillarTitle3: 'HARDWARE & CUSTOM PC',
       aboutPillarDesc3: "On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.",
       expTag: 'LOG_ENTRY_02 // EXPERIENCES',
       expTitle: 'Experiences',
@@ -207,15 +206,15 @@
       expSyndicateStatus: 'ACTIVE',
       expMeowtoolsRole: '[ In Progress ]',
       expMeowtoolsStatus: 'ACTIVE',
-      expMetaRole: 'Helper â˜…â˜…â˜…â˜…â˜†',
+      expMetaRole: 'Helper ★★★★☆',
       expMetaStatus: 'RESIGNED',
-      expPixyRole: 'Owner [ SS Manager ] â˜…â˜…â˜…â˜…â˜†',
+      expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'RESIGNED',
       contactTag: 'LOG_ENTRY_03 // CONTACT',
       contactTitle: "Let's Talk",
       contactSub: 'For collaborations, service requests or security investigations.',
       footerEnd: 'END_TRANSMISSION // COODZ_10',
-      backToExperiences: '[ â† back to experiences ]',
+      backToExperiences: '[ ← back to experiences ]',
       openProofs: '[ OPEN PROOFS ]',
       proofsTitle: 'Links & Proofs',
       btnAbout: '[ ABOUT ME ]',
@@ -254,7 +253,7 @@
       title: 'MetaMc',
       category: 'minecraft',
       role: { it: 'Helper', en: 'Helper' },
-      stars: 'â˜…â˜…â˜…â˜…â˜†',
+      stars: '★★★★☆',
       status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
       period: { it: '[ Periodo: Agosto - Settembre 2026 ]', en: '[ Period: August - September 2026 ]' },
       experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
@@ -262,11 +261,11 @@
         it: [
           'Sono stato membro dello staff di MetaMC per circa due mesi, periodo durante il quale ho potuto apprezzare un ambiente ben strutturato e professionale.',
           'Subito dopo aver superato il provino, sono stato affiancato e formato con chiarezza sui compiti da svolgere.',
-          'In gioco l\'organizzazione e i comandi sono configurati in modo quasi impeccabile; inoltre, il team Ã¨ accogliente e affiatato, rendendo il lavoro stimolante e mai pesante.',
-          'Trattandosi di un network di grandi dimensioni, MetaMC richiede presenza costante e alta attenzione: nello specifico, operando nelle modalitÃ  PvP, gestivo controlli su un bacino di oltre 600 utenti al giorno, a cui si sommava il supporto su Discord tra ticket, chat e assistenza vocale.',
+          'In gioco l\'organizzazione e i comandi sono configurati in modo quasi impeccabile; inoltre, il team è accogliente e affiatato, rendendo il lavoro stimolante e mai pesante.',
+          'Trattandosi di un network di grandi dimensioni, MetaMC richiede presenza costante e alta attenzione: nello specifico, operando nelle modalità PvP, gestivo controlli su un bacino di oltre 600 utenti al giorno, a cui si sommava il supporto su Discord tra ticket, chat e assistenza vocale.',
           'Un aspetto critico riguarda la comunicazione interna: ho riscontrato uno scambio scarso o insufficiente sia all\'interno dei gradi superiori, sia tra questi ultimi e lo staff di livello medio-basso.',
-          'A questo si aggiunge la mia esperienza con la candidatura per il ruolo di SS Verified: nonostante l\'esito positivo della candidatura scritta, a distanza di due settimane non ho piÃ¹ ricevuto alcun riscontro da parte del responsabile SS.',
-          'Sebbene non si tratti di una responsabilitÃ  diretta di MetaMC, dato che il percorso formativo Ã¨ delegato all\'hub della Tierlist italiana, questo passaggio rappresenta comunque una nota dolente e un ostacolo per chiunque desideri specializzarsi nei controlli hack sul server.'
+          'A questo si aggiunge la mia esperienza con la candidatura per il ruolo di SS Verified: nonostante l\'esito positivo della candidatura scritta, a distanza di due settimane non ho più ricevuto alcun riscontro da parte del responsabile SS.',
+          'Sebbene non si tratti di una responsabilità diretta di MetaMC, dato che il percorso formativo è delegato all\'hub della Tierlist italiana, questo passaggio rappresenta comunque una nota dolente e un ostacolo per chiunque desideri specializzarsi nei controlli hack sul server.'
         ],
         en: [
           'I was a staff member of MetaMC for about two months, during which I appreciated a well-structured and professional environment.',
@@ -280,7 +279,7 @@
       },
       strengthsTitle: { it: 'Punti di Forza', en: 'Strengths' },
       strengths: {
-        it: ['ProfessionalitÃ ', 'Organizzazione'],
+        it: ['Professionalità', 'Organizzazione'],
         en: ['Professionalism', 'Organization']
       },
       weaknessesTitle: { it: 'Punti Deboli', en: 'Weaknesses' },
@@ -298,17 +297,17 @@
       title: 'PixyMC',
       category: 'minecraft',
       role: { it: 'Owner [ SS Manager ]', en: 'Owner [ SS Manager ]' },
-      stars: 'â˜…â˜…â˜…â˜…â˜†',
+      stars: '★★★★☆',
       status: { it: '[ Stato: Dimesso ]', en: '[ Status: Resign ]' },
       period: { it: '[ Periodo: Agosto 2025 - Luglio 2026 ]', en: '[ Period: August 2025 - July 2026 ]' },
       experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
       experienceParagraphs: {
         it: [
-          'Sono stato membro dello staff per piÃ¹ di un anno, crescendo da Helper fino a diventare Owner. Nel corso del tempo ho potuto notare come il server offra una community sana e divertente, caratterizzata da ottimi rapporti tra player e staff.',
-          'L\'ambiente di lavoro Ã¨ uno dei migliori che io abbia mai visto: ti fa sentire parte di una famiglia, prima ancora che di un\'azienda. L\'headstaff e i founder sono molto comprensivi, amichevoli e capaci di metterti subito a tuo agio.',
-          'L\'utenza del server Ã¨ uno degli aspetti che apprezzo di piÃ¹: sono tutti educati, corretti, pensano a divertirsi e non creano mai problemi.',
-          'Tuttavia, questa atmosfera fin troppo familiare porta a una scarsa professionalitÃ , con continui "sconti" sul regolamento da parte dell\'headstaff e scherzi eccessivi.',
-          'In definitiva, PixyMC Ã¨ un server ideale per chi vuole fare lo staffer senza troppo impegno e senza stress.'
+          'Sono stato membro dello staff per più di un anno, crescendo da Helper fino a diventare Owner. Nel corso del tempo ho potuto notare come il server offra una community sana e divertente, caratterizzata da ottimi rapporti tra player e staff.',
+          'L\'ambiente di lavoro è uno dei migliori che io abbia mai visto: ti fa sentire parte di una famiglia, prima ancora che di un\'azienda. L\'headstaff e i founder sono molto comprensivi, amichevoli e capaci di metterti subito a tuo agio.',
+          'L\'utenza del server è uno degli aspetti che apprezzo di più: sono tutti educati, corretti, pensano a divertirsi e non creano mai problemi.',
+          'Tuttavia, questa atmosfera fin troppo familiare porta a una scarsa professionalità, con continui "sconti" sul regolamento da parte dell\'headstaff e scherzi eccessivi.',
+          'In definitiva, PixyMC è un server ideale per chi vuole fare lo staffer senza troppo impegno e senza stress.'
         ],
         en: [
           'I was a staff member for over a year, progressing from Helper up to Owner. Over time, I\'ve observed that the server fosters a healthy and highly enjoyable community, with excellent relationships between players and staff.',
@@ -325,7 +324,7 @@
       },
       weaknessesTitle: { it: 'Punti Deboli', en: 'Weaknesses' },
       weaknesses: {
-        it: ['Scarsa organizzazione iniziale', 'Poca professionalitÃ '],
+        it: ['Scarsa organizzazione iniziale', 'Poca professionalità'],
         en: ['Lack of initial organization', 'Lack of professionalism']
       },
       proofs: [
@@ -390,20 +389,18 @@
 
   function safeStorageGet(type, key) {
     try {
-      const storage = type === 'session' ? window.sessionStorage : window.localStorage;
-      return storage.getItem(key);
+      const store = type === 'session' ? window.sessionStorage : window.localStorage;
+      return store ? store.getItem(key) : null;
     } catch (e) {
       return null;
     }
   }
 
-  function safeStorageSet(type, key, val) {
+  function safeStorageSet(type, key, value) {
     try {
-      const storage = type === 'session' ? window.sessionStorage : window.localStorage;
-      storage.setItem(key, val);
-    } catch (e) {
-      // Ignore storage errors (blocked, private mode, quota)
-    }
+      const store = type === 'session' ? window.sessionStorage : window.localStorage;
+      if (store) store.setItem(key, value);
+    } catch (e) { }
   }
 
   let currentLang = safeStorageGet('local', 'coodz_lang') || 'it';
@@ -460,36 +457,59 @@
   let currentPlayPromise = null;
   let playlistIndex = 0;
   let skipDebounceTimer = null;
-  let updateMuteBtnState = () => {};
+  let updateMuteBtnState = () => { };
 
   function attachMusicStartOnInteraction() {
-    const audioEl = document.getElementById('bg-audio');
     const events = ['click', 'pointerdown', 'keydown', 'touchstart'];
     function onFirstUserGesture() {
       events.forEach((evt) => {
         window.removeEventListener(evt, onFirstUserGesture, true);
       });
+      const audio = document.getElementById('bg-audio');
       const isMuted = safeStorageGet('local', 'coodz_muted') === 'true';
-      if (!isMuted && audioEl) {
-        initWebAudioGraph(audioEl);
+      if (!isMuted && audio) {
+        initWebAudioGraph(audio);
         if (webAudioCtx && webAudioCtx.state === 'suspended') {
-          webAudioCtx.resume().catch(() => {});
+          webAudioCtx.resume().catch(() => { });
         }
-        audioEl.muted = false;
+        audio.muted = false;
         if (webAudioMasterGain && webAudioCtx) {
           webAudioMasterGain.gain.setValueAtTime(0, webAudioCtx.currentTime);
         } else {
-          audioEl.volume = 0;
+          audio.volume = 0;
         }
-        safePlayAudio(audioEl).then(() => {
-          fadeAudioVolume(audioEl, CONFIG.AUDIO_VOLUME, 2000);
+        safePlayAudio(audio).then(() => {
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 2000);
           updateMuteBtnState();
-        });
+        }).catch(() => { });
       }
     }
     events.forEach((evt) => {
       window.addEventListener(evt, onFirstUserGesture, { capture: true, once: true });
     });
+  }
+
+  function attachAudioRetryListener() {
+    if (audioRetryAttached) return;
+    audioRetryAttached = true;
+    const retryEvents = ['click', 'pointerdown', 'keydown', 'touchstart'];
+    function onRetryInteraction() {
+      retryEvents.forEach((evt) => window.removeEventListener(evt, onRetryInteraction, true));
+      audioRetryAttached = false;
+      const audio = document.getElementById('bg-audio');
+      if (audio && safeStorageGet('local', 'coodz_muted') !== 'true') {
+        initWebAudioGraph(audio);
+        if (webAudioCtx && webAudioCtx.state === 'suspended') {
+          webAudioCtx.resume().catch(() => { });
+        }
+        audio.muted = false;
+        safePlayAudio(audio).then(() => {
+          fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
+          updateMuteBtnState();
+        }).catch(() => { });
+      }
+    }
+    retryEvents.forEach((evt) => window.addEventListener(evt, onRetryInteraction, { capture: true, once: true }));
   }
 
   // Quality Tier detection ('high', 'med', 'low')
@@ -548,8 +568,14 @@
   let domHeroTitle = null;
   let domHeroTitleChSpans = null;
   let domHeroSubElements = null;
-  let domBgWordTargets = null;
+  let domBgWord = null;
   let domActionsEl = null;
+  const bgWordMetrics = {
+    1: { text: 'CHI SONO', fontSize: '100px' },
+    2: { text: 'ESPERIENZE', fontSize: '100px' },
+    3: { text: 'CONTATTI', fontSize: '100px' }
+  };
+  let activeBgWordIndex = -1;
 
   function getDomStage() {
     if (!domStage) domStage = document.getElementById('avatar-stage');
@@ -580,15 +606,11 @@
     }
     return domHeroSubElements;
   }
-  function getDomBgWordTargets() {
-    if (!domBgWordTargets) {
-      domBgWordTargets = [
-        { sel: '#chi_sono .section-bg-word', el: document.querySelector('#chi_sono .section-bg-word'), index: 1, isContact: false },
-        { sel: '#esperienze .section-bg-word', el: document.querySelector('#esperienze .section-bg-word'), index: 2, isContact: false },
-        { sel: '#contatti .section-bg-word', el: document.querySelector('#contatti .section-bg-word'), index: 3, isContact: true }
-      ];
+  function getDomBgWord() {
+    if (!domBgWord) {
+      domBgWord = document.getElementById('bg-word');
     }
-    return domBgWordTargets;
+    return domBgWord;
   }
   function getDomActionsEl() {
     if (!domActionsEl) {
@@ -792,7 +814,7 @@
   // ==========================================================================
   const FloatAnimation = (typeof window !== 'undefined' && window.AvatarRig && window.AvatarRig.RigAnimation)
     ? window.AvatarRig.RigAnimation
-    : class {};
+    : class { };
 
   // ==========================================================================
   // TITLE & SUBTITLE DECRYPT EFFECT (Random glyphs resolving left to right)
@@ -892,26 +914,26 @@
   // Normalized stroke waypoints per letter (ink box 0..1)
   const CHAR_STROKES = {
     c: [
-      [ [0.88, 0.25], [0.65, 0.08], [0.35, 0.12], [0.14, 0.35], [0.14, 0.65], [0.35, 0.88], [0.65, 0.92], [0.88, 0.75] ]
+      [[0.88, 0.25], [0.65, 0.08], [0.35, 0.12], [0.14, 0.35], [0.14, 0.65], [0.35, 0.88], [0.65, 0.92], [0.88, 0.75]]
     ],
     o: [
-      [ [0.50, 0.08], [0.20, 0.20], [0.10, 0.50], [0.20, 0.80], [0.50, 0.92], [0.80, 0.80], [0.90, 0.50], [0.80, 0.20], [0.50, 0.08] ]
+      [[0.50, 0.08], [0.20, 0.20], [0.10, 0.50], [0.20, 0.80], [0.50, 0.92], [0.80, 0.80], [0.90, 0.50], [0.80, 0.20], [0.50, 0.08]]
     ],
     d: [
-      [ [0.62, 0.50], [0.30, 0.46], [0.12, 0.68], [0.28, 0.92], [0.60, 0.93], [0.80, 0.72] ],
-      [ [0.80, 0.04], [0.80, 0.96] ]
+      [[0.62, 0.50], [0.30, 0.46], [0.12, 0.68], [0.28, 0.92], [0.60, 0.93], [0.80, 0.72]],
+      [[0.80, 0.04], [0.80, 0.96]]
     ],
     z: [
-      [ [0.10, 0.12], [0.90, 0.12], [0.10, 0.88], [0.90, 0.88] ]
+      [[0.10, 0.12], [0.90, 0.12], [0.10, 0.88], [0.90, 0.88]]
     ],
     '_': [
-      [ [0.00, 0.50], [1.00, 0.50] ]
+      [[0.00, 0.50], [1.00, 0.50]]
     ],
     '1': [
-      [ [0.10, 0.32], [0.62, 0.04], [0.62, 0.96] ]
+      [[0.10, 0.32], [0.62, 0.04], [0.62, 0.96]]
     ],
     '0': [
-      [ [0.50, 0.08], [0.20, 0.20], [0.10, 0.50], [0.20, 0.80], [0.50, 0.92], [0.80, 0.80], [0.90, 0.50], [0.80, 0.20], [0.50, 0.08] ]
+      [[0.50, 0.08], [0.20, 0.20], [0.10, 0.50], [0.20, 0.80], [0.50, 0.92], [0.80, 0.80], [0.90, 0.50], [0.80, 0.20], [0.50, 0.08]]
     ]
   };
 
@@ -984,28 +1006,6 @@
 
     const isDeepLink = window.location.hash && window.location.hash !== '#home';
     const isRepeatSession = !!safeStorageGet('session', 'coodz_intro_seen');
-
-    function attachAudioRetryListener() {
-      if (audioRetryAttached) return;
-      audioRetryAttached = true;
-      const retryEvents = ['click', 'pointerdown', 'keydown', 'touchstart'];
-      function onRetryInteraction() {
-        retryEvents.forEach((evt) => window.removeEventListener(evt, onRetryInteraction, true));
-        audioRetryAttached = false;
-        if (audio && safeStorageGet('local', 'coodz_muted') !== 'true') {
-          initWebAudioGraph(audio);
-          if (webAudioCtx && webAudioCtx.state === 'suspended') {
-            webAudioCtx.resume().catch(() => {});
-          }
-          audio.muted = false;
-          safePlayAudio(audio).then(() => {
-            fadeAudioVolume(audio, CONFIG.AUDIO_VOLUME, 1000);
-            updateMuteBtnState();
-          });
-        }
-      }
-      retryEvents.forEach((evt) => window.addEventListener(evt, onRetryInteraction, { capture: true, once: true }));
-    }
 
     function finishIntroInstant(options = {}) {
       const startMusic = options.startMusic !== false;
@@ -1119,7 +1119,7 @@
       if (audio) {
         initWebAudioGraph(audio);
         if (webAudioCtx && webAudioCtx.state === 'suspended') {
-          webAudioCtx.resume().catch(() => {});
+          webAudioCtx.resume().catch(() => { });
         }
         if (!audio.src) {
           audio.src = CONFIG.PLAYLIST[playlistIndex || 0].src;
@@ -2301,19 +2301,51 @@
 
   function applyBgWordOpacity() {
     document.documentElement.style.setProperty('--bg-word-opacity', CONFIG.BG_WORD_OPACITY);
+    const el = getDomBgWord();
+    if (el && fDisplay > 0.15) {
+      const idx = Math.max(1, Math.min(3, Math.round(fDisplay)));
+      const dist = fDisplay - idx;
+      if (Math.abs(dist) < 0.85) {
+        const op = Math.max(0, 1 - Math.abs(dist) * 1.25) * (typeof CONFIG.BG_WORD_OPACITY === 'number' ? CONFIG.BG_WORD_OPACITY : 1.0);
+        el.style.opacity = op.toFixed(3);
+      }
+    }
   }
 
   function fitBgWords() {
-    const targetWidth = window.innerWidth * 0.88;
-    const bgWords = document.querySelectorAll('.section-bg-word');
-    bgWords.forEach((el) => {
+    const el = getDomBgWord();
+    if (!el) return;
+    const widthVw = (typeof CONFIG.BG_WORD_WIDTH_VW === 'number' ? CONFIG.BG_WORD_WIDTH_VW : 88);
+    const targetWidth = window.innerWidth * (widthVw / 100);
+    const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
+    const words = {
+      1: dict.bgWordAbout || 'CHI SONO',
+      2: dict.bgWordExp || 'ESPERIENZE',
+      3: dict.bgWordContact || 'CONTATTI'
+    };
+
+    const prevTransform = el.style.transform;
+    el.style.transform = 'translate3d(-50%, -50%, 0)';
+    [1, 2, 3].forEach((idx) => {
+      const word = words[idx];
+      el.textContent = word;
       el.style.fontSize = '100px';
-      const measuredWidth = el.scrollWidth || el.offsetWidth;
-      if (measuredWidth > 0) {
-        const fittedPx = (targetWidth / measuredWidth) * 100;
-        el.style.fontSize = `${fittedPx.toFixed(1)}px`;
+      const rectW = el.getBoundingClientRect().width || el.offsetWidth || el.scrollWidth;
+      if (rectW > 0) {
+        const fittedPx = (targetWidth / rectW) * 100;
+        bgWordMetrics[idx] = { text: word, fontSize: `${fittedPx.toFixed(1)}px` };
+      } else {
+        bgWordMetrics[idx] = { text: word, fontSize: '100px' };
       }
     });
+    el.style.transform = prevTransform;
+
+    if (activeBgWordIndex >= 1 && bgWordMetrics[activeBgWordIndex]) {
+      el.textContent = bgWordMetrics[activeBgWordIndex].text;
+      el.style.fontSize = bgWordMetrics[activeBgWordIndex].fontSize;
+    } else {
+      el.textContent = '';
+    }
   }
 
   window.__applyBgWordOpacity = applyBgWordOpacity;
@@ -2529,26 +2561,27 @@
       }
     }
 
-    // 8. Continuous background word sliding scrub
-    const bgWordTargets = getDomBgWordTargets();
-    bgWordTargets.forEach((item) => {
-      const el = item.el || (item.el = document.querySelector(item.sel));
-      if (el) {
-        const dist = fDisplay - item.index;
-        if (Math.abs(dist) < 1.2) {
-          const op = Math.max(0, 1 - Math.abs(dist)) * 0.12;
-          const shiftPx = dist * 70;
-          if (item.isContact) {
-            el.style.transform = `translate(-50%, -50%) translateX(${shiftPx.toFixed(1)}px)`;
-          } else {
-            el.style.transform = `translateY(-50%) translateX(${shiftPx.toFixed(1)}px)`;
-          }
-          el.style.opacity = op.toFixed(3);
-        } else {
-          el.style.opacity = '0';
+    // 8. Continuous single fixed background word sliding scrub
+    const bgEl = getDomBgWord();
+    if (bgEl) {
+      const idx = Math.max(1, Math.min(3, Math.round(fDisplay)));
+      const dist = fDisplay - idx;
+      if (fDisplay > 0.15 && Math.abs(dist) < 0.85) {
+        if (activeBgWordIndex !== idx && bgWordMetrics[idx]) {
+          activeBgWordIndex = idx;
+          bgEl.textContent = bgWordMetrics[idx].text;
+          bgEl.style.fontSize = bgWordMetrics[idx].fontSize;
         }
+        const opMult = typeof CONFIG.BG_WORD_OPACITY === 'number' ? CONFIG.BG_WORD_OPACITY : 1.0;
+        const op = Math.max(0, 1 - Math.abs(dist) * 1.25) * opMult;
+        const shiftPx = dist * 70;
+        bgEl.style.transform = `translate3d(calc(-50% + ${shiftPx.toFixed(1)}px), -50%, 0)`;
+        bgEl.style.opacity = op.toFixed(3);
+      } else {
+        activeBgWordIndex = -1;
+        bgEl.style.opacity = '0';
       }
-    });
+    }
   }
 
   // ==========================================================================
@@ -2807,19 +2840,16 @@
         skinViewer.loadSkin = function (...args) {
           const res = origLoadSkin(...args);
           if (res && typeof res.then === 'function') {
-            return res.then((val) => {
+            res.then(() => {
               applyAvatarMaterialSettings();
               updateAvatarAura();
-              return val;
-            });
+            }).catch(() => { });
           }
           return res;
         };
-        const initialSkinPromise = skinViewer.loadSkin(CONFIG.SKIN_URL);
-        if (initialSkinPromise && typeof initialSkinPromise.catch === 'function') {
-          initialSkinPromise.catch(() => {
-            showFallback();
-          });
+        const skinPromise = skinViewer.loadSkin(CONFIG.SKIN_URL);
+        if (skinPromise && typeof skinPromise.catch === 'function') {
+          skinPromise.catch(() => showFallback());
         }
       }
 
@@ -3377,17 +3407,17 @@
         <div class="detail-pros-cons-grid">
           ${exp.strengths ? `
             <div class="detail-pros-col">
-              <div class="detail-group-tag mono"><span class="item-num">01 â€” </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
+              <div class="detail-group-tag mono"><span class="item-num">01 — </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
               <ul class="detail-list mono">
-                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">â–¹</span> <span>${item}</span></li>`).join('')}
+                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
           ${exp.weaknesses ? `
             <div class="detail-cons-col">
-              <div class="detail-group-tag mono"><span class="item-num">02 â€” </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
+              <div class="detail-group-tag mono"><span class="item-num">02 — </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
               <ul class="detail-list mono">
-                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">â–¹</span> <span>${item}</span></li>`).join('')}
+                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">▹</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -3411,7 +3441,7 @@
     if (exp.inProgress) {
       noticeHtml = `
         <div class="detail-notice mono">
-          <span class="status-dot-accent">â—</span>
+          <span class="status-dot-accent">●</span>
           <span class="detail-notice-tag">[ ${exp.noticeTag[currentLang]} ]</span>
           <span class="detail-notice-text">${exp.noticeText[currentLang]}</span>
         </div>
@@ -3421,7 +3451,7 @@
     detailEl.innerHTML = `
       <div class="detail-top-nav">
         <button id="btn-back-to-experiences" class="btn btn--secondary mono cursor-pointer" aria-label="Torna alle esperienze">
-          ${dict.backToExperiences || '[ â† torna alle esperienze ]'}
+          ${dict.backToExperiences || '[ ← torna alle esperienze ]'}
         </button>
       </div>
 
@@ -3436,7 +3466,7 @@
         <div class="detail-header-right mono">
           ${exp.stars ? `<span class="detail-stars">${exp.stars}</span>` : ''}
           <span class="status-indicator-tag ${exp.inProgress ? 'status--active' : 'status--dimesso'}">
-            <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}">${exp.inProgress ? 'â—' : 'â—‹'}</span>
+            <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}">${exp.inProgress ? '●' : '○'}</span>
             <span>${exp.inProgress ? (currentLang === 'it' ? 'ATTIVO' : 'ACTIVE') : (currentLang === 'it' ? 'DIMESSO' : 'RESIGNED')}</span>
           </span>
           <span class="detail-period">${exp.period[currentLang]}</span>
@@ -3915,13 +3945,13 @@
       menuToggleBtn.addEventListener('click', () => {
         mobileMenu.classList.toggle('open');
         const isOpen = mobileMenu.classList.contains('open');
-        menuToggleBtn.textContent = isOpen ? '[ Ã— ]' : '[ â˜° ]';
+        menuToggleBtn.textContent = isOpen ? '[ × ]' : '[ ☰ ]';
       });
 
       mobileLinks.forEach((link) => {
         link.addEventListener('click', () => {
           mobileMenu.classList.remove('open');
-          menuToggleBtn.textContent = '[ â˜° ]';
+          menuToggleBtn.textContent = '[ ☰ ]';
         });
       });
     }
@@ -3937,7 +3967,7 @@
   function initWebAudioGraph(audioEl) {
     if (webAudioReady && webAudioMasterGain && webAudioCtx) {
       if (webAudioCtx.state === 'suspended') {
-        webAudioCtx.resume().catch(() => {});
+        webAudioCtx.resume().catch(() => { });
       }
       return true;
     }
@@ -3948,7 +3978,7 @@
         webAudioCtx = new AudioCtxClass();
       }
       if (webAudioCtx.state === 'suspended') {
-        webAudioCtx.resume().catch(() => {});
+        webAudioCtx.resume().catch(() => { });
       }
       if (!webAudioSource && audioEl) {
         webAudioSource = webAudioCtx.createMediaElementSource(audioEl);
@@ -3992,7 +4022,7 @@
   function safePlayAudio(audioEl) {
     if (!audioEl) return Promise.resolve();
     if (webAudioCtx && webAudioCtx.state === 'suspended') {
-      webAudioCtx.resume().catch(() => {});
+      webAudioCtx.resume().catch(() => { });
     }
     try {
       const p = audioEl.play();
@@ -4023,7 +4053,7 @@
     const isGraphOk = initWebAudioGraph(audioEl);
     if (isGraphOk && webAudioMasterGain && webAudioCtx) {
       if (webAudioCtx.state === 'suspended') {
-        webAudioCtx.resume().catch(() => {});
+        webAudioCtx.resume().catch(() => { });
       }
       const targetGain = targetVol <= 0 ? 0 : targetVol * (CONFIG.AUDIO_GAIN || 1.4);
       const currTime = webAudioCtx.currentTime;
@@ -4037,7 +4067,7 @@
       } catch (e) {
         try {
           webAudioMasterGain.gain.setValueAtTime(targetGain, currTime);
-        } catch (e2) {}
+        } catch (e2) { }
       }
 
       if (targetVol > 0) {
@@ -4081,7 +4111,7 @@
         audio.src = track.src;
         try {
           audio.load();
-        } catch (e) {}
+        } catch (e) { }
       }
     }
 
@@ -4108,7 +4138,7 @@
         }
         wasPlayingBeforeRefresh = !!saved.playing;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     loadTrack(playlistIndex);
 
@@ -4160,7 +4190,7 @@
         e.stopPropagation();
         initWebAudioGraph(audio);
         if (webAudioCtx && webAudioCtx.state === 'suspended') {
-          webAudioCtx.resume().catch(() => {});
+          webAudioCtx.resume().catch(() => { });
         }
         const isMutedNow = audio.muted || safeStorageGet('local', 'coodz_muted') === 'true';
         if (isMutedNow || audio.paused) {
@@ -4186,7 +4216,7 @@
       if (!audio) return;
       initWebAudioGraph(audio);
       if (webAudioCtx && webAudioCtx.state === 'suspended') {
-        webAudioCtx.resume().catch(() => {});
+        webAudioCtx.resume().catch(() => { });
       }
 
       const isMutedNow = audio.muted || safeStorageGet('local', 'coodz_muted') === 'true';
@@ -4249,7 +4279,7 @@
       const isMutedNow = safeStorageGet('local', 'coodz_muted') === 'true';
       if (isMutedNow) return;
       if (webAudioCtx && webAudioCtx.state === 'suspended') {
-        webAudioCtx.resume().catch(() => {});
+        webAudioCtx.resume().catch(() => { });
       }
       if (audio.paused) {
         safePlayAudio(audio).then(() => {
@@ -4270,7 +4300,7 @@
     // Touch/pointer down unlock for mobile browsers (iOS Safari / Android Chrome)
     function onMobileAudioTouch() {
       if (webAudioCtx && (webAudioCtx.state === 'suspended' || webAudioCtx.state === 'interrupted')) {
-        webAudioCtx.resume().catch(() => {});
+        webAudioCtx.resume().catch(() => { });
       }
     }
     window.addEventListener('touchstart', onMobileAudioTouch, { passive: true });
@@ -4289,7 +4319,7 @@
           playing: isCurrentlyPlaying
         };
         safeStorageSet('session', 'coodz_audio_state', JSON.stringify(state));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setInterval(saveAudioSessionState, 1000);

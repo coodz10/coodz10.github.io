@@ -84,7 +84,8 @@ html, body {
   height: 100%;
   background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
+  font-weight: 400;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -295,13 +296,13 @@ html, body {
   line-height: 1.15;
 }
 
-/* Lead Paragraph / Bio (Strictly identical to all other body paragraphs) */
+/* Lead Paragraph / Bio */
 .lead {
   font-family: var(--font-sans);
-  font-size: var(--fs-body);
-  font-weight: 400 !important;
-  color: rgba(226, 232, 240, 0.78);
-  line-height: 1.65;
+  font-size: clamp(0.84rem, 1.55vh, 0.9375rem);
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.6;
   text-wrap: pretty;
   max-width: 360px;
 }
@@ -375,27 +376,31 @@ html, body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.35rem;
+  white-space: nowrap;
 }
 
 .item-num {
   color: var(--accent-blue);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .item-title {
   color: var(--text-muted);
   font-weight: 500;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .about-item__body {
   font-family: var(--font-sans);
-  font-size: var(--fs-body);
+  font-size: clamp(0.84rem, 1.55vh, 0.9375rem);
   font-weight: 400;
-  line-height: 1.65;
-  color: rgba(226, 232, 240, 0.78);
+  line-height: 1.6;
+  color: var(--muted);
   max-width: 360px;
   margin: 0;
 }
@@ -1610,51 +1615,35 @@ html, body {
 }
 
 /* ==========================================================================
-   11. GIANT BACKGROUND WORDS (Stroke only, clearly visible, horizontal drift)
+   11. GIANT BACKGROUND WORD (Single Fixed Layer Behind Avatar & Text)
    ========================================================================== */
 .section-bg-word {
-  position: absolute;
-  top: 52vh;
+  position: fixed;
+  top: 55vh;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 88vw;
-  max-width: 88vw;
+  transform: translate3d(-50%, -50%, 0);
+  width: max-content;
+  max-width: none;
   box-sizing: border-box;
   text-align: center;
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
   font-weight: 800;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   line-height: 1;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 1.5px rgba(196, 181, 255, 0.30);
-  opacity: var(--bg-word-opacity, 1);
+  -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.30);
+  opacity: 0;
   pointer-events: none;
   user-select: none;
-  z-index: 0;
+  z-index: 2; /* Behind #avatar-stage (6) and #scroll-container (10), above #stars-canvas (0) */
   white-space: nowrap;
-  animation: bgWordDrift 28s ease-in-out infinite;
-  will-change: transform;
-}
-
-/* Chi Sono Watermark: repositioned cleanly behind section header, clear of avatar silhouette */
-.section-about .section-bg-word,
-#chi_sono .section-bg-word {
-  top: 18vh;
-  -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.18);
-  opacity: calc(var(--bg-word-opacity, 1) * 0.75);
-}
-
-@keyframes bgWordDrift {
-  0% { transform: translate(-50%, -50%) translateX(-1.5vw); }
-  50% { transform: translate(-50%, -50%) translateX(1.5vw); }
-  100% { transform: translate(-50%, -50%) translateX(-1.5vw); }
+  will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .section-bg-word {
-    animation: none !important;
-    transform: translate(-50%, -50%) !important;
+    transform: translate3d(-50%, -50%, 0) !important;
   }
 }
 
@@ -1749,23 +1738,26 @@ html, body {
    ========================================================================== */
 @media (max-height: 800px) and (min-width: 769px) {
   .about-head {
-    margin-top: 4vh;
-    height: 16vh;
+    margin-top: max(76px, 8vh);
+    height: auto;
+    min-height: 0;
+    margin-bottom: 2vh;
   }
   .about-grid {
     margin-top: 1vh;
-    height: 66vh;
+    height: auto;
+    max-height: 72vh;
   }
   .about-col {
-    gap: 12px;
+    gap: clamp(14px, 2.2vh, 24px);
   }
   .about-item {
-    padding: 10px 0;
+    padding: 0 0 0 1rem;
   }
   .lead,
   .about-item__body {
-    font-size: 0.875rem;
-    line-height: 1.55;
+    font-size: clamp(0.8rem, 1.5vh, 0.875rem);
+    line-height: 1.52;
   }
   .experiences-block {
     padding-top: 4vh;
@@ -1846,10 +1838,6 @@ html, body {
     width: 100%;
   }
 
-  .section-bg-word {
-    font-size: clamp(3rem, 18vw, 6.5rem);
-  }
-
   /* Mobile Flow: Header -> ~30vh Avatar Slot -> Content Column */
   .about-block, .experiences-block, .contact-block, .home-grid {
     height: auto;
@@ -1923,6 +1911,17 @@ html, body {
   }
   .nav-right {
     gap: var(--s1);
+  }
+}
+
+@media (max-width: 420px) {
+  .about-item__header {
+    white-space: normal;
+  }
+  .item-title {
+    white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
   }
 }
 
