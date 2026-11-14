@@ -291,13 +291,15 @@
     }
 
     // Log verified facts for ?debug audit
-    console.log('[AvatarRig] Verified Rig Facts:');
-    console.log(' - Euler Order: XYZ (Rx * Ry * Rz)');
-    console.log(' - Facing: +Z, Up: +Y, Hanging arm: (0, -1, 0)');
-    console.log(' - Negative rotation.x raises arm FORWARD');
-    console.log(' - Outward Signs: leftArm=' + AvatarRig.outwardSigns.leftArm + ' (+z), rightArm=' + AvatarRig.outwardSigns.rightArm + ' (-z)');
-    console.log(' - Head Pitch: negative rot.x looks UP');
-    console.log(' - Body/Head Yaw: positive rot.y turns viewer-right (+X)');
+    if (typeof window !== 'undefined' && /[?&]debug\b/.test(window.location.search)) {
+      console.log('[AvatarRig] Verified Rig Facts:');
+      console.log(' - Euler Order: XYZ (Rx * Ry * Rz)');
+      console.log(' - Facing: +Z, Up: +Y, Hanging arm: (0, -1, 0)');
+      console.log(' - Negative rotation.x raises arm FORWARD');
+      console.log(' - Outward Signs: leftArm=' + AvatarRig.outwardSigns.leftArm + ' (+z), rightArm=' + AvatarRig.outwardSigns.rightArm + ' (-z)');
+      console.log(' - Head Pitch: negative rot.x looks UP');
+      console.log(' - Body/Head Yaw: positive rot.y turns viewer-right (+X)');
+    }
   }
 
   // ==========================================================================
@@ -1206,7 +1208,9 @@
     }
 
     isInitialized = true;
-    console.log('[AvatarRig] Initialized with Single Animation Owner.');
+    if (typeof window !== 'undefined' && /[?&]debug\b/.test(window.location.search)) {
+      console.log('[AvatarRig] Initialized with Single Animation Owner.');
+    }
   }
 
   // ==========================================================================

@@ -15,9 +15,6 @@
   // ==========================================================================
   const CONFIG = {
     SKIN_URL: 'assets/skin.png',
-    accentBlue: '#5ea8ff',
-    accentViolet: '#8b6cff',
-    accentLilac: '#c4b5ff',
     bg: '#03040a',
     text: '#e8eaff',
     muted: '#7c83a8',
@@ -36,9 +33,6 @@
     ROT_EXP_DETAIL: 0.65,      // esperienze-detail: turns toward detail panel on right
 
     // Lighting & Emissive Luminous Skin (Dark navy black texels, vivid blues)
-    GLOBAL_LIGHT: 5.2,         // Global ambient light intensity
-    CAMERA_LIGHT: 2.0,         // Directional camera light intensity
-    AVATAR_EMISSIVE: '#0c1238', // Dark navy emissive so pure black texels read dark navy, blues stay vivid
     GLOBAL_LIGHT: 5.5,         // Global ambient light intensity
     CAMERA_LIGHT: 2.8,         // Directional camera light intensity
     AVATAR_EMISSIVE: '#182442', // Rich midnight navy emissive so pure black texels read deep charcoal/navy, blues stay vivid
@@ -49,11 +43,6 @@
     PEN_ARM: 'left',           // 'left' arm faces viewer right when facing camera
     ARM_TIP: 10.0,             // Skin local Y distance for fingertip (~10 units)
     WRITE_SCALE: 0.42,         // Avatar scale during writing (~30vh tall)
-
-    // Zero-Gravity Float Dynamics
-    FLOAT_BOB: 1.2,            // Vertical bob amplitude in vh (period ~6s)
-    POSE_BLEND: 2.0,           // Pose blend duration in seconds (easeInOutCubic)
-    HAZE_OPACITY: 0.0,         // Ambient haze opacity
 
     // Head Tracking Look-At Signs (+1: right->right, above->up; -1: inverted)
     HEAD_YAW_SIGN: 1,          // Mouse right -> face turns to viewer's right
@@ -102,7 +91,6 @@
     // Audio & Playlist (Web Audio routing with dynamics compressor + master gain)
     AUDIO_VOLUME: 0.9,
     AUDIO_GAIN: 1.4,
-    DEFAULT_VOLUME: 0.9,
     PLAYLIST: [
       { name: 'dorado', src: 'music/dorado.mp3' },
       { name: '30C', src: 'music/30C.mp3' },
@@ -126,9 +114,7 @@
       navExp: '[ esperienze ]',
       navContact: '[ contatti ]',
       onlineStatus: 'coodz_10 // ONLINE',
-      audioLabel: 'AUDIO',
       scrollHint: '[ SCROLL ]',
-      aboutTag: 'LOG_ENTRY_00 // CHI_SONO',
       aboutTag: 'LOG_ENTRY_01 // CHI_SONO',
       aboutTitle: 'Chi Sono',
       aboutHandleLabel: 'HANDLE:',
@@ -144,7 +130,6 @@
       aboutPillarDesc2: "Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.",
       aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
       aboutPillarDesc3: "Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.",
-      expTag: 'LOG_ENTRY_01 // ESPERIENZE',
       expTag: 'LOG_ENTRY_02 // ESPERIENZE',
       expTitle: 'Esperienze',
       expTabAll: '[ TUTTO ]',
@@ -164,8 +149,6 @@
       expMetaStatus: 'DIMESSO',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'DIMESSO',
-      viewDossier: '[ VEDI SCHEDA ]',
-      contactTag: 'LOG_ENTRY_02 // CONTATTI',
       contactTag: 'LOG_ENTRY_03 // CONTATTI',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
@@ -193,9 +176,7 @@
       navExp: '[ experiences ]',
       navContact: '[ contact ]',
       onlineStatus: 'coodz_10 // ONLINE',
-      audioLabel: 'AUDIO',
       scrollHint: '[ SCROLL ]',
-      aboutTag: 'LOG_ENTRY_00 // ABOUT_ME',
       aboutTag: 'LOG_ENTRY_01 // ABOUT_ME',
       aboutTitle: 'About Me',
       aboutHandleLabel: 'HANDLE:',
@@ -211,7 +192,6 @@
       aboutPillarDesc2: "In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.",
       aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
       aboutPillarDesc3: "On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.",
-      expTag: 'LOG_ENTRY_01 // EXPERIENCES',
       expTag: 'LOG_ENTRY_02 // EXPERIENCES',
       expTitle: 'Experiences',
       expTabAll: '[ ALL ]',
@@ -231,8 +211,6 @@
       expMetaStatus: 'RESIGNED',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'RESIGNED',
-      viewDossier: '[ VIEW DOSSIER ]',
-      contactTag: 'LOG_ENTRY_02 // CONTACT',
       contactTag: 'LOG_ENTRY_03 // CONTACT',
       contactTitle: "Let's Talk",
       contactSub: 'For collaborations, service requests or security investigations.',

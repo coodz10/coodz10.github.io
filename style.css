@@ -25,7 +25,6 @@
 :root {
   /* Colors */
   --bg: #05060f;
-  --surface: rgba(10, 11, 36, 0.45);
   --line: rgba(124, 131, 168, 0.22);
   --line-strong: rgba(56, 189, 248, 0.5);
   --text: #e8eaff;
@@ -49,7 +48,6 @@
   --fs-h1: clamp(2rem, 3.5vw, 2.75rem);
   --fs-h2: clamp(1.1rem, 1.5vw, 1.35rem);
   --fs-body: 0.9375rem;
-  --fs-lead: 0.9375rem;
   --fs-mono: 0.75rem;
 
   /* Spacing scale */
@@ -60,7 +58,6 @@
   --s5: 24px;
   --s6: 32px;
   --s7: 48px;
-  --s8: 72px;
   --page-pad: clamp(20px, 5vw, 72px);
 
   /* Motion */
@@ -278,11 +275,6 @@ html, body {
 .section-head--center {
   align-items: center;
   text-align: center;
-}
-
-.section-head--left {
-  align-items: flex-start;
-  text-align: left;
 }
 
 .section-head__tag {
@@ -1966,107 +1958,4 @@ html, body {
   padding: var(--s3) var(--s4);
   color: var(--text);
   font-size: 0.72rem;
-}
-
-.debug-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--s3);
-  border-bottom: 1px solid var(--line);
-  padding-bottom: var(--s2);
-}
-
-.debug-title {
-  color: var(--accent);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-
-.debug-btn {
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-}
-
-.debug-btn:hover {
-  color: #fff;
-}
-
-.debug-controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-}
-
-.debug-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.debug-row span {
-  display: flex;
-  justify-content: space-between;
-  color: var(--muted);
-  font-size: 0.68rem;
-}
-
-.debug-row span b {
-  color: var(--text);
-  font-weight: 500;
-}
-
-.debug-row input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.debug-select {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  padding: 4px 6px;
-  outline: none;
-}
-
-.debug-toggles-row {
-  display: flex;
-  gap: var(--s2);
-  justify-content: space-between;
-  margin-top: 4px;
-}
-
-.debug-toggle-btn {
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  cursor: pointer;
-  padding: 0;
-}
-
-.debug-toggle-btn:hover {
-  color: var(--accent);
-}
-
-.debug-output {
-  margin-top: var(--s3);
-  padding: var(--s2);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  color: var(--accent);
-  font-size: 0.62rem;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  user-select: all;
-  max-height: 130px;
-  overflow-y: auto;
 }
