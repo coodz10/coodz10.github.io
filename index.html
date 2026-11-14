@@ -175,14 +175,18 @@
 
         <!-- Header: Centered above middle column (6vh to 24vh) -->
         <header class="section-head section-head--center about-head">
+          <span class="section-head__tag mono" data-i18n="aboutTag">01 // CHI_SONO</span>
+          <h1 class="section-head__title" data-i18n="aboutTitle">Chi Sono</h1>
           <span class="section-head__tag mono" data-i18n="aboutTag">LOG_ENTRY_01 // CHI_SONO</span>
           <h2 class="section-head__title" data-i18n="aboutTitle">Chi Sono</h2>
           
           <!-- Single mono metadata line under title -->
           <div class="about-meta mono">
             <span class="meta-item"><span class="meta-label" data-i18n="aboutHandleLabel">HANDLE:</span> <span class="meta-val">coodz_10</span></span>
+            <span class="meta-sep">·</span>
             <span class="meta-sep">//</span>
             <span class="meta-item"><span class="meta-label" data-i18n="aboutRoleLabel">RUOLO:</span> <span class="meta-val" data-i18n="aboutRoleVal">SysAdmin // Security</span></span>
+            <span class="meta-sep">·</span>
             <span class="meta-sep">//</span>
             <span class="meta-item meta-status"><span class="status-dot-accent">●</span> <span class="meta-label" data-i18n="aboutStatusLabel">STATO:</span> <span class="meta-val" data-i18n="aboutStatusVal">[ OPERATIVO ]</span></span>
           </div>
@@ -190,8 +194,12 @@
 
         <!-- Symmetric 3-column Grid: Left column | Avatar Slot | Right column -->
         <div class="about-grid">
+          <!-- LEFT column: lead paragraph + item 01 (~30vw max) -->
           <!-- LEFT column: item 00 + item 01 (max-width: 360px) -->
           <div class="about-col about-col--left">
+            <p class="lead" data-i18n="aboutIntro">
+              Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.
+            </p>
             <div class="about-item">
               <div class="about-item__header mono">
                 <span class="item-num">00 — </span>
@@ -204,6 +212,7 @@
             <div class="about-item">
               <div class="about-item__header mono">
                 <span class="item-num">01 — </span>
+                <span class="item-title" data-i18n="aboutPillarTitle1">SOFTWARE &amp; SICUREZZA</span>
                 <span class="item-title" data-i18n="aboutPillarTitle1">[ SOFTWARE &amp; SICUREZZA ]</span>
               </div>
               <p class="about-item__body" data-i18n="aboutPillarDesc1">
@@ -215,11 +224,13 @@
           <!-- MIDDLE column: Avatar Slot -->
           <div class="avatar-slot about-avatar-slot" aria-hidden="true"></div>
 
+          <!-- RIGHT column: item 02 + item 03 (~30vw max) -->
           <!-- RIGHT column: item 02 + item 03 (max-width: 360px) -->
           <div class="about-col about-col--right">
             <div class="about-item">
               <div class="about-item__header mono">
                 <span class="item-num">02 — </span>
+                <span class="item-title" data-i18n="aboutPillarTitle2">INTELLIGENZA ARTIFICIALE</span>
                 <span class="item-title" data-i18n="aboutPillarTitle2">[ INTELLIGENZA ARTIFICIALE ]</span>
               </div>
               <p class="about-item__body" data-i18n="aboutPillarDesc2">
@@ -230,6 +241,7 @@
             <div class="about-item">
               <div class="about-item__header mono">
                 <span class="item-num">03 — </span>
+                <span class="item-title" data-i18n="aboutPillarTitle3">HARDWARE &amp; CUSTOM PC</span>
                 <span class="item-title" data-i18n="aboutPillarTitle3">[ HARDWARE &amp; CUSTOM PC ]</span>
               </div>
               <p class="about-item__body" data-i18n="aboutPillarDesc3">
@@ -255,6 +267,8 @@
         <!-- Left Column: Header centered above slot column + Avatar Slot below -->
         <div class="experiences-head-col">
           <header class="section-head section-head--center exp-head">
+            <span class="section-head__tag mono" data-i18n="expTag">02 // ESPERIENZE</span>
+            <h1 class="section-head__title" data-i18n="expTitle">Esperienze</h1>
             <span class="section-head__tag mono" data-i18n="expTag">LOG_ENTRY_02 // ESPERIENZE</span>
             <h2 class="section-head__title" data-i18n="expTitle">Esperienze</h2>
           </header>
@@ -361,6 +375,21 @@
                     <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
                   </div>
                 </a>
+
+                <!-- Card 03: MeowTools & Community -->
+                <a href="#esperienze/meowtools" class="row-link card-minimal" data-exp="meowtools">
+                  <div class="row-link__left">
+                    <span class="row-link__index mono">03</span>
+                    <div>
+                      <h2 class="row-link__title">MeowTools &amp; Community</h2>
+                      <p class="row-link__sub mono" data-i18n="expMeowtoolsRole">[ In Lavorazione ]</p>
+                    </div>
+                  </div>
+                  <div class="row-link__right mono">
+                    <span class="status-indicator-tag status--active"><span class="status-dot-accent">●</span> <span data-i18n="expMeowtoolsStatus">ATTIVO</span></span>
+                    <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
+                  </div>
+                </a>
               </div>
             </div>
           </div>
@@ -381,6 +410,8 @@
       <div class="section-bg-word mono" data-i18n="bgWordContact" aria-hidden="true">CONTATTI</div>
       <div class="section-block contact-block">
         <header class="section-head section-head--center contact-head">
+          <span class="section-head__tag mono" data-i18n="contactTag">03 // CONTATTI</span>
+          <h1 class="section-head__title" data-i18n="contactTitle">Parliamo</h1>
           <span class="section-head__tag mono" data-i18n="contactTag">LOG_ENTRY_03 // CONTATTI</span>
           <h2 class="section-head__title" data-i18n="contactTitle">Parliamo</h2>
           <p class="contact-sub mono" data-i18n="contactSub">

@@ -36,6 +36,9 @@
     ROT_EXP_DETAIL: 0.65,      // esperienze-detail: turns toward detail panel on right
 
     // Lighting & Emissive Luminous Skin (Dark navy black texels, vivid blues)
+    GLOBAL_LIGHT: 5.2,         // Global ambient light intensity
+    CAMERA_LIGHT: 2.0,         // Directional camera light intensity
+    AVATAR_EMISSIVE: '#0c1238', // Dark navy emissive so pure black texels read dark navy, blues stay vivid
     GLOBAL_LIGHT: 5.5,         // Global ambient light intensity
     CAMERA_LIGHT: 2.8,         // Directional camera light intensity
     AVATAR_EMISSIVE: '#182442', // Rich midnight navy emissive so pure black texels read deep charcoal/navy, blues stay vivid
@@ -125,6 +128,7 @@
       onlineStatus: 'coodz_10 // ONLINE',
       audioLabel: 'AUDIO',
       scrollHint: '[ SCROLL ]',
+      aboutTag: 'LOG_ENTRY_00 // CHI_SONO',
       aboutTag: 'LOG_ENTRY_01 // CHI_SONO',
       aboutTitle: 'Chi Sono',
       aboutHandleLabel: 'HANDLE:',
@@ -140,6 +144,7 @@
       aboutPillarDesc2: "Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.",
       aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
       aboutPillarDesc3: "Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.",
+      expTag: 'LOG_ENTRY_01 // ESPERIENZE',
       expTag: 'LOG_ENTRY_02 // ESPERIENZE',
       expTitle: 'Esperienze',
       expTabAll: '[ TUTTO ]',
@@ -153,11 +158,14 @@
       expElysianStatus: 'ATTIVO',
       expSyndicateRole: 'Support Team',
       expSyndicateStatus: 'ATTIVO',
+      expMeowtoolsRole: '[ In Lavorazione ]',
+      expMeowtoolsStatus: 'ATTIVO',
       expMetaRole: 'Helper ★★★★☆',
       expMetaStatus: 'DIMESSO',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'DIMESSO',
       viewDossier: '[ VEDI SCHEDA ]',
+      contactTag: 'LOG_ENTRY_02 // CONTATTI',
       contactTag: 'LOG_ENTRY_03 // CONTATTI',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
@@ -187,6 +195,7 @@
       onlineStatus: 'coodz_10 // ONLINE',
       audioLabel: 'AUDIO',
       scrollHint: '[ SCROLL ]',
+      aboutTag: 'LOG_ENTRY_00 // ABOUT_ME',
       aboutTag: 'LOG_ENTRY_01 // ABOUT_ME',
       aboutTitle: 'About Me',
       aboutHandleLabel: 'HANDLE:',
@@ -202,6 +211,7 @@
       aboutPillarDesc2: "In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.",
       aboutPillarTitle3: '[ HARDWARE & CUSTOM PC ]',
       aboutPillarDesc3: "On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.",
+      expTag: 'LOG_ENTRY_01 // EXPERIENCES',
       expTag: 'LOG_ENTRY_02 // EXPERIENCES',
       expTitle: 'Experiences',
       expTabAll: '[ ALL ]',
@@ -215,11 +225,14 @@
       expElysianStatus: 'ACTIVE',
       expSyndicateRole: 'Support Team',
       expSyndicateStatus: 'ACTIVE',
+      expMeowtoolsRole: '[ In Progress ]',
+      expMeowtoolsStatus: 'ACTIVE',
       expMetaRole: 'Helper ★★★★☆',
       expMetaStatus: 'RESIGNED',
       expPixyRole: 'Owner [ SS Manager ] ★★★★☆',
       expPixyStatus: 'RESIGNED',
       viewDossier: '[ VIEW DOSSIER ]',
+      contactTag: 'LOG_ENTRY_02 // CONTACT',
       contactTag: 'LOG_ENTRY_03 // CONTACT',
       contactTitle: "Let's Talk",
       contactSub: 'For collaborations, service requests or security investigations.',
@@ -376,6 +389,24 @@
         en: 'Details and review for this experience are currently work in progress.'
       },
       proofs: []
+    },
+    meowtools: {
+      index: '03',
+      title: 'MeowTools & Community',
+      category: 'ds',
+      role: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      stars: '',
+      status: { it: '[ Stato: Attivo ]', en: '[ Status: Active ]' },
+      period: { it: '[ Periodo: In Corso ]', en: '[ Period: Ongoing ]' },
+      inProgress: true,
+      noticeTag: { it: '[ In Lavorazione ]', en: '[ In Progress ]' },
+      noticeText: {
+        it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
+        en: 'Details and review for this experience are currently work in progress.'
+      },
+      proofs: [
+        { url: 'https://imgur.com/a/Amgjwsz' }
+      ]
     }
   };
 
