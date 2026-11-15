@@ -10,9 +10,7 @@
   <meta name="theme-color" content="#05060f">
   <link rel="canonical" href="https://coodz10.github.io/">
 
-  <link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="icon" type="image/png" href="assets/face.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 
   <meta property="og:type" content="website">
@@ -72,7 +70,6 @@
 
   <div class="vignette-overlay" aria-hidden="true"></div>
   <canvas id="stars-canvas" class="stars-canvas"></canvas>
-  <div id="bg-word" class="section-bg-word" aria-hidden="true"></div>
 
   <div id="avatar-stage" class="avatar-stage state-home">
     <div id="avatar-float" class="avatar-float">
@@ -84,10 +81,10 @@
 
   <nav class="nav-bar mono">
     <div class="nav-left">
-      <span class="status-indicator">
-        <span class="status-dot-accent status-dot-pulse" aria-hidden="true">●</span>
-        <span data-i18n="onlineStatus">coodz_10 · online</span>
-      </span>
+      <a href="#home" class="brand-mark" aria-label="home">
+        <img src="assets/face.png" width="24" height="24" alt="" class="brand-mark__face">
+        <span class="brand-mark__name">coodz_10</span>
+      </a>
     </div>
 
     <div class="nav-center desktop-only">
@@ -102,11 +99,6 @@
       <button id="lang-toggle-btn" class="btn btn--chip nav-btn" aria-label="Cambia lingua">[ EN ]</button>
 
       <button id="mute-btn" class="btn btn--chip nav-btn audio-toggle-btn" aria-label="Disattiva musica" title="Musica">
-        <span class="eq-icon" aria-hidden="true">
-          <span class="eq-bar"></span>
-          <span class="eq-bar"></span>
-          <span class="eq-bar"></span>
-        </span>
         <span class="audio-label-desktop">[ MUSICA ON ]</span>
         <span class="audio-label-mobile">[ ON ]</span>
       </button>
@@ -158,16 +150,7 @@
       <div class="section-block about-block">
 
         <header class="section-head section-head--center about-head">
-          <span class="section-head__tag mono" data-i18n="aboutTag">01 · chi sono</span>
-          <h2 class="section-head__title" data-i18n="aboutTitle">Chi sono</h2>
-
-          <div class="about-meta mono">
-            <span class="meta-item"><span class="meta-label" data-i18n="aboutHandleLabel">handle</span> <span class="meta-val">coodz_10</span></span>
-            <span class="meta-sep" aria-hidden="true">·</span>
-            <span class="meta-item"><span class="meta-label" data-i18n="aboutRoleLabel">ruolo</span> <span class="meta-val" data-i18n="aboutRoleVal">sysadmin · security</span></span>
-            <span class="meta-sep" aria-hidden="true">·</span>
-            <span class="meta-item meta-status"><span class="meta-label" data-i18n="aboutStatusLabel">stato</span> <span class="status-dot-accent" aria-hidden="true">●</span> <span class="meta-val" data-i18n="aboutStatusVal">operativo</span></span>
-          </div>
+          <h1 class="section-head__title" data-i18n="aboutTitle">Chi sono</h1>
         </header>
 
         <div class="about-grid">
@@ -176,9 +159,7 @@
               Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.
             </p>
             <div class="about-item">
-              <div class="about-item__header mono">
-                <span class="item-num">01 · </span><span class="item-title" data-i18n="aboutPillarTitle1">SOFTWARE &amp; SICUREZZA</span>
-              </div>
+              <h2 class="about-item__title" data-i18n="aboutPillarTitle1">Software e sicurezza</h2>
               <p class="about-item__body" data-i18n="aboutPillarDesc1">
                 Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.
               </p>
@@ -189,18 +170,14 @@
 
           <div class="about-col about-col--right">
             <div class="about-item">
-              <div class="about-item__header mono">
-                <span class="item-num">02 · </span><span class="item-title" data-i18n="aboutPillarTitle2">INTELLIGENZA ARTIFICIALE</span>
-              </div>
+              <h2 class="about-item__title" data-i18n="aboutPillarTitle2">Intelligenza artificiale</h2>
               <p class="about-item__body" data-i18n="aboutPillarDesc2">
                 Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.
               </p>
             </div>
 
             <div class="about-item">
-              <div class="about-item__header mono">
-                <span class="item-num">03 · </span><span class="item-title" data-i18n="aboutPillarTitle3">HARDWARE &amp; CUSTOM PC</span>
-              </div>
+              <h2 class="about-item__title" data-i18n="aboutPillarTitle3">Hardware e custom PC</h2>
               <p class="about-item__body" data-i18n="aboutPillarDesc3">
                 Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.
               </p>
@@ -216,8 +193,7 @@
 
         <div class="experiences-head-col">
           <header class="section-head section-head--center exp-head">
-            <span class="section-head__tag mono" data-i18n="expTag">02 · esperienze</span>
-            <h2 class="section-head__title" data-i18n="expTitle">Esperienze</h2>
+            <h1 class="section-head__title" data-i18n="expTitle">Esperienze</h1>
           </header>
           <div class="avatar-slot exp-avatar-slot" aria-hidden="true"></div>
         </div>
@@ -338,8 +314,7 @@
     <section id="contatti" class="snap-section section-contact">
       <div class="section-block contact-block">
         <header class="section-head section-head--center contact-head">
-          <span class="section-head__tag mono" data-i18n="contactTag">03 · contatti</span>
-          <h2 class="section-head__title" data-i18n="contactTitle">Parliamo</h2>
+          <h1 class="section-head__title" data-i18n="contactTitle">Parliamo</h1>
           <p class="contact-sub" data-i18n="contactSub">
             Per collaborazioni, richieste di servizi o investigazioni di sicurezza.
           </p>
@@ -352,7 +327,7 @@
             <div class="row-link__left">
               <span class="row-link__title">Discord</span>
             </div>
-            <div class="row-link__right mono">
+            <div class="row-link__right">
               <span class="row-link__handle">@coodz_10</span>
               <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
             </div>
@@ -362,7 +337,7 @@
             <div class="row-link__left">
               <span class="row-link__title">GitHub</span>
             </div>
-            <div class="row-link__right mono">
+            <div class="row-link__right">
               <span class="row-link__handle">coodz10</span>
               <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
             </div>
@@ -372,7 +347,7 @@
             <div class="row-link__left">
               <span class="row-link__title">Email</span>
             </div>
-            <div class="row-link__right mono">
+            <div class="row-link__right">
               <span class="row-link__handle" title="cood_ita@zohomail.eu">cood_ita@zohomail.eu</span>
               <span class="row-link__arrow" aria-hidden="true">&rarr;</span>
             </div>

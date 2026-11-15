@@ -14,8 +14,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     AVATAR_ZOOM_MOBILE: 0.52,  // Mobile camera zoom (fully visible, proportioned)
     AVATAR_Y_OFFSET: -25,      // Vertical stage nudge in px (top of head ~10vh, feet ~84vh)
     AVATAR_BASE_HEIGHT_PX_AT_ZOOM: 0, // Visual height of avatar at scale 1 (measured once via 3D bounding box)
-    BG_WORD_WIDTH_VW: 88,      // Target width in vw for fitted giant background word
-    BG_WORD_OPACITY: 0.22,
 
     // Avatar Rotations (0 shows front face towards camera; Math.PI turns 180° to back)
     ROT_OFFSET: 0,             // Rotation offset (0 = face toward camera; Math.PI = back)
@@ -104,23 +102,15 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       navAbout: '[ chi sono ]',
       navExp: '[ esperienze ]',
       navContact: '[ contatti ]',
-      onlineStatus: 'coodz_10 · online',
       scrollHint: '[ SCROLL ]',
-      aboutTag: '01 · chi sono',
       aboutTitle: 'Chi sono',
-      aboutHandleLabel: 'handle',
-      aboutRoleLabel: 'ruolo',
-      aboutRoleVal: 'sysadmin · security',
-      aboutStatusLabel: 'stato',
-      aboutStatusVal: 'operativo',
       aboutIntro: "Mi chiamo Samuele, ho 16 anni e sono uno studente di liceo scientifico. Ho una forte passione per l'informatica a 360 gradi, dall'hardware al software, con un approccio molto pratico e orientato a capire cosa succede davvero dietro le quinte di un sistema.",
-      aboutPillarTitle1: 'SOFTWARE & SICUREZZA',
+      aboutPillarTitle1: 'Software e sicurezza',
       aboutPillarDesc1: "Sul lato software e sicurezza, mi specializzo in analisi forense digitale (ScreenSharing) applicata principalmente all'ecosistema dei server Minecraft competitivi.",
-      aboutPillarTitle2: 'INTELLIGENZA ARTIFICIALE',
+      aboutPillarTitle2: 'Intelligenza artificiale',
       aboutPillarDesc2: "Parallelamente, utilizzo strumenti di intelligenza artificiale in modo avanzato, sia attraverso modelli locali sia tramite piattaforme cloud, sfruttandoli per lo sviluppo di software, l'analisi tecnica, il debugging e l'automazione di processi. Ho inoltre esperienza nella personalizzazione e nell'ottimizzazione dei modelli per adattarli alle mie esigenze.",
-      aboutPillarTitle3: 'HARDWARE & CUSTOM PC',
+      aboutPillarTitle3: 'Hardware e custom PC',
       aboutPillarDesc3: "Sul lato hardware, mi occupo di assemblaggio e configurazione di PC personalizzati, seguendo l'intero processo: dalla scelta dei componenti in base alle esigenze e al budget, fino all'assemblaggio, all'ottimizzazione e alla risoluzione di eventuali problemi. Offro inoltre supporto a chi necessita di una configurazione o di una build su misura.",
-      expTag: '02 · esperienze',
       expTitle: 'Esperienze',
       expTabAll: '[ TUTTO ]',
       expCatMinecraft: '[ MINECRAFT ]',
@@ -139,7 +129,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       expMetaStatus: 'dimesso',
       expPixyRole: 'Owner · SS Manager ★★★★☆',
       expPixyStatus: 'dimesso',
-      contactTag: '03 · contatti',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
       footerEnd: 'coodz_10 · 2026',
@@ -148,10 +137,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       proofsTitle: 'Link e prove',
       proofsClose: '[ chiudi ]',
       btnAbout: '[ CHI SONO ]',
-      btnExp: '[ LE MIE ESPERIENZE ]',
-      bgWordAbout: 'CHI SONO',
-      bgWordExp: 'ESPERIENZE',
-      bgWordContact: 'CONTATTI'
+      btnExp: '[ LE MIE ESPERIENZE ]'
     },
     en: {
       gateText: 'ENTER',
@@ -166,23 +152,15 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       navAbout: '[ about me ]',
       navExp: '[ experience ]',
       navContact: '[ contact ]',
-      onlineStatus: 'coodz_10 · online',
       scrollHint: '[ SCROLL ]',
-      aboutTag: '01 · about',
       aboutTitle: 'About me',
-      aboutHandleLabel: 'handle',
-      aboutRoleLabel: 'role',
-      aboutRoleVal: 'sysadmin · security',
-      aboutStatusLabel: 'status',
-      aboutStatusVal: 'operational',
       aboutIntro: "My name is Samuele, I am 16 years old, and I am a scientific high school student. I have a strong passion for 360° IT, from hardware to software, with a highly practical approach focused on understanding what really happens behind the scenes of a system.",
-      aboutPillarTitle1: 'SOFTWARE & SECURITY',
+      aboutPillarTitle1: 'Software and security',
       aboutPillarDesc1: "On the software and security side, I specialize in digital forensics (ScreenSharing) applied primarily to the competitive Minecraft server ecosystem.",
-      aboutPillarTitle2: 'ARTIFICIAL INTELLIGENCE',
+      aboutPillarTitle2: 'Artificial intelligence',
       aboutPillarDesc2: "In parallel, I utilize artificial intelligence tools in an advanced manner, both through local models and cloud platforms, leveraging them for software development, technical analysis, debugging, and process automation. I also have experience customizing and fine-tuning models to fit my needs.",
-      aboutPillarTitle3: 'HARDWARE & CUSTOM PC',
+      aboutPillarTitle3: 'Hardware and custom PCs',
       aboutPillarDesc3: "On the hardware side, I build and configure custom PCs, overseeing the entire process: from component selection based on needs and budget, to assembly, optimization, and troubleshooting. I also provide guidance and support to anyone in need of a tailored configuration or build.",
-      expTag: '02 · experience',
       expTitle: 'Experience',
       expTabAll: '[ ALL ]',
       expCatMinecraft: '[ MINECRAFT ]',
@@ -201,7 +179,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       expMetaStatus: 'resigned',
       expPixyRole: 'Owner · SS Manager ★★★★☆',
       expPixyStatus: 'resigned',
-      contactTag: '03 · contact',
       contactTitle: "Let's talk",
       contactSub: 'For collaborations, service requests or security investigations.',
       footerEnd: 'coodz_10 · 2026',
@@ -210,10 +187,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       proofsTitle: 'Links & proofs',
       proofsClose: '[ close ]',
       btnAbout: '[ ABOUT ME ]',
-      btnExp: '[ MY EXPERIENCE ]',
-      bgWordAbout: 'ABOUT',
-      bgWordExp: 'EXPERIENCE',
-      bgWordContact: 'CONTACT'
+      btnExp: '[ MY EXPERIENCE ]'
     }
   };
   window.CONFIG = CONFIG;
@@ -226,7 +200,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       role: { it: 'Helper', en: 'Helper' },
       stars: '',
       status: { it: 'attivo', en: 'active' },
-      period: { it: 'ottobre 2026 -', en: 'october 2026 -' },
+      period: { it: 'da ottobre 2026', en: 'since october 2026' },
       inProgress: true,
       noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
@@ -245,7 +219,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       stars: '★★★★☆',
       status: { it: 'dimesso', en: 'resigned' },
       period: { it: 'agosto - settembre 2026', en: 'august - september 2026' },
-      experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
+      experienceTitle: { it: 'La mia esperienza', en: 'My experience' },
       experienceParagraphs: {
         it: [
           'Sono stato membro dello staff di MetaMC per circa due mesi, periodo durante il quale ho potuto apprezzare un ambiente ben strutturato e professionale.',
@@ -266,12 +240,12 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
           'Although this is not a direct responsibility of MetaMC, since the training path is delegated to the Italian Tierlist hub, this process remains a sore point and an obstacle for anyone wishing to specialize in hack checks on the server.'
         ]
       },
-      strengthsTitle: { it: 'Punti di Forza', en: 'Strengths' },
+      strengthsTitle: { it: 'Punti di forza', en: 'Strengths' },
       strengths: {
         it: ['Professionalità', 'Organizzazione'],
         en: ['Professionalism', 'Organization']
       },
-      weaknessesTitle: { it: 'Punti Deboli', en: 'Weaknesses' },
+      weaknessesTitle: { it: 'Punti deboli', en: 'Weaknesses' },
       weaknesses: {
         it: ['Comunicazione insufficiente'],
         en: ['Insufficient communication']
@@ -289,7 +263,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       stars: '★★★★☆',
       status: { it: 'dimesso', en: 'resigned' },
       period: { it: 'agosto 2025 - luglio 2026', en: 'august 2025 - july 2026' },
-      experienceTitle: { it: 'La Mia Esperienza', en: 'My Experience' },
+      experienceTitle: { it: 'La mia esperienza', en: 'My experience' },
       experienceParagraphs: {
         it: [
           'Sono stato membro dello staff per più di un anno, crescendo da Helper fino a diventare Owner. Nel corso del tempo ho potuto notare come il server offra una community sana e divertente, caratterizzata da ottimi rapporti tra player e staff.',
@@ -306,12 +280,12 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
           'Ultimately, PixyMC is an ideal server for anyone who wants to be a staff member casually and without stress.'
         ]
       },
-      strengthsTitle: { it: 'Punti di Forza', en: 'Strengths' },
+      strengthsTitle: { it: 'Punti di forza', en: 'Strengths' },
       strengths: {
         it: ['Ottimo ambiente di lavoro', 'Staff comprensivo e disponibile'],
         en: ['Great working environment', 'Understanding and friendly staff']
       },
-      weaknessesTitle: { it: 'Punti Deboli', en: 'Weaknesses' },
+      weaknessesTitle: { it: 'Punti deboli', en: 'Weaknesses' },
       weaknesses: {
         it: ['Scarsa organizzazione iniziale', 'Poca professionalità'],
         en: ['Lack of initial organization', 'Lack of professionalism']
@@ -329,7 +303,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       role: { it: 'SS Verified', en: 'SS Verified' },
       stars: '',
       status: { it: 'attivo', en: 'active' },
-      period: { it: 'ottobre 2026 -', en: 'october 2026 -' },
+      period: { it: 'da ottobre 2026', en: 'since october 2026' },
       inProgress: true,
       noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
@@ -347,7 +321,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       role: { it: 'Support Team', en: 'Support Team' },
       stars: '',
       status: { it: 'attivo', en: 'active' },
-      period: { it: '2026 -', en: '2026 -' },
+      period: { it: 'dal 2026', en: 'since 2026' },
       inProgress: true,
       noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
@@ -554,14 +528,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
   let domHeroTitle = null;
   let domHeroTitleChSpans = null;
   let domHeroSubElements = null;
-  let domBgWord = null;
   let domActionsEl = null;
-  const bgWordMetrics = {
-    1: { text: 'CHI SONO', fontSize: '100px' },
-    2: { text: 'ESPERIENZE', fontSize: '100px' },
-    3: { text: 'CONTATTI', fontSize: '100px' }
-  };
-  let activeBgWordIndex = -1;
 
   function getDomStage() {
     if (!domStage) domStage = document.getElementById('avatar-stage');
@@ -591,12 +558,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       domHeroSubElements = document.querySelectorAll('.hero-subtitle-wrap, .home-bottom-actions, .hero-light-spill');
     }
     return domHeroSubElements;
-  }
-  function getDomBgWord() {
-    if (!domBgWord) {
-      domBgWord = document.getElementById('bg-word');
-    }
-    return domBgWord;
   }
   function getDomActionsEl() {
     if (!domActionsEl) {
@@ -727,7 +688,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       if (activeSectionId === 'home') return;
 
       if (activeSectionId === 'chi_sono') {
-        const steps = ['.section-head', '.about-meta', '.about-item'];
+        const steps = ['.section-head', '.lead', '.about-item__title', '.about-item'];
         currentReadingIndex = (currentReadingIndex + 1) % steps.length;
         const sel = steps[currentReadingIndex];
         const el = document.querySelector(`#chi_sono ${sel}`);
@@ -2228,9 +2189,84 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       targetObj.roll = kf.roll || 0;
     }
 
+    updateScrollFadeStates();
+    updateSectionClearanceBounds(baseH);
+
     if (window.AvatarDirector && typeof window.AvatarDirector.updateReadingRects === 'function') {
       window.AvatarDirector.updateReadingRects();
     }
+  }
+
+  function updateScrollFadeStates() {
+    document.querySelectorAll('#chi_sono .about-col').forEach((col) => {
+      col.classList.remove('is-scrollable');
+      const canScroll = window.innerWidth > 768 && col.scrollHeight > col.clientHeight + 2;
+      col.classList.toggle('is-scrollable', canScroll);
+    });
+    const detailBody = document.getElementById('detail-scroll-body');
+    if (detailBody) {
+      detailBody.classList.remove('is-scrollable');
+      const canScroll = window.innerWidth > 768 && detailBody.scrollHeight > detailBody.clientHeight + 2;
+      detailBody.classList.toggle('is-scrollable', canScroll);
+    }
+  }
+
+  function updateSectionClearanceBounds(baseH) {
+    if (!window.AvatarRig || typeof window.AvatarRig.setClearanceBounds !== 'function') return;
+    const rootFontPx = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+    const minGapPx = 3 * rootFontPx; // 3rem minimum clearance between arm tip and any text column
+    const effectiveBaseH = baseH > 0 ? baseH : (window.innerHeight * 0.72);
+    const bounds = {};
+
+    const aboutSec = document.getElementById('chi_sono');
+    if (aboutSec && cachedSlotKeyframes.chi_sono) {
+      const slot = aboutSec.querySelector('.about-avatar-slot');
+      const leftCol = aboutSec.querySelector('.about-col--left');
+      const rightCol = aboutSec.querySelector('.about-col--right');
+      if (slot && leftCol && rightCol) {
+        const sr = slot.getBoundingClientRect();
+        const lr = leftCol.getBoundingClientRect();
+        const rr = rightCol.getBoundingClientRect();
+        const cx = sr.left + sr.width * 0.5;
+        const overlapsY = (r) => r.bottom > sr.top && r.top < sr.bottom;
+        const leftEdgePx = (overlapsY(lr) && lr.right <= cx) ? lr.right : null;
+        const rightEdgePx = (overlapsY(rr) && rr.left >= cx) ? rr.left : null;
+        bounds.chi_sono = {
+          cx,
+          slotWidthPx: sr.width,
+          renderedH: effectiveBaseH * cachedSlotKeyframes.chi_sono.scale,
+          leftTextRightPx: leftEdgePx,
+          rightTextLeftPx: rightEdgePx,
+          minGapPx,
+          rootFontPx
+        };
+      }
+    }
+
+    const expSec = document.getElementById('esperienze');
+    if (expSec && cachedSlotKeyframes.esperienze) {
+      const slot = expSec.querySelector('.exp-avatar-slot');
+      const contentCol = expSec.querySelector('.experiences-content-col');
+      if (slot && contentCol) {
+        const sr = slot.getBoundingClientRect();
+        const cr = contentCol.getBoundingClientRect();
+        const cx = sr.left + sr.width * 0.5;
+        const overlapsY = cr.bottom > sr.top && cr.top < sr.bottom;
+        const rightEdgePx = (overlapsY && cr.left >= cx) ? cr.left : null;
+        bounds.esperienze = {
+          cx,
+          slotWidthPx: sr.width,
+          renderedH: effectiveBaseH * cachedSlotKeyframes.esperienze.scale,
+          leftTextRightPx: null,
+          rightTextLeftPx: rightEdgePx,
+          minGapPx,
+          rootFontPx
+        };
+        bounds['esperienze-detail'] = bounds.esperienze;
+      }
+    }
+
+    window.AvatarRig.setClearanceBounds(bounds);
   }
 
   function smoothstep(x) {
@@ -2266,58 +2302,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       roll: kf.roll || 0
     };
   }
-
-  function applyBgWordOpacity() {
-    document.documentElement.style.setProperty('--bg-word-opacity', CONFIG.BG_WORD_OPACITY);
-    const el = getDomBgWord();
-    if (el && fDisplay > 0.15) {
-      const idx = Math.max(1, Math.min(3, Math.round(fDisplay)));
-      const dist = fDisplay - idx;
-      if (Math.abs(dist) < 0.85) {
-        const op = Math.max(0, 1 - Math.abs(dist) * 1.25) * (typeof CONFIG.BG_WORD_OPACITY === 'number' ? CONFIG.BG_WORD_OPACITY : 1.0);
-        el.style.opacity = op.toFixed(3);
-      }
-    }
-  }
-
-  function fitBgWords() {
-    const el = getDomBgWord();
-    if (!el) return;
-    const widthVw = (typeof CONFIG.BG_WORD_WIDTH_VW === 'number' ? CONFIG.BG_WORD_WIDTH_VW : 88);
-    const targetWidth = window.innerWidth * (widthVw / 100);
-    const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
-    const words = {
-      1: dict.bgWordAbout || 'CHI SONO',
-      2: dict.bgWordExp || 'ESPERIENZE',
-      3: dict.bgWordContact || 'CONTATTI'
-    };
-
-    const prevTransform = el.style.transform;
-    el.style.transform = 'translate3d(-50%, -50%, 0)';
-    [1, 2, 3].forEach((idx) => {
-      const word = words[idx];
-      el.textContent = word;
-      el.style.fontSize = '100px';
-      const rectW = el.getBoundingClientRect().width || el.offsetWidth || el.scrollWidth;
-      if (rectW > 0) {
-        const fittedPx = (targetWidth / rectW) * 100;
-        bgWordMetrics[idx] = { text: word, fontSize: `${fittedPx.toFixed(1)}px` };
-      } else {
-        bgWordMetrics[idx] = { text: word, fontSize: '100px' };
-      }
-    });
-    el.style.transform = prevTransform;
-
-    if (activeBgWordIndex >= 1 && bgWordMetrics[activeBgWordIndex]) {
-      el.textContent = bgWordMetrics[activeBgWordIndex].text;
-      el.style.fontSize = bgWordMetrics[activeBgWordIndex].fontSize;
-    } else {
-      el.textContent = '';
-    }
-  }
-
-  window.__applyBgWordOpacity = applyBgWordOpacity;
-  window.__fitBgWords = fitBgWords;
 
   function waitForSiteFonts() {
     if (!document.fonts) return Promise.resolve();
@@ -2629,32 +2613,13 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         });
       }
     }
-
-    // 8. Continuous single fixed background word sliding scrub
-    const bgEl = getDomBgWord();
-    if (bgEl) {
-      const idx = Math.max(1, Math.min(3, Math.round(fDisplay)));
-      const dist = fDisplay - idx;
-      if (fDisplay > 0.15 && Math.abs(dist) < 0.85) {
-        if (activeBgWordIndex !== idx && bgWordMetrics[idx]) {
-          activeBgWordIndex = idx;
-          bgEl.textContent = bgWordMetrics[idx].text;
-          bgEl.style.fontSize = bgWordMetrics[idx].fontSize;
-        }
-        const opMult = typeof CONFIG.BG_WORD_OPACITY === 'number' ? CONFIG.BG_WORD_OPACITY : 1.0;
-        const op = Math.max(0, 1 - Math.abs(dist) * 1.25) * opMult;
-        const shiftPx = dist * 70;
-        bgEl.style.transform = `translate3d(calc(-50% + ${shiftPx.toFixed(1)}px), -50%, 0)`;
-        bgEl.style.opacity = op.toFixed(3);
-      } else {
-        activeBgWordIndex = -1;
-        bgEl.style.opacity = '0';
-      }
-    }
   }
 
   function setAvatarState(state) {
     currentAvatarState = state;
+    if (window.AvatarRig && typeof window.AvatarRig.setActiveSection === 'function') {
+      window.AvatarRig.setActiveSection(state);
+    }
 
     const stage = document.getElementById('avatar-stage');
     if (stage) {
@@ -3460,17 +3425,17 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         <div class="detail-pros-cons-grid">
           ${exp.strengths ? `
             <div class="detail-pros-col">
-              <div class="detail-group-tag mono"><span class="item-num">01 · </span>${exp.strengthsTitle[currentLang].toUpperCase()}</div>
-              <ul class="detail-list mono">
-                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet accent">·</span> <span>${item}</span></li>`).join('')}
+              <div class="detail-group-tag mono">${exp.strengthsTitle[currentLang].toUpperCase()}</div>
+              <ul class="detail-list">
+                ${exp.strengths[currentLang].map((item) => `<li><span class="bullet">·</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
           ${exp.weaknesses ? `
             <div class="detail-cons-col">
-              <div class="detail-group-tag mono"><span class="item-num">02 · </span>${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
-              <ul class="detail-list mono">
-                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet accent">·</span> <span>${item}</span></li>`).join('')}
+              <div class="detail-group-tag mono">${exp.weaknessesTitle[currentLang].toUpperCase()}</div>
+              <ul class="detail-list">
+                ${exp.weaknesses[currentLang].map((item) => `<li><span class="bullet">·</span> <span>${item}</span></li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -3482,9 +3447,9 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     if (exp.experienceParagraphs) {
       reviewHtml = `
         <div class="detail-review-section">
-          <h3 class="detail-review-title">${exp.experienceTitle[currentLang]}</h3>
+          <h2 class="detail-review-title">${exp.experienceTitle[currentLang]}</h2>
           <div class="detail-paragraphs">
-            ${exp.experienceParagraphs[currentLang].map((p) => `<p class="lead">${p}</p>`).join('')}
+            ${exp.experienceParagraphs[currentLang].map((p) => `<p>${p}</p>`).join('')}
           </div>
         </div>
       `;
@@ -3493,10 +3458,9 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     let noticeHtml = '';
     if (exp.inProgress) {
       noticeHtml = `
-        <div class="detail-notice mono">
-          <span class="status-dot-accent">●</span>
-          <span class="detail-notice-tag">${exp.noticeTag[currentLang]}</span>
-          <span class="detail-notice-text">${exp.noticeText[currentLang]}</span>
+        <div class="detail-notice">
+          <span class="detail-notice-tag mono">${exp.noticeTag[currentLang]}</span>
+          <p class="detail-notice-text">${exp.noticeText[currentLang]}</p>
         </div>
       `;
     }
@@ -3508,31 +3472,30 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         </button>
       </div>
 
-      <div class="detail-header">
-        <div class="detail-header-left">
+      <div class="detail-scroll-body" id="detail-scroll-body">
+        <div class="detail-header">
           <div class="detail-title-row">
             <span class="detail-index mono">${exp.index}</span>
-            <h2 class="detail-title">${exp.title}</h2>
+            <h1 class="detail-title">${exp.title}</h1>
           </div>
           <p class="detail-role mono">${exp.role[currentLang]}</p>
+          <div class="detail-meta-row mono">
+            ${exp.stars ? `<span class="detail-meta-item">${exp.stars}</span><span class="detail-meta-sep" aria-hidden="true">·</span>` : ''}
+            <span class="status-indicator-tag ${exp.inProgress ? 'status--active' : 'status--dimesso'}">
+              <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}" aria-hidden="true">${exp.inProgress ? '●' : '○'}</span>
+              <span>${exp.inProgress ? (currentLang === 'it' ? 'attivo' : 'active') : (currentLang === 'it' ? 'dimesso' : 'resigned')}</span>
+            </span>
+            <span class="detail-meta-sep" aria-hidden="true">·</span>
+            <span class="detail-meta-item detail-meta-item--muted">${exp.period[currentLang]}</span>
+          </div>
         </div>
-        <div class="detail-header-right mono">
-          ${exp.stars ? `<span class="detail-stars">${exp.stars}</span>` : ''}
-          <span class="status-indicator-tag ${exp.inProgress ? 'status--active' : 'status--dimesso'}">
-            <span class="${exp.inProgress ? 'status-dot-accent' : 'status-dot-muted'}">${exp.inProgress ? '●' : '○'}</span>
-            <span>${exp.inProgress ? (currentLang === 'it' ? 'attivo' : 'active') : (currentLang === 'it' ? 'dimesso' : 'resigned')}</span>
-          </span>
-          <span class="detail-period">${exp.period[currentLang]}</span>
+
+        <div class="detail-body">
+          ${noticeHtml}
+          ${reviewHtml}
+          ${prosConsHtml}
+          ${proofsBtnHtml}
         </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="detail-body">
-        ${noticeHtml}
-        ${reviewHtml}
-        ${prosConsHtml}
-        ${proofsBtnHtml}
       </div>
     `;
 
@@ -3553,6 +3516,8 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         openProofsModal(key);
       });
     }
+
+    requestAnimationFrame(updateScrollFadeStates);
   }
 
   function openExperienceDetail(key, updateHistory = true) {
@@ -3569,15 +3534,24 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     const detailView = document.getElementById('experience-detail-view');
     if (!cardsView || !detailView) return;
 
-    detailView.style.display = 'block';
+    cardsView.classList.add('view-hidden');
+    cardsView.style.display = 'none';
+    cardsView.setAttribute('aria-hidden', 'true');
+
+    detailView.classList.remove('view-active');
+    detailView.classList.add('view-hidden');
+    detailView.style.display = 'flex';
     detailView.setAttribute('aria-hidden', 'false');
     detailView.scrollTop = 0;
+    const scrollBody = document.getElementById('detail-scroll-body');
+    if (scrollBody) scrollBody.scrollTop = 0;
+    void detailView.offsetWidth;
 
     // Trigger smooth 500ms slide/fade transition
     requestAnimationFrame(() => {
-      cardsView.classList.add('view-hidden');
       detailView.classList.remove('view-hidden');
       detailView.classList.add('view-active');
+      updateScrollFadeStates();
 
       // Trigger avatar reaction (substate 'esperienze-detail': turns slightly toward panel and nods)
       setAvatarState('esperienze-detail');
@@ -3591,10 +3565,9 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
 
     setTimeout(() => {
       if (activeDetailId === key) {
-        cardsView.style.display = 'none';
-        cardsView.setAttribute('aria-hidden', 'true');
+        updateScrollFadeStates();
       }
-    }, 500);
+    }, 520);
   }
 
   function closeExperienceDetail(updateHistory = true) {
@@ -3609,13 +3582,18 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     const detailView = document.getElementById('experience-detail-view');
     if (!cardsView || !detailView) return;
 
+    detailView.classList.remove('view-active');
+    detailView.classList.add('view-hidden');
+    detailView.style.display = 'none';
+    detailView.setAttribute('aria-hidden', 'true');
+
+    cardsView.classList.add('view-hidden');
     cardsView.style.display = 'block';
     cardsView.setAttribute('aria-hidden', 'false');
+    void cardsView.offsetWidth;
 
     requestAnimationFrame(() => {
       cardsView.classList.remove('view-hidden');
-      detailView.classList.remove('view-active');
-      detailView.classList.add('view-hidden');
 
       // Avatar returns to walking pose in 'esperienze'
       setAvatarState('esperienze');
@@ -3626,13 +3604,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         }
       }
     });
-
-    setTimeout(() => {
-      if (!activeDetailId) {
-        detailView.style.display = 'none';
-        detailView.setAttribute('aria-hidden', 'true');
-      }
-    }, 500);
   }
 
   function openProofsModal(key) {
@@ -3874,7 +3845,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     updateCachedDimensions();
     computeSlotKeyframes();
     fitHeroTitle();
-    fitBgWords();
     updateDocumentTitle(activeSectionId);
 
     setTimeout(() => {
@@ -3915,7 +3885,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     sections.forEach((sec) => observer.observe(sec));
 
     // Nav Links smooth scroll click
-    document.querySelectorAll('.nav-link, .mobile-link').forEach((link) => {
+    document.querySelectorAll('.brand-mark, .nav-link, .mobile-link').forEach((link) => {
       link.addEventListener('click', (e) => {
         const targetId = link.getAttribute('href');
         if (targetId && targetId.startsWith('#')) {
@@ -3954,12 +3924,12 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     updateCachedDimensions();
     updateNavIndicator(activeSectionId);
     fitHeroTitle();
-    fitBgWords();
+    updateScrollFadeStates();
     window.addEventListener('resize', () => {
       updateCachedDimensions();
       updateNavIndicator(activeSectionId);
       if (!isIntroActive) fitHeroTitle();
-      fitBgWords();
+      computeSlotKeyframes();
     }, { passive: true });
 
     // Passive scroll listener for continuous scroll-driven flight
@@ -4473,7 +4443,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     initAudio();
     initGateAndIntro();
     initTitleHoverScramble();
-    applyBgWordOpacity();
     initAvatar();
     initAvatarInteraction();
     initStars();
@@ -4492,7 +4461,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     waitForSiteFonts().then(() => {
       if (!isIntroActive) fitHeroTitle();
       computeSlotKeyframes();
-      fitBgWords();
     });
   });
 

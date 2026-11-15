@@ -33,7 +33,7 @@ jobs:
           [ -f security.txt ] && cp security.txt _site/ || true
           [ -d .well-known ] && cp -r .well-known _site/ || true
           cp -r servers music _site/
-          cp assets/skin.png assets/favicon-16.png assets/favicon-32.png assets/favicon-48.png assets/apple-touch-icon.png assets/og-image.png _site/assets/
+          cp assets/skin.png assets/face.png assets/favicon-16.png assets/favicon-32.png assets/favicon-48.png assets/apple-touch-icon.png assets/og-image.png _site/assets/
           cp -r assets/fonts _site/assets/
 
       - name: Setup Pages

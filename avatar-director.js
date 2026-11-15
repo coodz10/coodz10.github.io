@@ -349,11 +349,11 @@
     // raise = -a (negative rotation.x raises forward horizontal)
     // spread = b * sign (positive spread is abduction away from torso)
     const rawRaise = -a;
-    const rawSpread = Math.max(0.30, Math.min(1.35, b));
+    const rawSpread = Math.max(0.30, Math.min(0.70, b));
 
     // Clamp with rig anatomical limits
     const clampedRaise = Math.max(-0.40, Math.min(2.70, rawRaise));
-    const clampedSpread = Math.max(0.30, Math.min(1.30, rawSpread));
+    const clampedSpread = Math.max(0.30, Math.min(0.70, rawSpread));
 
     sharedAimResult.raise = clampedRaise;
     sharedAimResult.spread = clampedSpread;
@@ -433,8 +433,8 @@
         const u = Math.min(1, Math.max(0, t / dur));
         const leftArmWeight = Math.sin(Math.PI * u) * 0.4;
         const out = {
-          rightArm: { raise: 0, spread: 0.22, twist: 0, weight: 0 },
-          leftArm: { spread: 0.30, weight: leftArmWeight },
+          rightArm: { raise: 0, spread: 0.40, twist: 0, weight: 0 },
+          leftArm: { spread: 0.14, weight: leftArmWeight },
           head: { roll: 0, pitch: 0, weight: 0 }
         };
 
@@ -442,7 +442,7 @@
           // Anticipation: small opposite dip
           const aU = t / 0.12;
           out.rightArm.raise = -0.05 * Math.sin(Math.PI * aU);
-          out.rightArm.spread = 0.14;
+          out.rightArm.spread = 0.40;
           out.rightArm.twist = 0;
           out.rightArm.weight = aU * 0.5;
         } else if (t < 0.65) {
@@ -450,7 +450,7 @@
           const actU = (t - 0.12) / (0.65 - 0.12);
           const s = minJerk(actU);
           out.rightArm.raise = -0.05 + (2.50 - (-0.05)) * s;
-          out.rightArm.spread = 0.14 + (0.32 - 0.14) * s;
+          out.rightArm.spread = 0.40 + (0.48 - 0.40) * s;
           out.rightArm.twist = 0.25 * s;
           out.rightArm.weight = 1.0;
           out.head.roll = 0.12 * s;
@@ -460,9 +460,9 @@
           // Hold with decaying exponential oscillation above head
           const oscT = t - 0.65;
           const decay = Math.exp(-1.4 * oscT);
-          const waveOsc = 0.22 * Math.sin(oscT * 10.5) * decay;
+          const waveOsc = 0.12 * Math.sin(oscT * 10.5) * decay;
           out.rightArm.raise = 2.45 + 0.05 * Math.sin(oscT * 5.0);
-          out.rightArm.spread = 0.32 + waveOsc;
+          out.rightArm.spread = 0.48 + waveOsc;
           out.rightArm.twist = 0.25;
           out.rightArm.weight = 1.0;
           out.head.roll = 0.12 * decay;
@@ -473,7 +473,7 @@
           const relU = (t - 1.60) / (dur - 1.60);
           const s = 1 - minJerk(relU);
           out.rightArm.raise = 2.45 * s;
-          out.rightArm.spread = 0.14 + (0.32 - 0.14) * s;
+          out.rightArm.spread = 0.40 + (0.48 - 0.40) * s;
           out.rightArm.twist = 0.25 * s;
           out.rightArm.weight = s;
           out.head.roll = 0.04 * s;
@@ -500,20 +500,20 @@
         const bodyTwistW = (t < 0.60) ? minJerk(Math.max(0, (t - 0.15) / 0.45)) * 0.7 : (t < 1.30) ? 0.7 : (1 - minJerk((t - 1.30) / (dur - 1.30))) * 0.7;
         const leftArmWeight = Math.max(Math.sin(Math.PI * u) * 0.4, bodyTwistW);
         const out = {
-          rightArm: { raise: 0, spread: 0.32, twist: 0, weight: 0 },
-          leftArm: { spread: 0.36, weight: leftArmWeight },
+          rightArm: { raise: 0, spread: 0.42, twist: 0, weight: 0 },
+          leftArm: { spread: 0.16, weight: leftArmWeight },
           body: { twist: 0, weight: 0 }
         };
 
         const targetScreen = context.pointTarget || { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
         const aim = solveAimArm('right', targetScreen);
-        const aimSpread = Math.max(0.35, aim.spread);
+        const aimSpread = Math.min(0.68, Math.max(0.42, aim.spread));
 
         if (t < 0.15) {
           // Anticipation
           const aU = t / 0.15;
           out.rightArm.raise = -0.05 * aU;
-          out.rightArm.spread = 0.32;
+          out.rightArm.spread = 0.42;
           out.rightArm.weight = aU * 0.4;
           out.body.twist = 0.05 * aU;
           out.body.weight = aU * 0.4;
@@ -522,7 +522,7 @@
           const actU = (t - 0.15) / 0.45;
           const s = minJerk(actU);
           out.rightArm.raise = aim.raise * s;
-          out.rightArm.spread = 0.30 + (aimSpread - 0.30) * s;
+          out.rightArm.spread = 0.42 + (aimSpread - 0.42) * s;
           out.rightArm.twist = aim.twist * s;
           out.rightArm.weight = s;
           out.body.twist = 0.20 * s;
@@ -540,7 +540,7 @@
           const relU = (t - 1.30) / (dur - 1.30);
           const s = 1 - minJerk(relU);
           out.rightArm.raise = aim.raise * s;
-          out.rightArm.spread = 0.30 + (aimSpread - 0.30) * s;
+          out.rightArm.spread = 0.42 + (aimSpread - 0.42) * s;
           out.rightArm.twist = aim.twist * s;
           out.rightArm.weight = s;
           out.body.twist = 0.20 * s;
@@ -558,12 +558,15 @@
       name: 'present',
       priority: PRIORITY_SCRIPTED,
       cooldown: 8.0,
-      joints: ['rightArm', 'body'],
+      joints: ['rightArm', 'leftArm', 'body'],
       duration: 2.2,
       anticipationSec: 0.10,
       evaluate(t, dur) {
+        const u = Math.min(1, Math.max(0, t / dur));
+        const leftArmWeight = Math.sin(Math.PI * u) * 0.45;
         const out = {
-          rightArm: { raise: 0, spread: 0.14, twist: 0, weight: 0 },
+          rightArm: { raise: 0, spread: 0.40, twist: 0, weight: 0 },
+          leftArm: { spread: 0.24, weight: leftArmWeight },
           body: { twist: 0, weight: 0 }
         };
 
@@ -574,14 +577,14 @@
           const actU = (t - 0.10) / 0.60;
           const s = minJerk(actU);
           out.rightArm.raise = 0.45 * s;
-          out.rightArm.spread = (0.14 + (0.75 - 0.14) * s);
+          out.rightArm.spread = 0.40 + (0.62 - 0.40) * s;
           out.rightArm.twist = 0.35 * s; // palm side
           out.rightArm.weight = s;
           out.body.twist = 0.18 * s;
           out.body.weight = s * 0.6;
         } else if (t < 1.60) {
           out.rightArm.raise = 0.45;
-          out.rightArm.spread = 0.75;
+          out.rightArm.spread = 0.62;
           out.rightArm.twist = 0.35;
           out.rightArm.weight = 1.0;
           out.body.twist = 0.18;
@@ -590,7 +593,7 @@
           const relU = (t - 1.60) / (dur - 1.60);
           const s = 1 - minJerk(relU);
           out.rightArm.raise = 0.45 * s;
-          out.rightArm.spread = 0.14 + (0.75 - 0.14) * s;
+          out.rightArm.spread = 0.40 + (0.62 - 0.40) * s;
           out.rightArm.twist = 0.35 * s;
           out.rightArm.weight = s;
           out.body.twist = 0.18 * s;
@@ -710,8 +713,8 @@
       anticipationSec: 0.15,
       evaluate(t, dur) {
         const out = {
-          leftArm: { raise: 0, spread: 0.12, twist: 0, weight: 0 },
-          rightArm: { raise: 0, spread: 0.14, twist: 0, weight: 0 },
+          leftArm: { raise: 0, spread: 0.22, twist: 0, weight: 0 },
+          rightArm: { raise: 0, spread: 0.38, twist: 0, weight: 0 },
           body: { lean: 0, weight: 0 },
           head: { pitch: 0, weight: 0 }
         };
@@ -719,10 +722,10 @@
         if (t < 0.80) {
           const s = minJerk(t / 0.80);
           out.leftArm.raise = 1.40 * s;
-          out.leftArm.spread = 0.12 + (0.50 - 0.12) * s;
+          out.leftArm.spread = 0.22 + (0.36 - 0.22) * s;
           out.leftArm.weight = s;
           out.rightArm.raise = 1.40 * s;
-          out.rightArm.spread = 0.14 + (0.50 - 0.14) * s;
+          out.rightArm.spread = 0.38 + (0.54 - 0.38) * s;
           out.rightArm.weight = s;
           out.head.pitch = 0.15 * s;
           out.head.weight = s * 0.7;
@@ -730,10 +733,10 @@
           out.body.weight = s * 0.6;
         } else if (t < 1.80) {
           out.leftArm.raise = 1.40;
-          out.leftArm.spread = 0.50;
+          out.leftArm.spread = 0.36;
           out.leftArm.weight = 1.0;
           out.rightArm.raise = 1.40;
-          out.rightArm.spread = 0.50;
+          out.rightArm.spread = 0.54;
           out.rightArm.weight = 1.0;
           out.head.pitch = 0.15;
           out.head.weight = 0.7;
@@ -742,10 +745,10 @@
         } else {
           const s = 1 - minJerk((t - 1.80) / (dur - 1.80));
           out.leftArm.raise = 1.40 * s;
-          out.leftArm.spread = 0.12 + (0.50 - 0.12) * s;
+          out.leftArm.spread = 0.22 + (0.36 - 0.22) * s;
           out.leftArm.weight = s;
           out.rightArm.raise = 1.40 * s;
-          out.rightArm.spread = 0.14 + (0.50 - 0.14) * s;
+          out.rightArm.spread = 0.38 + (0.54 - 0.38) * s;
           out.rightArm.weight = s;
           out.head.pitch = 0.15 * s;
           out.head.weight = s * 0.7;
@@ -770,8 +773,8 @@
       evaluate(t, dur) {
         const out = {
           body: { lean: 0, weight: 0 },
-          leftArm: { raise: 0, spread: 0.30, weight: 0 },
-          rightArm: { raise: 0, spread: 0.30, weight: 0 }
+          leftArm: { raise: 0, spread: 0.24, weight: 0 },
+          rightArm: { raise: 0, spread: 0.42, weight: 0 }
         };
 
         const u = t / dur;
@@ -782,10 +785,10 @@
         out.body.lean = 0.02 * bob;
         out.body.weight = env;
         out.leftArm.raise = -0.06 * bob;
-        out.leftArm.spread = 0.30;
+        out.leftArm.spread = 0.24;
         out.leftArm.weight = env * 0.4;
         out.rightArm.raise = -0.06 * bob;
-        out.rightArm.spread = 0.30;
+        out.rightArm.spread = 0.42;
         out.rightArm.weight = env * 0.4;
 
         return out;
@@ -806,8 +809,8 @@
       evaluate(t, dur) {
         const out = {
           rootYaw: { yaw: 0, weight: 0 },
-          leftArm: { spread: 0.12, weight: 0 },
-          rightArm: { spread: 0.14, weight: 0 }
+          leftArm: { spread: 0.22, weight: 0 },
+          rightArm: { spread: 0.40, weight: 0 }
         };
 
         const u = Math.min(1, Math.max(0, t / dur));
@@ -818,9 +821,9 @@
         out.rootYaw.weight = 1.0;
 
         const armSpreadExtra = 0.22 * Math.sin(u * Math.PI);
-        out.leftArm.spread = 0.12 + armSpreadExtra;
+        out.leftArm.spread = 0.22 + armSpreadExtra * 0.5;
         out.leftArm.weight = Math.sin(u * Math.PI);
-        out.rightArm.spread = 0.14 + armSpreadExtra;
+        out.rightArm.spread = 0.40 + armSpreadExtra * 0.9;
         out.rightArm.weight = Math.sin(u * Math.PI);
 
         return out;
@@ -1073,7 +1076,7 @@
     cachedReadingTargets.left.length = 0;
     cachedReadingTargets.right.length = 0;
 
-    const leftItems = document.querySelectorAll('#chi_sono .col-left p, #chi_sono .lead, #chi_sono .about-item');
+    const leftItems = document.querySelectorAll('#chi_sono .about-col--left p, #chi_sono .lead, #chi_sono .about-col--left .about-item__title, #chi_sono .about-col--left .about-item');
     for (let i = 0; i < leftItems.length; i++) {
       const r = leftItems[i].getBoundingClientRect();
       if (r.width > 0 && r.height > 0) {
@@ -1086,7 +1089,7 @@
       }
     }
 
-    const rightItems = document.querySelectorAll('#chi_sono .col-right p, #chi_sono .about-meta, #chi_sono .about-item');
+    const rightItems = document.querySelectorAll('#chi_sono .about-col--right p, #chi_sono .about-col--right .about-item__title, #chi_sono .about-col--right .about-item');
     for (let i = 0; i < rightItems.length; i++) {
       const r = rightItems[i].getBoundingClientRect();
       if (r.width > 0 && r.height > 0) {

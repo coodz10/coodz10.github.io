@@ -4,11 +4,11 @@
   const CONFIG = {
     // Spring dynamics: natural frequency (Hz) and damping ratio (zeta)
     SPRINGS: {
-      head:      { freq: 3.2, damping: 0.90 },
-      body:      { freq: 2.0, damping: 1.00 },
-      arms:      { freq: 2.4, damping: 0.80 }, // slight underdamping: max ~8% natural fluid overshoot
-      legs:      { freq: 1.7, damping: 0.90 },
-      rootYaw:   { freq: 1.6, damping: 1.00 },
+      head: { freq: 3.2, damping: 0.90 },
+      body: { freq: 2.0, damping: 1.00 },
+      arms: { freq: 2.4, damping: 0.80 }, // slight underdamping: max ~8% natural fluid overshoot
+      legs: { freq: 1.7, damping: 0.90 },
+      rootYaw: { freq: 1.6, damping: 1.00 },
       collision: { freq: 3.5, damping: 1.00 }  // collision offset smoothing spring
     },
 
@@ -23,14 +23,14 @@
 
     // Anatomical soft joint limits [min, max] (radians)
     LIMITS: {
-      headYaw:   [-1.10, 1.10],
+      headYaw: [-1.10, 1.10],
       headPitch: [-0.60, 0.50], // negative x is look up, positive pitch = look up
-      headRoll:  [-0.35, 0.35],
-      bodyYaw:   [-0.90, 0.90],
-      bodyLean:  [-0.25, 0.60],
-      bodyRoll:  [-0.30, 0.30],
-      armRaise:  [-3.14, 0.70], // rot.x = -raise; negative raises forward and overhead to -pi (-3.14)
-      legSwing:  [-0.90, 0.90]
+      headRoll: [-0.35, 0.35],
+      bodyYaw: [-0.90, 0.90],
+      bodyLean: [-0.25, 0.60],
+      bodyRoll: [-0.30, 0.30],
+      armRaise: [-3.14, 0.70], // rot.x = -raise; negative raises forward and overhead to -pi (-3.14)
+      legSwing: [-0.90, 0.90]
     },
 
     // Organic drift amplitudes (radians)
@@ -91,33 +91,69 @@
   const JOINT_COUNT = 6;
   const DOF_COUNT = JOINT_COUNT * 3; // 18 DOFs (X=0, Y=1, Z=2 per joint)
 
-  const J_HEAD      = 0;
-  const J_BODY      = 1;
-  const J_LEFT_ARM  = 2;
+  const J_HEAD = 0;
+  const J_BODY = 1;
+  const J_LEFT_ARM = 2;
   const J_RIGHT_ARM = 3;
-  const J_LEFT_LEG  = 4;
+  const J_LEFT_LEG = 4;
   const J_RIGHT_LEG = 5;
 
   // Float32Arrays for zero-allocation simulation updates
-  const currentJointAngles     = new Float32Array(DOF_COUNT);
+  const currentJointAngles = new Float32Array(DOF_COUNT);
   const currentJointVelocities = new Float32Array(DOF_COUNT);
-  const targetJointAngles      = new Float32Array(DOF_COUNT);
-  const rawTargetJointAngles   = new Float32Array(DOF_COUNT);
+  const targetJointAngles = new Float32Array(DOF_COUNT);
+  const rawTargetJointAngles = new Float32Array(DOF_COUNT);
   const settleVariationOffsets = new Float32Array(DOF_COUNT);
-  const collisionOffsets       = new Float32Array(DOF_COUNT);
-  const collisionVelocities    = new Float32Array(DOF_COUNT);
+  const collisionOffsets = new Float32Array(DOF_COUNT);
+  const collisionVelocities = new Float32Array(DOF_COUNT);
   const targetCollisionOffsets = new Float32Array(DOF_COUNT);
-  const proceduralOffsets      = new Float32Array(DOF_COUNT);
-  const poseSaveScratch        = new Float32Array(DOF_COUNT);
-  const halfMixScratch         = new Float32Array(DOF_COUNT);
+  const proceduralOffsets = new Float32Array(DOF_COUNT);
+  const poseSaveScratch = new Float32Array(DOF_COUNT);
+  const halfMixScratch = new Float32Array(DOF_COUNT);
 
   // Director layer overlay buffers
-  const directorOverrides      = new Float32Array(DOF_COUNT);
-  const directorWeights        = new Float32Array(DOF_COUNT);
+  const directorOverrides = new Float32Array(DOF_COUNT);
+  const directorWeights = new Float32Array(DOF_COUNT);
 
   // Root transform (yaw, pitch, roll)
   const rootAngles             = new Float32Array(3);
   const rootVelocities         = new Float32Array(3);
+
+  // Per-section text clearance bounds (updated on resize / section change)
+  let clearanceBoundsBySection = {};
+  let activeClearanceSection   = 'home';
+  let maxAllowedSpreadL        = 0.70;
+  let maxAllowedSpreadR        = 0.70;
+
+  function recomputeSectionArmCaps() {
+    const b = clearanceBoundsBySection[activeClearanceSection];
+    if (!b || !b.renderedH || b.renderedH <= 0) {
+      maxAllowedSpreadL = 0.70;
+      maxAllowedSpreadR = 0.70;
+      return;
+    }
+    const H = b.renderedH;
+    const shoulderOffsetPx = 0.1875 * H;
+    const armLenPx = 0.375 * H;
+    const armThickHalfPx = 0.0625 * H;
+
+    let maxL = 0.70;
+    if (b.rightTextLeftPx !== null && b.rightTextLeftPx !== undefined) {
+      const availRightPx = (b.rightTextLeftPx - b.minGapPx) - (b.cx + shoulderOffsetPx);
+      const maxSinL = Math.max(0.18, (availRightPx - armThickHalfPx) / armLenPx);
+      maxL = Math.min(0.70, Math.asin(Math.min(1, maxSinL)));
+    }
+
+    let maxR = 0.70;
+    if (b.leftTextRightPx !== null && b.leftTextRightPx !== undefined) {
+      const availLeftPx = (b.cx - shoulderOffsetPx) - (b.leftTextRightPx + b.minGapPx);
+      const maxSinR = Math.max(0.18, (availLeftPx - armThickHalfPx) / armLenPx);
+      maxR = Math.min(0.70, Math.asin(Math.min(1, maxSinR)));
+    }
+
+    maxAllowedSpreadL = maxL;
+    maxAllowedSpreadR = maxR;
+  }
   const targetRootAngles       = new Float32Array(3);
 
   // Organic drift initial phases (3 sines per DOF)
@@ -138,7 +174,7 @@
   let prefersReducedMotion = false;
   try {
     prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch (e) {}
+  } catch (e) { }
 
   // Gesture overlay system
   let activeGesture = null;
@@ -188,9 +224,9 @@
     const skin = player.skin;
 
     // 1. Derive outward sign dynamically from joint positions
-    if (skin.leftArm)  AvatarRig.outwardSigns.leftArm  = Math.sign(skin.leftArm.position.x) || 1;
+    if (skin.leftArm) AvatarRig.outwardSigns.leftArm = Math.sign(skin.leftArm.position.x) || 1;
     if (skin.rightArm) AvatarRig.outwardSigns.rightArm = Math.sign(skin.rightArm.position.x) || -1;
-    if (skin.leftLeg)  AvatarRig.outwardSigns.leftLeg  = Math.sign(skin.leftLeg.position.x) || 1;
+    if (skin.leftLeg) AvatarRig.outwardSigns.leftLeg = Math.sign(skin.leftLeg.position.x) || 1;
     if (skin.rightLeg) AvatarRig.outwardSigns.rightLeg = Math.sign(skin.rightLeg.position.x) || -1;
 
     // 2. Three.js math constructors resolution & FK scratch objects
@@ -212,18 +248,18 @@
       eulerScratch = new EulerClass(0, 0, 0, 'XYZ');
     }
     if (Vector3Class) {
-      SOCKET_OFFSETS[J_HEAD]      = new Vector3Class(0, 6, 0);         // Neck socket
-      SOCKET_OFFSETS[J_BODY]      = null;                              // Torso root
-      SOCKET_OFFSETS[J_LEFT_ARM]  = new Vector3Class(5, 4, 0);         // Left shoulder socket
+      SOCKET_OFFSETS[J_HEAD] = new Vector3Class(0, 6, 0);         // Neck socket
+      SOCKET_OFFSETS[J_BODY] = null;                              // Torso root
+      SOCKET_OFFSETS[J_LEFT_ARM] = new Vector3Class(5, 4, 0);         // Left shoulder socket
       SOCKET_OFFSETS[J_RIGHT_ARM] = new Vector3Class(-5, 4, 0);        // Right shoulder socket
-      SOCKET_OFFSETS[J_LEFT_LEG]  = new Vector3Class(1.9, -6, -0.1);   // Left hip socket
+      SOCKET_OFFSETS[J_LEFT_LEG] = new Vector3Class(1.9, -6, -0.1);   // Left hip socket
       SOCKET_OFFSETS[J_RIGHT_LEG] = new Vector3Class(-1.9, -6, -0.1);  // Right hip socket
 
       // Anatomical shoulder anchor offsets: inner top corner of arms & torso sockets
-      ARM_PIVOTS_LOCAL[J_LEFT_ARM]  = new Vector3Class(-1.0, 2.0, 0);
+      ARM_PIVOTS_LOCAL[J_LEFT_ARM] = new Vector3Class(-1.0, 2.0, 0);
       ARM_PIVOTS_LOCAL[J_RIGHT_ARM] = new Vector3Class(1.0, 2.0, 0);
-      TORSO_SOCKETS[J_LEFT_ARM]     = new Vector3Class(4.0, 6.0, 0);
-      TORSO_SOCKETS[J_RIGHT_ARM]    = new Vector3Class(-4.0, 6.0, 0);
+      TORSO_SOCKETS[J_LEFT_ARM] = new Vector3Class(4.0, 6.0, 0);
+      TORSO_SOCKETS[J_RIGHT_ARM] = new Vector3Class(-4.0, 6.0, 0);
     }
 
     // 3. Cache inner meshes for collision resolver
@@ -313,12 +349,12 @@
   // Helper to pack authored pose into a 18-element Float32Array
   function packPose(p) {
     const arr = new Float32Array(DOF_COUNT);
-    arr[0] = p.head.x;  arr[1] = p.head.y;  arr[2] = p.head.z;
-    arr[3] = p.body.x;  arr[4] = p.body.y;  arr[5] = p.body.z;
-    arr[6] = p.leftArm.x;  arr[7] = p.leftArm.y;  arr[8] = p.leftArm.z;
-    arr[9] = p.rightArm.x; arr[10]= p.rightArm.y; arr[11]= p.rightArm.z;
-    arr[12]= p.leftLeg.x;  arr[13]= p.leftLeg.y;  arr[14]= p.leftLeg.z;
-    arr[15]= p.rightLeg.x; arr[16]= p.rightLeg.y; arr[17]= p.rightLeg.z;
+    arr[0] = p.head.x; arr[1] = p.head.y; arr[2] = p.head.z;
+    arr[3] = p.body.x; arr[4] = p.body.y; arr[5] = p.body.z;
+    arr[6] = p.leftArm.x; arr[7] = p.leftArm.y; arr[8] = p.leftArm.z;
+    arr[9] = p.rightArm.x; arr[10] = p.rightArm.y; arr[11] = p.rightArm.z;
+    arr[12] = p.leftLeg.x; arr[13] = p.leftLeg.y; arr[14] = p.leftLeg.z;
+    arr[15] = p.rightLeg.x; arr[16] = p.rightLeg.y; arr[17] = p.rightLeg.z;
     return arr;
   }
 
@@ -326,97 +362,97 @@
     neutral: {
       head:     head({ yaw: 0, pitch: 0, roll: 0 }),
       body:     body({ lean: 0, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0, spread: 0.28, twist: 0 }),
-      rightArm: arm('right', { raise: 0, spread: 0.28, twist: 0 }),
-      leftLeg:  leg('left',  { swing: -0.02, spread: 0.04 }),
+      leftArm:  arm('left',  { raise: 0, spread: 0.25, twist: 0 }),
+      rightArm: arm('right', { raise: 0, spread: 0.42, twist: 0 }),
+      leftLeg: leg('left', { swing: -0.02, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.02, spread: 0.04 })
     },
     float: {
       head:     head({ yaw: 0.02, pitch: 0.03, roll: 0 }),
       body:     body({ lean: 0.04, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.06, spread: 0.24, twist: 0.08 }),
-      rightArm: arm('right', { raise: 0.06, spread: 0.26, twist: -0.08 }),
-      leftLeg:  leg('left',  { swing: 0.08, spread: 0.06 }),
+      leftArm:  arm('left',  { raise: 0.06, spread: 0.25, twist: 0.08 }),
+      rightArm: arm('right', { raise: 0.06, spread: 0.42, twist: -0.08 }),
+      leftLeg: leg('left', { swing: 0.08, spread: 0.06 }),
       rightLeg: leg('right', { swing: -0.05, spread: 0.06 })
     },
     rest: {
-      head:     head({ yaw: 0.05, pitch: -0.02, roll: 0 }),
-      body:     body({ lean: 0.04, twist: 0.02, roll: 0.02 }),
-      leftArm:  arm('left',  { raise: 0.08, spread: 0.24, twist: 0 }),
-      rightArm: arm('right', { raise: 0.04, spread: 0.24, twist: 0 }),
-      leftLeg:  leg('left',  { swing: 0.12, spread: 0.04 }),
+      head: head({ yaw: 0.05, pitch: -0.02, roll: 0 }),
+      body: body({ lean: 0.04, twist: 0.02, roll: 0.02 }),
+      leftArm: arm('left', { raise: 0.08, spread: 0.24, twist: 0 }),
+      rightArm: arm('right', { raise: 0.04, spread: 0.40, twist: 0 }),
+      leftLeg: leg('left', { swing: 0.12, spread: 0.04 }),
       rightLeg: leg('right', { swing: -0.06, spread: 0.04 })
     },
     open: {
       head:     head({ yaw: 0, pitch: 0.04, roll: 0 }),
       body:     body({ lean: -0.02, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.15, spread: 0.38, twist: -0.15 }),
-      rightArm: arm('right', { raise: 0.15, spread: 0.38, twist: 0.15 }),
-      leftLeg:  leg('left',  { swing: -0.04, spread: 0.05 }),
+      leftArm:  arm('left',  { raise: 0.15, spread: 0.30, twist: -0.15 }),
+      rightArm: arm('right', { raise: 0.15, spread: 0.48, twist: 0.15 }),
+      leftLeg: leg('left', { swing: -0.04, spread: 0.05 }),
       rightLeg: leg('right', { swing: 0.04, spread: 0.05 })
     },
     reach: {
       head:     head({ yaw: 0.10, pitch: 0.05, roll: 0 }),
       body:     body({ lean: 0.04, twist: -0.08, roll: 0 }),
-      leftArm:  arm('left',  { raise: -0.10, spread: 0.28, twist: 0 }),
-      rightArm: arm('right', { raise: 1.20, spread: 0.30, twist: -0.10 }),
-      leftLeg:  leg('left',  { swing: -0.08, spread: 0.04 }),
+      leftArm:  arm('left',  { raise: -0.10, spread: 0.25, twist: 0 }),
+      rightArm: arm('right', { raise: 1.20, spread: 0.42, twist: -0.10 }),
+      leftLeg: leg('left', { swing: -0.08, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.10, spread: 0.04 })
     },
     wave: {
       head:     head({ yaw: 0.10, pitch: 0.08, roll: 0.05 }),
       body:     body({ lean: 0.02, twist: -0.05, roll: -0.03 }),
-      leftArm:  arm('left',  { raise: -0.08, spread: 0.30, twist: 0 }),
-      rightArm: arm('right', { raise: 2.60, spread: 0.38, twist: 0.20 }),
-      leftLeg:  leg('left',  { swing: 0.02, spread: 0.04 }),
+      leftArm:  arm('left',  { raise: -0.08, spread: 0.25, twist: 0 }),
+      rightArm: arm('right', { raise: 2.60, spread: 0.45, twist: 0.20 }),
+      leftLeg: leg('left', { swing: 0.02, spread: 0.04 }),
       rightLeg: leg('right', { swing: -0.02, spread: 0.04 })
     },
     fly: {
       head:     head({ yaw: 0, pitch: 0.20, roll: 0 }),
       body:     body({ lean: 0.35, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 1.50, spread: 0.28, twist: 0 }),
-      rightArm: arm('right', { raise: 1.50, spread: 0.28, twist: 0 }),
-      leftLeg:  leg('left',  { swing: -0.25, spread: 0.05 }),
+      leftArm:  arm('left',  { raise: 1.50, spread: 0.25, twist: 0 }),
+      rightArm: arm('right', { raise: 1.50, spread: 0.42, twist: 0 }),
+      leftLeg: leg('left', { swing: -0.25, spread: 0.05 }),
       rightLeg: leg('right', { swing: -0.25, spread: 0.05 })
     },
     write: {
       head:     head({ yaw: 0.15, pitch: -0.10, roll: 0 }),
       body:     body({ lean: 0.30, twist: 0.08, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.85, spread: 0.28, twist: 0.10 }),
-      rightArm: arm('right', { raise: -0.25, spread: 0.28, twist: -0.10 }),
-      leftLeg:  leg('left',  { swing: -0.18, spread: 0.05 }),
+      leftArm:  arm('left',  { raise: 0.85, spread: 0.25, twist: 0.10 }),
+      rightArm: arm('right', { raise: -0.25, spread: 0.42, twist: -0.10 }),
+      leftLeg: leg('left', { swing: -0.18, spread: 0.05 }),
       rightLeg: leg('right', { swing: -0.25, spread: 0.05 })
     },
     tilt: {
       head:     head({ yaw: 0.05, pitch: 0, roll: -0.08 }),
       body:     body({ lean: 0.05, twist: 0.10, roll: 0.12 }),
-      leftArm:  arm('left',  { raise: 0.06, spread: 0.28, twist: 0 }),
-      rightArm: arm('right', { raise: 0.14, spread: 0.30, twist: 0 }),
-      leftLeg:  leg('left',  { swing: -0.06, spread: 0.08 }),
+      leftArm:  arm('left',  { raise: 0.06, spread: 0.25, twist: 0 }),
+      rightArm: arm('right', { raise: 0.14, spread: 0.42, twist: 0 }),
+      leftLeg: leg('left', { swing: -0.06, spread: 0.08 }),
       rightLeg: leg('right', { swing: 0.08, spread: 0.08 })
     },
     point: {
       head:     head({ yaw: 0.15, pitch: 0.05, roll: 0 }),
       body:     body({ lean: 0.02, twist: -0.15, roll: 0 }),
-      leftArm:  arm('left',  { raise: -0.08, spread: 0.32, twist: 0 }),
-      rightArm: arm('right', { raise: 1.45, spread: 0.32, twist: -0.15 }),
-      leftLeg:  leg('left',  { swing: -0.05, spread: 0.04 }),
+      leftArm:  arm('left',  { raise: -0.08, spread: 0.25, twist: 0 }),
+      rightArm: arm('right', { raise: 1.45, spread: 0.44, twist: -0.15 }),
+      leftLeg: leg('left', { swing: -0.05, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.08, spread: 0.04 })
     },
     hold: {
       head:     head({ yaw: 0, pitch: 0, roll: 0 }),
       body:     body({ lean: 0.04, twist: 0, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.30, spread: 0.28, twist: 0.10 }),
-      rightArm: arm('right', { raise: 0.30, spread: 0.28, twist: -0.10 }),
-      leftLeg:  leg('left',  { swing: -0.04, spread: 0.04 }),
+      leftArm:  arm('left',  { raise: 0.30, spread: 0.25, twist: 0.10 }),
+      rightArm: arm('right', { raise: 0.30, spread: 0.42, twist: -0.10 }),
+      leftLeg: leg('left', { swing: -0.04, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.04, spread: 0.04 })
     },
     place: {
       head:     head({ yaw: 0.10, pitch: 0.05, roll: 0 }),
       body:     body({ lean: 0.15, twist: -0.08, roll: 0 }),
-      leftArm:  arm('left',  { raise: 0.30, spread: 0.28, twist: 0 }),
-      rightArm: arm('right', { raise: 0.85, spread: 0.30, twist: -0.20 }),
-      leftLeg:  leg('left',  { swing: -0.12, spread: 0.04 }),
+      leftArm:  arm('left',  { raise: 0.30, spread: 0.25, twist: 0 }),
+      rightArm: arm('right', { raise: 0.85, spread: 0.43, twist: -0.20 }),
+      leftLeg: leg('left', { swing: -0.12, spread: 0.04 }),
       rightLeg: leg('right', { swing: 0.10, spread: 0.04 })
     }
   };
@@ -428,12 +464,12 @@
 
   // Pairs to test: [partA, partB, limbJointToAdjust]
   const COLLISION_PAIRS = [
-    { a: 'leftArm',  b: 'body',     limb: J_LEFT_ARM },
-    { a: 'rightArm', b: 'body',     limb: J_RIGHT_ARM },
-    { a: 'leftArm',  b: 'head',     limb: J_LEFT_ARM },
-    { a: 'rightArm', b: 'head',     limb: J_RIGHT_ARM },
-    { a: 'leftLeg',  b: 'rightLeg', limb: J_LEFT_LEG },
-    { a: 'leftArm',  b: 'leftLeg',  limb: J_LEFT_ARM },
+    { a: 'leftArm', b: 'body', limb: J_LEFT_ARM },
+    { a: 'rightArm', b: 'body', limb: J_RIGHT_ARM },
+    { a: 'leftArm', b: 'head', limb: J_LEFT_ARM },
+    { a: 'rightArm', b: 'head', limb: J_RIGHT_ARM },
+    { a: 'leftLeg', b: 'rightLeg', limb: J_LEFT_LEG },
+    { a: 'leftArm', b: 'leftLeg', limb: J_LEFT_ARM },
     { a: 'rightArm', b: 'rightLeg', limb: J_RIGHT_ARM }
   ];
 
@@ -456,8 +492,8 @@
       tempV.applyMatrix4(matA);
       meshB.worldToLocal(tempV);
       if (tempV.x >= minX && tempV.x <= maxX &&
-          tempV.y >= minY && tempV.y <= maxY &&
-          tempV.z >= minZ && tempV.z <= maxZ) {
+        tempV.y >= minY && tempV.y <= maxY &&
+        tempV.z >= minZ && tempV.z <= maxZ) {
         return true;
       }
     }
@@ -676,7 +712,7 @@
 
       // Secondary motion lag from stage motion
       lagArmL = -stageAx * CONFIG.LAG.kArm;
-      lagArmR =  stageAx * CONFIG.LAG.kArm;
+      lagArmR = stageAx * CONFIG.LAG.kArm;
       lagLegs = -stageAy * CONFIG.LAG.kLeg;
       bodyLeanSecondary = Math.max(-0.25, Math.min(0.55, CONFIG.LAG.c1 * stageVy - CONFIG.LAG.c2 * stageAy));
       bodyRollSecondary = Math.max(-0.25, Math.min(0.25, -stageVx * 0.15));
@@ -721,14 +757,14 @@
         }
 
         // Add breathing & lag to limb spread
-        if (j === J_LEFT_ARM && ax === 0)  val += writeCircleX;
-        if (j === J_LEFT_ARM && ax === 1)  val += writeCircleY;
-        if (j === J_LEFT_ARM && ax === 2)  val += (breathArmSpread + lagArmL) * outwardSign('leftArm');
+        if (j === J_LEFT_ARM && ax === 0) val += writeCircleX;
+        if (j === J_LEFT_ARM && ax === 1) val += writeCircleY;
+        if (j === J_LEFT_ARM && ax === 2) val += (breathArmSpread + lagArmL) * outwardSign('leftArm');
         if (j === J_RIGHT_ARM && ax === 2) val += (breathArmSpread + lagArmR) * outwardSign('rightArm');
-        if (j === J_LEFT_LEG && ax === 0)  val += lagLegs + flightFlutter + writeFlutter;
+        if (j === J_LEFT_LEG && ax === 0) val += lagLegs + flightFlutter + writeFlutter;
         if (j === J_RIGHT_LEG && ax === 0) val += lagLegs - flightFlutter - writeFlutter;
-        if (j === J_BODY && ax === 0)      val += bodyLeanSecondary;
-        if (j === J_BODY && ax === 2)      val += bodyRollSecondary;
+        if (j === J_BODY && ax === 0) val += bodyLeanSecondary;
+        if (j === J_BODY && ax === 2) val += bodyRollSecondary;
 
         // Guaranteed arm spread clearance to prevent limb-torso penetration.
         // Clearance only applies when the arm is adjacent to torso sides (rot.x near 0).
@@ -738,7 +774,7 @@
         const armProxR = Math.max(0, Math.min(1, (currentJointAngles[J_RIGHT_ARM * 3 + 0] + 1.2) / 0.8));
         const minArmClearanceL = (0.24 + bodyTurnAbs * 0.35) * armProxL;
         const minArmClearanceR = (0.24 + bodyTurnAbs * 0.35) * armProxR;
-        if (j === J_LEFT_ARM && ax === 2)  val = Math.max(minArmClearanceL, val);
+        if (j === J_LEFT_ARM && ax === 2) val = Math.max(minArmClearanceL, val);
         if (j === J_RIGHT_ARM && ax === 2) val = Math.min(-minArmClearanceR, val);
 
         // Add legacy gesture wave oscillation if director did not drive it
@@ -753,6 +789,33 @@
         targetJointAngles[dof] = val;
       }
     }
+
+    // Enforce global arm spread cap (0.70 rad), text-column clearance (3rem), and L/R asymmetry (>= 0.15 rad)
+    const lDof = J_LEFT_ARM * 3 + 2;
+    const rDof = J_RIGHT_ARM * 3 + 2;
+    let sL = Math.max(0.18, Math.min(maxAllowedSpreadL, targetJointAngles[lDof]));
+    let sR = Math.max(0.18, Math.min(maxAllowedSpreadR, -targetJointAngles[rDof]));
+    if (Math.abs(sL - sR) < 0.15) {
+      if (sR >= sL) {
+        const candL = Math.max(0.18, sR - 0.16);
+        if (sR - candL >= 0.15) {
+          sL = candL;
+        } else {
+          sL = candL;
+          sR = Math.min(maxAllowedSpreadR, sL + 0.16);
+        }
+      } else {
+        const candR = Math.max(0.18, sL - 0.16);
+        if (sL - candR >= 0.15) {
+          sR = candR;
+        } else {
+          sR = candR;
+          sL = Math.min(maxAllowedSpreadL, sR + 0.16);
+        }
+      }
+    }
+    targetJointAngles[lDof] = sL;
+    targetJointAngles[rDof] = -sR;
 
     // 4. Multi-substep spring integration (substep <= 1/120s)
     const substepCount = Math.max(1, Math.min(8, Math.ceil(effectiveDt / (1 / 120))));
@@ -845,6 +908,45 @@
       }
     }
 
+    // 4b. Guarantee final integrated arm spreads strictly obey max cap and L/R asymmetry
+    const capL = Math.min(0.70, maxAllowedSpreadL);
+    const capR = Math.min(0.70, maxAllowedSpreadR);
+    let finalSL = Math.max(0, currentJointAngles[J_LEFT_ARM * 3 + 2]);
+    let finalSR = Math.max(0, -currentJointAngles[J_RIGHT_ARM * 3 + 2]);
+    if (finalSL > capL) {
+      finalSL = capL;
+      if (currentJointVelocities[J_LEFT_ARM * 3 + 2] > 0) currentJointVelocities[J_LEFT_ARM * 3 + 2] = 0;
+    }
+    if (finalSR > capR) {
+      finalSR = capR;
+      if (currentJointVelocities[J_RIGHT_ARM * 3 + 2] < 0) currentJointVelocities[J_RIGHT_ARM * 3 + 2] = 0;
+    }
+    if (Math.abs(finalSL - finalSR) < 0.155) {
+      const tgtSL = Math.max(0, targetJointAngles[J_LEFT_ARM * 3 + 2]);
+      const tgtSR = Math.max(0, -targetJointAngles[J_RIGHT_ARM * 3 + 2]);
+      if (tgtSR >= tgtSL) {
+        if (finalSL + 0.16 <= capR) {
+          finalSR = finalSL + 0.16;
+          if (currentJointVelocities[J_RIGHT_ARM * 3 + 2] > 0) currentJointVelocities[J_RIGHT_ARM * 3 + 2] = 0;
+        } else {
+          finalSR = capR;
+          finalSL = Math.max(0, capR - 0.16);
+          if (currentJointVelocities[J_LEFT_ARM * 3 + 2] > 0) currentJointVelocities[J_LEFT_ARM * 3 + 2] = 0;
+        }
+      } else {
+        if (finalSR + 0.16 <= capL) {
+          finalSL = finalSR + 0.16;
+          if (currentJointVelocities[J_LEFT_ARM * 3 + 2] < 0) currentJointVelocities[J_LEFT_ARM * 3 + 2] = 0;
+        } else {
+          finalSL = capL;
+          finalSR = Math.max(0, capL - 0.16);
+          if (currentJointVelocities[J_RIGHT_ARM * 3 + 2] < 0) currentJointVelocities[J_RIGHT_ARM * 3 + 2] = 0;
+        }
+      }
+    }
+    currentJointAngles[J_LEFT_ARM * 3 + 2] = finalSL;
+    currentJointAngles[J_RIGHT_ARM * 3 + 2] = -finalSR;
+
     // 5. Forward Kinematic Articulation & Socket Binding
     // Torso (body) is the kinematic parent: its rotations lean and twist the entire torso.
     // Head, arms, and legs are locked to their anatomical sockets on the rotated torso.
@@ -915,7 +1017,7 @@
     const guardIntervalMs = 1000 / guardFreq;
     const nowMs = performance.now();
     let isHidden = false;
-    try { isHidden = typeof document !== 'undefined' && document.hidden; } catch (e) {}
+    try { isHidden = typeof document !== 'undefined' && document.hidden; } catch (e) { }
 
     if (!isHidden && isCanvasVisible && (nowMs - lastGuardTime >= guardIntervalMs)) {
       const guardT0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
@@ -1170,7 +1272,7 @@
 
   const BaseAnimation = (window.skinview3d && window.skinview3d.PlayerAnimation)
     ? window.skinview3d.PlayerAnimation
-    : class {};
+    : class { };
 
   class RigAnimation extends BaseAnimation {
     constructor() {
@@ -1288,6 +1390,59 @@
   AvatarRig.getPoseNames = () => Object.keys(RAW_POSES);
   AvatarRig.RAW_POSES = RAW_POSES;
   AvatarRig.getPlayerObject = () => playerRef;
+  AvatarRig.setClearanceBounds = (bounds) => {
+    clearanceBoundsBySection = bounds || {};
+    recomputeSectionArmCaps();
+  };
+  AvatarRig.setActiveSection = (sectionId) => {
+    activeClearanceSection = sectionId || 'home';
+    recomputeSectionArmCaps();
+  };
+  AvatarRig.getPoseClearanceMetrics = () => {
+    const sL = Math.abs(currentJointAngles[J_LEFT_ARM * 3 + 2] || 0);
+    const sR = Math.abs(currentJointAngles[J_RIGHT_ARM * 3 + 2] || 0);
+    const b = clearanceBoundsBySection[activeClearanceSection];
+    if (!b || !b.renderedH) {
+      return {
+        section: activeClearanceSection,
+        leftSpreadRad: Math.round(sL * 1000) / 1000,
+        rightSpreadRad: Math.round(sR * 1000) / 1000,
+        spreadDiffRad: Math.round(Math.abs(sL - sR) * 1000) / 1000,
+        maxAllowedSpreadL: Math.round(maxAllowedSpreadL * 1000) / 1000,
+        maxAllowedSpreadR: Math.round(maxAllowedSpreadR * 1000) / 1000,
+        slotWidthPx: b ? Math.round(b.slotWidthPx) : 0,
+        widestPoseWidthPx: 0,
+        minTextClearancePx: null,
+        minTextClearanceRem: null
+      };
+    }
+    const H = b.renderedH;
+    const reach = (sp) => 0.1875 * H + 0.375 * H * Math.sin(sp) + 0.0625 * H * Math.cos(sp);
+    const reachL = reach(Math.min(maxAllowedSpreadL, sL));
+    const reachR = reach(Math.min(maxAllowedSpreadR, sR));
+    const maxPoseReachL = reach(Math.min(maxAllowedSpreadL, 0.70));
+    const maxPoseReachR = reach(Math.min(maxAllowedSpreadR, 0.70));
+    let minClearPx = Infinity;
+    if (b.leftTextRightPx !== null && b.leftTextRightPx !== undefined) {
+      minClearPx = Math.min(minClearPx, (b.cx - reachR) - b.leftTextRightPx);
+    }
+    if (b.rightTextLeftPx !== null && b.rightTextLeftPx !== undefined) {
+      minClearPx = Math.min(minClearPx, b.rightTextLeftPx - (b.cx + reachL));
+    }
+    return {
+      section: activeClearanceSection,
+      leftSpreadRad: Math.round(sL * 1000) / 1000,
+      rightSpreadRad: Math.round(sR * 1000) / 1000,
+      spreadDiffRad: Math.round(Math.abs(sL - sR) * 1000) / 1000,
+      maxAllowedSpreadL: Math.round(maxAllowedSpreadL * 1000) / 1000,
+      maxAllowedSpreadR: Math.round(maxAllowedSpreadR * 1000) / 1000,
+      slotWidthPx: Math.round(b.slotWidthPx),
+      currentPoseWidthPx: Math.round(reachL + reachR),
+      widestPoseWidthPx: Math.round(maxPoseReachL + maxPoseReachR),
+      minTextClearancePx: minClearPx === Infinity ? null : Math.round(minClearPx),
+      minTextClearanceRem: minClearPx === Infinity ? null : Math.round((minClearPx / (b.rootFontPx || 16)) * 100) / 100
+    };
+  };
   AvatarRig.getInnerMeshes = () => innerMeshes;
   AvatarRig.testPairCollision = testPairCollision;
   AvatarRig.validate = validate;

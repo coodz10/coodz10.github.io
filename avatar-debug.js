@@ -642,7 +642,7 @@
 
       const textNodes = Array.from(el.querySelectorAll('h1, h2, h3, p, a, button, .section-head, .lead, .about-item, .row-link, .contact-row, .hero-title, .hero-subtitle, .home-cta-row, .contact-foot'))
         .filter((node) => {
-          if (node.closest('.section-bg-word') || node.closest('.avatar-slot')) return false;
+          if (node.closest('.avatar-slot')) return false;
           const r = node.getBoundingClientRect();
           if (r.width <= 0 || r.height <= 0) return false;
           const style = window.getComputedStyle(node);
@@ -678,12 +678,11 @@
       });
 
       el.querySelectorAll('*').forEach((parent) => {
-        if (parent.closest('#hero-title') || parent.classList.contains('hero-title') || parent.classList.contains('eq-icon')) return;
+        if (parent.closest('#hero-title') || parent.classList.contains('hero-title')) return;
         const children = Array.from(parent.children);
         const seenText = new Map();
         children.forEach((child) => {
           if (child.children.length > 0) return;
-          if (child.classList.contains('meta-sep') && child.textContent.trim() === '·') return;
           const norm = (child.textContent || '').trim().replace(/\s+/g, ' ');
           if (!norm) return;
           if (seenText.has(norm)) {
@@ -694,10 +693,7 @@
         });
       });
 
-      el.querySelectorAll('.about-item__header, .item-title, .section-head__tag, .section-head__title, .meta-item').forEach((node) => {
-        if (node.classList.contains('about-item__header') && node.querySelectorAll('.item-title').length > 1) {
-          duplicates.push({ type: 'multiple-item-titles', text: (node.textContent || '').trim().replace(/\s+/g, ' ') });
-        }
+      el.querySelectorAll('.about-item__title, .section-head__title').forEach((node) => {
         const norm = (node.textContent || '').trim().replace(/\s+/g, ' ');
         if (/^(.{3,}?)\s+\1$/i.test(norm)) {
           duplicates.push({ type: 'repeated-label', text: norm });
@@ -706,14 +702,13 @@
 
       const counts = {
         headers: el.querySelectorAll('.section-head').length,
-        headerTags: el.querySelectorAll('.section-head__tag').length,
         headerTitles: el.querySelectorAll('.section-head__title').length,
         leads: el.querySelectorAll('.lead').length,
         aboutItems: el.querySelectorAll('.about-item').length
       };
 
       if (id === 'chi_sono' || id === 'esperienze' || id === 'contatti') {
-        if (counts.headers !== 1 || counts.headerTags !== 1 || counts.headerTitles !== 1) {
+        if (counts.headers !== 1 || counts.headerTitles !== 1) {
           duplicates.push({ type: 'header-count-mismatch', counts });
         }
       }
@@ -827,16 +822,6 @@
             <span id="debug-aura-val">${(window.CONFIG && typeof window.CONFIG.AURA === 'number') ? window.CONFIG.AURA.toFixed(2) : '1.00'}</span>
             <input type="range" id="debug-aura-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && window.CONFIG.AURA) || 1.0}" style="width:90px;">
           </label>
-          <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
-            <span>BG Word Opacity:</span>
-            <span id="debug-bg-val">${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY.toFixed(2) : '0.22'}</span>
-            <input type="range" id="debug-bg-slider" min="0" max="1" step="0.05" value="${(window.CONFIG && typeof window.CONFIG.BG_WORD_OPACITY === 'number') ? window.CONFIG.BG_WORD_OPACITY : 0.22}" style="width:90px;">
-          </label>
-          <label style="display:flex;justify-content:space-between;align-items:center;color:#e8eaff;font-size:0.68rem;">
-            <span>BG Word Width (vw):</span>
-            <span id="debug-bg-width-val">${(window.CONFIG && typeof window.CONFIG.BG_WORD_WIDTH_VW === 'number') ? window.CONFIG.BG_WORD_WIDTH_VW : 88}vw</span>
-            <input type="range" id="debug-bg-width-slider" min="50" max="96" step="1" value="${(window.CONFIG && typeof window.CONFIG.BG_WORD_WIDTH_VW === 'number') ? window.CONFIG.BG_WORD_WIDTH_VW : 88}" style="width:90px;">
-          </label>
         </div>
       </div>
 
@@ -901,28 +886,6 @@
         const valEl = document.getElementById('debug-aura-val');
         if (valEl) valEl.textContent = val.toFixed(2);
         if (window.__updateAvatarAura) window.__updateAvatarAura();
-      });
-    }
-
-    const bgSlider = document.getElementById('debug-bg-slider');
-    if (bgSlider) {
-      bgSlider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (window.CONFIG) window.CONFIG.BG_WORD_OPACITY = val;
-        const valEl = document.getElementById('debug-bg-val');
-        if (valEl) valEl.textContent = val.toFixed(2);
-        if (window.__applyBgWordOpacity) window.__applyBgWordOpacity();
-      });
-    }
-
-    const bgWidthSlider = document.getElementById('debug-bg-width-slider');
-    if (bgWidthSlider) {
-      bgWidthSlider.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value, 10);
-        if (window.CONFIG) window.CONFIG.BG_WORD_WIDTH_VW = val;
-        const valEl = document.getElementById('debug-bg-width-val');
-        if (valEl) valEl.textContent = val + 'vw';
-        if (window.__fitBgWords) window.__fitBgWords();
       });
     }
 
