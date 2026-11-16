@@ -376,6 +376,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
   let currentAvatarState = 'home';
   let activeSectionId = 'home';
   let activeDetailId = null; // Currently open experience detail key ('redismc', 'metamc', 'pixymc')
+  let detailOpenedAt = 0;
   let isMobile = window.innerWidth <= 768;
 
   // Scroll-driven flight state & layout caching
@@ -2053,18 +2054,42 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       if (!CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM) {
         CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM = window.innerHeight * (isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP) * 0.82;
       }
+      if (typeof CONFIG.AVATAR_BASE_CENTER_OFFSET_Y !== 'number') {
+        CONFIG.AVATAR_BASE_CENTER_OFFSET_Y = 0;
+      }
       return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
     }
 
+    const playerObj = skinViewer.playerObject;
+    const skin = playerObj.skin;
+    const savedPlayerRotX = playerObj.rotation.x;
+    const savedPlayerRotY = playerObj.rotation.y;
+    const savedPlayerRotZ = playerObj.rotation.z;
+    const poseParts = skin ? [skin.head, skin.body, skin.leftLeg, skin.rightLeg].filter(Boolean) : [];
+    const savedQuats = poseParts.map((part) => [part.quaternion.x, part.quaternion.y, part.quaternion.z, part.quaternion.w]);
+
     try {
-      skinViewer.playerObject.updateMatrixWorld(true);
+      playerObj.rotation.set(0, 0, 0);
+      poseParts.forEach((part) => part.quaternion.set(0, 0, 0, 1));
+      playerObj.updateMatrixWorld(true);
+
       const Vector3 = skinViewer.camera.position.constructor;
+      const leftArmGroup = skin ? skin.leftArm : null;
+      const rightArmGroup = skin ? skin.rightArm : null;
+      const isArmNode = (n) => {
+        let cur = n;
+        while (cur && cur !== playerObj) {
+          if (cur === leftArmGroup || cur === rightArmGroup) return true;
+          cur = cur.parent;
+        }
+        return false;
+      };
 
       let minY = Infinity;
       let maxY = -Infinity;
 
-      skinViewer.playerObject.traverse((node) => {
-        if (node.isMesh && node.geometry) {
+      playerObj.traverse((node) => {
+        if (node.isMesh && node.geometry && !isArmNode(node)) {
           if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
           const geomBox = node.geometry.boundingBox;
           if (geomBox) {
@@ -2092,13 +2117,22 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
 
       if (minY !== Infinity && maxY !== -Infinity && maxY > minY) {
         CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM = maxY - minY;
+        CONFIG.AVATAR_BASE_CENTER_OFFSET_Y = ((minY + maxY) * 0.5) - (window.innerHeight * 0.5);
         return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
       }
     } catch (e) {
       if (window.AvatarDebug) console.warn('[Avatar] Failed to measure base height:', e);
+    } finally {
+      playerObj.rotation.set(savedPlayerRotX, savedPlayerRotY, savedPlayerRotZ);
+      poseParts.forEach((part, idx) => {
+        const q = savedQuats[idx];
+        part.quaternion.set(q[0], q[1], q[2], q[3]);
+      });
+      playerObj.updateMatrixWorld(true);
     }
 
     CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM = window.innerHeight * (isMobile ? CONFIG.AVATAR_ZOOM_MOBILE : CONFIG.AVATAR_ZOOM_DESKTOP) * 0.82;
+    CONFIG.AVATAR_BASE_CENTER_OFFSET_Y = 0;
     return CONFIG.AVATAR_BASE_HEIGHT_PX_AT_ZOOM;
   }
 
@@ -2143,9 +2177,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       const slotCenterX = slotRelLeft + slotRect.width * 0.5;
       const slotCenterY = slotRelTop + slotRect.height * 0.5;
 
-      const targetX = slotCenterX - viewportCenterX;
-      const targetY = slotCenterY - viewportCenterY;
-
       let scale = 0.5;
       if (baseH > 0 && slotRect.height > 0) {
         const scaleH = (slotRect.height * 0.96) / baseH;
@@ -2153,6 +2184,9 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         scale = Math.min(scaleH, scaleW);
       }
       scale = Math.max(0.20, Math.min(1.15, scale));
+
+      const targetX = slotCenterX - viewportCenterX;
+      const targetY = (slotCenterY - viewportCenterY) - ((CONFIG.AVATAR_BASE_CENTER_OFFSET_Y || 0) * scale);
 
       cachedSlotKeyframes[id] = {
         x: targetX,
@@ -3523,6 +3557,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
   function openExperienceDetail(key, updateHistory = true) {
     if (!EXPERIENCE_DETAILS[key]) return;
     activeDetailId = key;
+    detailOpenedAt = performance.now();
 
     if (updateHistory) {
       history.pushState({ exp: key }, '', `#esperienze/${key}`);
@@ -3595,14 +3630,14 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     requestAnimationFrame(() => {
       cardsView.classList.remove('view-hidden');
 
-      // Avatar returns to walking pose in 'esperienze'
-      setAvatarState('esperienze');
       if (window.AvatarDirector) {
         window.AvatarDirector.onDetailClose();
         if (typeof window.AvatarDirector.updateReadingRects === 'function') {
           window.AvatarDirector.updateReadingRects();
         }
       }
+      // Only switch to 'esperienze' if still on that section; otherwise restore current section state
+      setAvatarState(activeSectionId || 'esperienze');
     });
   }
 
@@ -3755,8 +3790,11 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       const key = hash.replace('#esperienze/', '').toLowerCase();
       if (EXPERIENCE_DETAILS[key]) {
         const expSec = document.getElementById('esperienze');
-        if (expSec) {
-          expSec.scrollIntoView({ behavior: 'smooth' });
+        const scroller = document.getElementById('scroll-container');
+        if (expSec && scroller) {
+          scroller.scrollTo({ top: expSec.offsetTop, behavior: 'instant' });
+        } else if (expSec) {
+          expSec.scrollIntoView({ behavior: 'instant' });
         }
         openExperienceDetail(key, false);
         updateNavIndicator('esperienze');
@@ -3864,6 +3902,11 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         if (entry.isIntersecting) {
           activeSectionId = entry.target.id;
           entry.target.classList.add('section-active');
+
+          if (activeSectionId !== 'esperienze' && activeDetailId && (performance.now() - detailOpenedAt > 900)) {
+            closeExperienceDetail(false);
+            history.replaceState(null, '', `#${activeSectionId}`);
+          }
 
           if (activeSectionId === 'esperienze' && activeDetailId) {
             setAvatarState('esperienze-detail');
