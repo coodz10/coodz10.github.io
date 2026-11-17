@@ -5182,8 +5182,12 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       });
     }
 
+    const volumeWrap = document.getElementById('nav-volume');
+    const volumeBtn = document.getElementById('audio-volume-btn');
+    const volumePopover = document.getElementById('audio-volume-popover');
+    const volumeDownBtn = document.getElementById('audio-vol-down');
+    const volumeUpBtn = document.getElementById('audio-vol-up');
     const volumeSlider = document.getElementById('audio-volume-slider');
-    const volumeVal = document.getElementById('audio-volume-val');
     const savedVolStr = safeStorageGet('local', 'coodz_volume');
     if (savedVolStr !== null && savedVolStr !== '') {
       const parsedVol = parseFloat(savedVolStr);
@@ -5193,52 +5197,101 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     }
     const syncVolumeUI = (vol) => {
       const pct = Math.round(Math.max(0, Math.min(1, vol)) * 100);
-      if (volumeSlider) volumeSlider.value = String(pct);
-      if (volumeVal) volumeVal.textContent = `${pct}%`;
+      if (volumeBtn) volumeBtn.textContent = `[ VOL ${pct}% ]`;
+      if (volumeSlider) {
+        volumeSlider.value = String(pct);
+        volumeSlider.style.setProperty('--vol-pct', `${pct}%`);
+      }
+    };
+    const applyVolumePct = (rawPct) => {
+      const pct = Math.max(0, Math.min(100, Math.round(rawPct)));
+      const vol = pct / 100;
+      CONFIG.AUDIO_VOLUME = vol;
+      safeStorageSet('local', 'coodz_volume', String(vol));
+      syncVolumeUI(vol);
+
+      initWebAudioGraph(audio);
+      if (webAudioCtx && webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(() => { });
+      }
+
+      if (vol <= 0) {
+        safeStorageSet('local', 'coodz_muted', 'true');
+        audio.muted = true;
+        if (webAudioMasterGain && webAudioCtx) {
+          webAudioMasterGain.gain.cancelScheduledValues(webAudioCtx.currentTime);
+          webAudioMasterGain.gain.setValueAtTime(0, webAudioCtx.currentTime);
+        } else {
+          audio.volume = 0;
+        }
+        updateMuteBtnState();
+      } else {
+        safeStorageSet('local', 'coodz_muted', 'false');
+        audio.muted = false;
+        if (audio.paused) {
+          safePlayAudio(audio).catch(() => { });
+        }
+        if (webAudioMasterGain && webAudioCtx) {
+          const targetGain = vol * (CONFIG.AUDIO_GAIN || 1.4);
+          webAudioMasterGain.gain.cancelScheduledValues(webAudioCtx.currentTime);
+          webAudioMasterGain.gain.setTargetAtTime(targetGain, webAudioCtx.currentTime, 0.015);
+        } else {
+          audio.volume = vol;
+        }
+        updateMuteBtnState();
+      }
     };
     syncVolumeUI(CONFIG.AUDIO_VOLUME);
+
+    const setVolumePopoverOpen = (open) => {
+      if (!volumePopover || !volumeBtn) return;
+      volumePopover.hidden = !open;
+      volumeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    if (volumeBtn && volumePopover) {
+      volumeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setVolumePopoverOpen(volumePopover.hidden);
+      });
+      volumeBtn.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const curPct = Math.round(CONFIG.AUDIO_VOLUME * 100);
+        applyVolumePct(curPct + (e.deltaY < 0 ? 5 : -5));
+      }, { passive: false });
+      document.addEventListener('click', (e) => {
+        if (!volumePopover.hidden && volumeWrap && !volumeWrap.contains(e.target)) {
+          setVolumePopoverOpen(false);
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !volumePopover.hidden) {
+          setVolumePopoverOpen(false);
+          volumeBtn.focus();
+        }
+      });
+    }
+
+    if (volumeDownBtn) {
+      volumeDownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyVolumePct(Math.round(CONFIG.AUDIO_VOLUME * 100) - 10);
+      });
+    }
+    if (volumeUpBtn) {
+      volumeUpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyVolumePct(Math.round(CONFIG.AUDIO_VOLUME * 100) + 10);
+      });
+    }
 
     if (volumeSlider) {
       volumeSlider.addEventListener('pointerdown', (e) => e.stopPropagation());
       volumeSlider.addEventListener('click', (e) => e.stopPropagation());
       volumeSlider.addEventListener('input', (e) => {
         e.stopPropagation();
-        const pct = Math.max(0, Math.min(100, parseInt(volumeSlider.value, 10) || 0));
-        const vol = pct / 100;
-        CONFIG.AUDIO_VOLUME = vol;
-        safeStorageSet('local', 'coodz_volume', String(vol));
-        syncVolumeUI(vol);
-
-        initWebAudioGraph(audio);
-        if (webAudioCtx && webAudioCtx.state === 'suspended') {
-          webAudioCtx.resume().catch(() => { });
-        }
-
-        if (vol <= 0) {
-          safeStorageSet('local', 'coodz_muted', 'true');
-          audio.muted = true;
-          if (webAudioMasterGain && webAudioCtx) {
-            webAudioMasterGain.gain.cancelScheduledValues(webAudioCtx.currentTime);
-            webAudioMasterGain.gain.setValueAtTime(0, webAudioCtx.currentTime);
-          } else {
-            audio.volume = 0;
-          }
-          updateMuteBtnState();
-        } else {
-          safeStorageSet('local', 'coodz_muted', 'false');
-          audio.muted = false;
-          if (audio.paused) {
-            safePlayAudio(audio).catch(() => { });
-          }
-          if (webAudioMasterGain && webAudioCtx) {
-            const targetGain = vol * (CONFIG.AUDIO_GAIN || 1.4);
-            webAudioMasterGain.gain.cancelScheduledValues(webAudioCtx.currentTime);
-            webAudioMasterGain.gain.setTargetAtTime(targetGain, webAudioCtx.currentTime, 0.015);
-          } else {
-            audio.volume = vol;
-          }
-          updateMuteBtnState();
-        }
+        applyVolumePct(parseInt(volumeSlider.value, 10) || 0);
       });
     }
 

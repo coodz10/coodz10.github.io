@@ -112,10 +112,17 @@
       <button id="audio-skip-btn" class="btn btn--chip nav-btn skip-btn mono" aria-label="Brano successivo"
         data-i18n="audioSkip">[ >> ]</button>
 
-      <div class="nav-volume desktop-only">
-        <input type="range" id="audio-volume-slider" class="nav-volume__slider cursor-pointer" min="0" max="100"
-          step="1" value="75" aria-label="Volume musica">
-        <span id="audio-volume-val" class="nav-volume__val mono">75%</span>
+      <div class="nav-volume desktop-only" id="nav-volume">
+        <button type="button" id="audio-volume-btn" class="btn btn--chip nav-btn mono cursor-pointer"
+          aria-label="Regola volume musica" aria-expanded="false" aria-controls="audio-volume-popover">[ VOL 75% ]</button>
+        <div id="audio-volume-popover" class="nav-volume__popover" hidden>
+          <button type="button" id="audio-vol-down" class="btn btn--chip nav-btn mono cursor-pointer"
+            aria-label="Abbassa volume">[ - ]</button>
+          <input type="range" id="audio-volume-slider" class="nav-volume__slider cursor-pointer" min="0" max="100"
+            step="1" value="75" aria-label="Volume musica">
+          <button type="button" id="audio-vol-up" class="btn btn--chip nav-btn mono cursor-pointer"
+            aria-label="Alza volume">[ + ]</button>
+        </div>
       </div>
 
       <button id="menu-toggle-btn" class="btn btn--chip nav-btn mobile-only menu-btn" aria-label="Menu" tabindex="-1"
