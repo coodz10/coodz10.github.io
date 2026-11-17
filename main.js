@@ -129,6 +129,8 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       expMetaStatus: 'dimesso',
       expPixyRole: 'Owner · SS Manager ★★★★☆',
       expPixyStatus: 'dimesso',
+      expFruitRole: 'Helper · SS Verified',
+      expFruitStatus: 'attivo',
       contactTitle: 'Parliamo',
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
       footerEnd: 'coodz_10 · 2026',
@@ -183,6 +185,8 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       expMetaStatus: 'resigned',
       expPixyRole: 'Owner · SS Manager ★★★★☆',
       expPixyStatus: 'resigned',
+      expFruitRole: 'Helper · SS Verified',
+      expFruitStatus: 'active',
       contactTitle: "Let's talk",
       contactSub: 'For collaborations, service requests or security investigations.',
       footerEnd: 'coodz_10 · 2026',
@@ -342,6 +346,22 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         en: 'Details and review for this experience are currently work in progress.'
       },
       proofCount: 1
+    },
+    fruitmc: {
+      index: '04',
+      title: 'FruitMC',
+      category: 'minecraft',
+      role: { it: 'Helper · SS Verified', en: 'Helper · SS Verified' },
+      stars: '',
+      status: { it: 'attivo', en: 'active' },
+      period: { it: 'in corso', en: 'ongoing' },
+      inProgress: true,
+      noticeTag: { it: 'in lavorazione', en: 'in progress' },
+      noticeText: {
+        it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
+        en: 'Details and review for this experience are currently work in progress.'
+      },
+      proofCount: 1
     }
   };
 
@@ -373,9 +393,9 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
   let activeDetailId = null; // Currently open experience detail key ('redismc', 'metamc', 'pixymc')
   let detailOpenedAt = 0;
   let isProofsViewerOpen = false;
-  let setStarsPaused = () => {};
-  let refreshProofsViewerUI = () => {};
-  let layoutProofsViewer = () => {};
+  let setStarsPaused = () => { };
+  let refreshProofsViewerUI = () => { };
+  let layoutProofsViewer = () => { };
   let isMobile = window.innerWidth <= 768;
 
   // Scroll-driven flight state & layout caching
