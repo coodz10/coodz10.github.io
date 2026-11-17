@@ -1,4 +1,4 @@
-console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su discord: coodz_10');
+console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su discord: _1samu1_');
 
 (function () {
   'use strict';
