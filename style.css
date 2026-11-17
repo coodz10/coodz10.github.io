@@ -1125,6 +1125,7 @@ body {
   max-height: calc(100dvh - max(4.5rem, 8vh) - 2rem);
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
   scrollbar-width: thin;
   scrollbar-color: rgba(51, 115, 255, 0.35) transparent;
   padding-right: 0.25rem;
@@ -1211,6 +1212,7 @@ body {
   gap: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
   scrollbar-width: thin;
   scrollbar-color: rgba(51, 115, 255, 0.35) transparent;
   padding-right: 0.25rem;

@@ -322,7 +322,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       role: { it: 'Support Team', en: 'Support Team' },
       stars: '',
       status: { it: 'attivo', en: 'active' },
-      period: { it: 'dal 2026', en: 'since 2026' },
+      period: { it: 'da novembre 2026', en: 'since november 2026' },
       inProgress: true,
       noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
@@ -338,7 +338,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       role: { it: 'Trial ScreenSharer', en: 'Trial ScreenSharer' },
       stars: '',
       status: { it: 'attivo', en: 'active' },
-      period: { it: 'in corso', en: 'ongoing' },
+      period: { it: 'da novembre 2026', en: 'since november 2026' },
       inProgress: true,
       noticeTag: { it: 'in lavorazione', en: 'in progress' },
       noticeText: {
@@ -354,12 +354,29 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       role: { it: 'Helper · SS Verified', en: 'Helper · SS Verified' },
       stars: '★☆☆☆☆',
       status: { it: 'dimesso', en: 'resigned' },
-      period: { it: 'in corso', en: 'ongoing' },
-      inProgress: false,
-      noticeTag: { it: 'in lavorazione', en: 'in progress' },
-      noticeText: {
-        it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
-        en: 'Details and review for this experience are currently work in progress.'
+      period: { it: 'inizio ottobre 2026', en: 'early october 2026' },
+      experienceTitle: { it: 'La mia esperienza', en: 'My experience' },
+      experienceParagraphs: {
+        it: [
+          'La mia esperienza nello staff di FruitMC è stata decisamente negativa. All\'epoca ero ancora alle prime armi con il mondo degli ScreenShare (SS) e avevo superato il provino a malapena; nonostante ciò, ogni volta che dovevo portare un player in controllo ero obbligato a chiedere supporto ad altri membri dello staff (o persino a ex staffer), i quali però non erano quasi mai disponibili.',
+          'L\'unico vero punto a favore riguarda l\'infrastruttura: il pannello staff su sito privato era ben strutturato, intuitivo e molto comodo per caricare prove e gestire le varie segnalazioni.',
+          'Do comunque 1 stella perché mi sono trovato malissimo a livello umano e organizzativo, specialmente con l\'Head Staff, che si è dimostrato tutt\'altro che professionale. A peggiorare il tutto, sono stato rimosso dal ruolo (depexato) senza alcuna spiegazione né preavviso, un gesto che considero una grave mancanza di rispetto. Va inoltre considerato che sono entrato in un periodo già critico per il server, segnato da un crollo drastico dell\'utenza (passata da 150-200 player a soli 10-20).'
+        ],
+        en: [
+          'My experience on the FruitMC staff team was decidedly negative. At the time I was still a beginner in the ScreenShare (SS) scene and had barely passed the trial; despite that, every time I had to bring a player in for a check I was forced to ask other staff members (or even former staff) for support, who were almost never available.',
+          'The only real positive aspect concerns the infrastructure: the private web staff panel was well structured, intuitive, and very convenient for uploading proofs and managing reports.',
+          'I still give it 1 star because I had a terrible time both personally and organizationally, especially with the Head Staff, who proved to be anything but professional. To make matters worse, I was removed from my role (demoted) without any explanation or notice, which I consider a serious lack of respect. It should also be noted that I joined during an already critical period for the server, marked by a drastic drop in player count (from 150-200 players down to just 10-20).'
+        ]
+      },
+      strengthsTitle: { it: 'Punti di forza', en: 'Strengths' },
+      strengths: {
+        it: ['Ottimo pannello amministrativo'],
+        en: ['Great administrative panel']
+      },
+      weaknessesTitle: { it: 'Punti deboli', en: 'Weaknesses' },
+      weaknesses: {
+        it: ['Head Staff poco professionale', 'Depex senza motivo né preavviso'],
+        en: ['Unprofessional Head Staff', 'Demotion without reason or notice']
       },
       proofCount: 1
     }
@@ -2264,6 +2281,21 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     }
   }
 
+  const expContentColEl = document.querySelector('.experiences-content-col');
+  if (expContentColEl) {
+    expContentColEl.addEventListener('wheel', (e) => {
+      const detailBody = document.getElementById('detail-scroll-body');
+      const activeScroller = (detailBody && detailBody.offsetParent !== null)
+        ? detailBody
+        : expContentColEl;
+      const atTop = e.deltaY < 0 && activeScroller.scrollTop <= 0;
+      const atBottom = e.deltaY > 0 && activeScroller.scrollTop + activeScroller.clientHeight >= activeScroller.scrollHeight - 1;
+      if (activeScroller.scrollHeight <= activeScroller.clientHeight || atTop || atBottom) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  }
+
   function updateSectionClearanceBounds(baseH) {
     if (!window.AvatarRig || typeof window.AvatarRig.setClearanceBounds !== 'function') return;
     const rootFontPx = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
@@ -3558,7 +3590,6 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       <div class="detail-scroll-body" id="detail-scroll-body">
         <div class="detail-header">
           <div class="detail-title-row">
-            <span class="detail-index mono">${exp.index}</span>
             <h1 class="detail-title">${exp.title}</h1>
           </div>
           <p class="detail-role mono">${exp.role[currentLang]}</p>
