@@ -133,8 +133,12 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       contactSub: 'Per collaborazioni, richieste di servizi o investigazioni di sicurezza.',
       footerEnd: 'coodz_10 · 2026',
       backToExperiences: '[ ← torna alle esperienze ]',
-      openProofs: '[ APRI PROVE ]',
-      proofsTitle: 'Link e prove',
+      openProofsCount: '[ apri prove · {n} ]',
+      proofViewerLabel: 'Visualizzatore prove',
+      proofAltTemplate: 'prova {i} di {n} · {title}',
+      proofUnavailable: 'immagine non disponibile',
+      proofPrevLabel: 'Prova precedente',
+      proofNextLabel: 'Prova successiva',
       proofsClose: '[ chiudi ]',
       btnAbout: '[ CHI SONO ]',
       btnExp: '[ LE MIE ESPERIENZE ]'
@@ -183,8 +187,12 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       contactSub: 'For collaborations, service requests or security investigations.',
       footerEnd: 'coodz_10 · 2026',
       backToExperiences: '[ ← back to experience ]',
-      openProofs: '[ OPEN PROOFS ]',
-      proofsTitle: 'Links & proofs',
+      openProofsCount: '[ open proofs · {n} ]',
+      proofViewerLabel: 'Proofs viewer',
+      proofAltTemplate: 'proof {i} of {n} · {title}',
+      proofUnavailable: 'image unavailable',
+      proofPrevLabel: 'Previous proof',
+      proofNextLabel: 'Next proof',
       proofsClose: '[ close ]',
       btnAbout: '[ ABOUT ME ]',
       btnExp: '[ MY EXPERIENCE ]'
@@ -207,9 +215,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
       },
-      proofs: [
-        { url: 'https://imgur.com/a/6r60dbY' }
-      ]
+      proofCount: 1
     },
     metamc: {
       index: '02',
@@ -250,10 +256,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         it: ['Comunicazione insufficiente'],
         en: ['Insufficient communication']
       },
-      proofs: [
-        { url: 'https://imgur.com/a/YgUNOux' },
-        { url: 'https://imgur.com/wOMooyU' }
-      ]
+      proofCount: 2
     },
     pixymc: {
       index: '03',
@@ -290,11 +293,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         it: ['Scarsa organizzazione iniziale', 'Poca professionalità'],
         en: ['Lack of initial organization', 'Lack of professionalism']
       },
-      proofs: [
-        { url: 'https://imgur.com/0a8e2HW' },
-        { url: 'https://imgur.com/T2BEOhO' },
-        { url: 'https://imgur.com/YOaVB2c' }
-      ]
+      proofCount: 3
     },
     elysian: {
       index: '01',
@@ -310,9 +309,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
       },
-      proofs: [
-        { url: 'https://imgur.com/a/Ff0pF34' }
-      ]
+      proofCount: 1
     },
     syndicate: {
       index: '02',
@@ -328,7 +325,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
       },
-      proofs: []
+      proofCount: 0
     },
     meowtools: {
       index: '03',
@@ -344,9 +341,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         it: 'I dettagli e la recensione di questa esperienza sono attualmente in fase di stesura.',
         en: 'Details and review for this experience are currently work in progress.'
       },
-      proofs: [
-        { url: 'https://imgur.com/a/Amgjwsz' }
-      ]
+      proofCount: 1
     }
   };
 
@@ -377,6 +372,10 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
   let activeSectionId = 'home';
   let activeDetailId = null; // Currently open experience detail key ('redismc', 'metamc', 'pixymc')
   let detailOpenedAt = 0;
+  let isProofsViewerOpen = false;
+  let setStarsPaused = () => {};
+  let refreshProofsViewerUI = () => {};
+  let layoutProofsViewer = () => {};
   let isMobile = window.innerWidth <= 768;
 
   // Scroll-driven flight state & layout caching
@@ -3001,11 +3000,16 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         setTimeout(updateViewerSize, 120);
       }, { passive: true });
 
-      // Pause rendering when tab hidden
+      // Pause rendering when tab hidden or proofs viewer open
       document.addEventListener('visibilitychange', () => {
         if (skinViewer) {
-          skinViewer.renderPaused = document.hidden;
+          skinViewer.renderPaused = document.hidden || isProofsViewerOpen;
         }
+      });
+
+      window.__coGetRenderStatus = () => ({
+        skinPaused: skinViewer ? !!skinViewer.renderPaused : null,
+        viewerOpen: isProofsViewerOpen
       });
     } catch (err) {
       if (window.AvatarDebug) console.warn('SkinViewer failed to initialize, using fallback image:', err);
@@ -3020,7 +3024,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
 
   function initAvatarInteraction() {
     function handleInteraction(clientX, clientY, target) {
-      if (target && target.closest('button, a, input, select, textarea, [role="button"], #opening-screen, .opening-screen, .avatar-debug-panel, #proofs-modal, .proofs-modal')) {
+      if (target && target.closest('button, a, input, select, textarea, [role="button"], #opening-screen, .opening-screen, .avatar-debug-panel, #proofs-modal, .proofs-viewer')) {
         return;
       }
       if (!skinViewer || !floatAnimation) return;
@@ -3258,8 +3262,14 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     let nextBigMeteorTime = performance.now() + 12000; // Big brighter one every ~12s
 
     let startTime = performance.now();
+    let starsRafId = null;
+    let starsPaused = false;
 
     function renderStars(now) {
+      if (starsPaused) {
+        starsRafId = null;
+        return;
+      }
       const starsT0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
       if (!document.hidden) {
         const elapsed = (now - startTime) / 1000;
@@ -3421,10 +3431,28 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         window.AvatarDebug.recordMetric('starsCanvas', performance.now() - starsT0);
       }
 
-      requestAnimationFrame(renderStars);
+      if (!starsPaused) {
+        starsRafId = requestAnimationFrame(renderStars);
+      } else {
+        starsRafId = null;
+      }
     }
 
-    requestAnimationFrame(renderStars);
+    setStarsPaused = (paused) => {
+      starsPaused = !!paused;
+      if (starsPaused) {
+        if (starsRafId !== null) {
+          cancelAnimationFrame(starsRafId);
+          starsRafId = null;
+        }
+      } else if (!prefersReducedMotion && starsRafId === null) {
+        startTime = performance.now();
+        nextMeteorTime = performance.now() + (isMobile ? 1800 : 900);
+        starsRafId = requestAnimationFrame(renderStars);
+      }
+    };
+
+    starsRafId = requestAnimationFrame(renderStars);
 
     window.addEventListener('resize', () => {
       width = canvas.width = window.innerWidth;
@@ -3443,11 +3471,12 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
 
     let proofsBtnHtml = '';
-    if (exp.proofs && exp.proofs.length > 0) {
+    if (exp.proofCount > 0) {
+      const openLabel = (dict.openProofsCount || '[ apri prove · {n} ]').replace('{n}', String(exp.proofCount));
       proofsBtnHtml = `
         <div class="detail-actions">
           <button id="detail-proofs-btn" class="btn btn--primary mono cursor-pointer" data-exp="${key}">
-            ${dict.openProofs || '[ APRI PROVE ]'}
+            ${openLabel}
           </button>
         </div>
       `;
@@ -3547,7 +3576,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     if (proofsBtn) {
       proofsBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        openProofsModal(key);
+        openProofsModal(key, 1, true, proofsBtn);
       });
     }
 
@@ -3588,12 +3617,14 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       detailView.classList.add('view-active');
       updateScrollFadeStates();
 
-      // Trigger avatar reaction (substate 'esperienze-detail': turns slightly toward panel and nods)
-      setAvatarState('esperienze-detail');
-      if (window.AvatarDirector) {
-        window.AvatarDirector.onDetailOpen(key);
-        if (typeof window.AvatarDirector.updateReadingRects === 'function') {
-          window.AvatarDirector.updateReadingRects();
+      if (!isProofsViewerOpen) {
+        // Trigger avatar reaction (substate 'esperienze-detail': turns slightly toward panel and nods)
+        setAvatarState('esperienze-detail');
+        if (window.AvatarDirector) {
+          window.AvatarDirector.onDetailOpen(key);
+          if (typeof window.AvatarDirector.updateReadingRects === 'function') {
+            window.AvatarDirector.updateReadingRects();
+          }
         }
       }
     });
@@ -3641,54 +3672,789 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     });
   }
 
-  function openProofsModal(key) {
-    const exp = EXPERIENCE_DETAILS[key];
+  let proofsManifestCache = null;
+  let proofsManifestPromise = null;
+  const decodedProofCache = new Map(); // capped at 3 entries: current, next, prev
+  let closeViewerTimer = null;
+  let gestureEndTimer = null;
+  let crossfadeTimer = null;
+  let viewerLoadToken = 0;
+  let lastOpenerEl = null;
+  let savedViewerScrollTop = 0;
+
+  const viewerState = {
+    key: null,
+    items: [],
+    index: 0,
+    scale: 1,
+    panX: 0,
+    panY: 0,
+    naturalW: 0,
+    naturalH: 0,
+    box: null
+  };
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function fetchProofsManifest() {
+    if (proofsManifestCache) return Promise.resolve(proofsManifestCache);
+    if (!proofsManifestPromise) {
+      proofsManifestPromise = fetch('assets/proofs/manifest.json')
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          proofsManifestCache = data || {};
+          return proofsManifestCache;
+        })
+        .catch((err) => {
+          proofsManifestPromise = null;
+          throw err;
+        });
+    }
+    return proofsManifestPromise;
+  }
+
+  function evictDecodedCache(protectedUrls, maxEntries = 3) {
+    for (const [url, entry] of decodedProofCache.entries()) {
+      if (decodedProofCache.size <= maxEntries) break;
+      if (protectedUrls && protectedUrls.has(url)) continue;
+      try {
+        if (entry && entry.img) entry.img.src = '';
+      } catch (e) { }
+      decodedProofCache.delete(url);
+    }
+  }
+
+  function loadDecodedProof(url, protectedUrls) {
+    if (!url) return Promise.reject(new Error('Empty proof URL'));
+    if (decodedProofCache.has(url)) {
+      const existing = decodedProofCache.get(url);
+      decodedProofCache.delete(url);
+      decodedProofCache.set(url, existing);
+      return existing.promise;
+    }
+    evictDecodedCache(protectedUrls, 2);
+
+    const imgEl = new Image();
+    imgEl.decoding = 'async';
+    const entry = { img: imgEl, promise: null };
+    entry.promise = new Promise((resolve, reject) => {
+      let settled = false;
+      const doneOk = () => {
+        if (settled) return;
+        settled = true;
+        resolve(imgEl);
+      };
+      const doneErr = (err) => {
+        if (settled) return;
+        settled = true;
+        decodedProofCache.delete(url);
+        reject(err || new Error('Proof load failed'));
+      };
+      imgEl.addEventListener('error', () => doneErr(new Error('Image load error')), { once: true });
+      imgEl.addEventListener('load', () => {
+        if (typeof imgEl.decode === 'function') {
+          imgEl.decode().then(doneOk).catch(() => {
+            if (imgEl.naturalWidth > 0) doneOk();
+            else doneErr(new Error('Image decode error'));
+          });
+        } else {
+          doneOk();
+        }
+      }, { once: true });
+      imgEl.src = url;
+    });
+    decodedProofCache.set(url, entry);
+    return entry.promise;
+  }
+
+  function syncViewerNavHeight() {
     const modal = document.getElementById('proofs-modal');
-    const titleEl = document.getElementById('proofs-modal-title');
-    const linksEl = document.getElementById('proofs-modal-links');
-    if (!exp || !modal || !titleEl || !linksEl) return;
+    const nav = document.querySelector('.nav-bar');
+    if (modal && nav) {
+      const bottom = Math.max(0, Math.round(nav.getBoundingClientRect().bottom));
+      modal.style.setProperty('--nav-h', `${bottom}px`);
+    }
+  }
+
+  function computeFittedBox(item) {
+    const stage = document.getElementById('proofs-viewer-stage');
+    if (!stage) return { w: 400, h: 300, natW: 400, natH: 300, stageW: 800, stageH: 600 };
+    const st = window.getComputedStyle(stage);
+    const padL = parseFloat(st.paddingLeft) || 32;
+    const padR = parseFloat(st.paddingRight) || 32;
+    const padT = parseFloat(st.paddingTop) || 32;
+    const padB = parseFloat(st.paddingBottom) || 32;
+    const stageW = stage.clientWidth;
+    const stageH = stage.clientHeight;
+    const availW = Math.max(40, stageW - padL - padR);
+    const availH = Math.max(40, stageH - padT - padB);
+    const natW = Math.max(1, viewerState.naturalW || (item && item.w) || availW);
+    const natH = Math.max(1, viewerState.naturalH || (item && item.h) || availH);
+    const fit = Math.min(availW / natW, availH / natH);
+    return {
+      w: Math.max(1, natW * fit),
+      h: Math.max(1, natH * fit),
+      natW,
+      natH,
+      stageW,
+      stageH
+    };
+  }
+
+  function getViewerMaxScale() {
+    const item = viewerState.items[viewerState.index];
+    const box = viewerState.box || computeFittedBox(item);
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const raw = ((box.natW * dpr) / Math.max(1, box.w)) * 1.5;
+    return Math.max(4, Math.min(8, raw));
+  }
+
+  function clampViewerPan(px, py, sc) {
+    const item = viewerState.items[viewerState.index];
+    const box = viewerState.box || computeFittedBox(item);
+    const maxPanX = Math.max(0, (box.w * sc - box.stageW) * 0.5);
+    const maxPanY = Math.max(0, (box.h * sc - box.stageH) * 0.5);
+    return {
+      x: Math.max(-maxPanX, Math.min(maxPanX, px)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, py))
+    };
+  }
+
+  function setViewerGestureActive(active, autoClearMs = 0) {
+    const fullImg = document.getElementById('proofs-viewer-img');
+    const smImg = document.getElementById('proofs-viewer-img-sm');
+    if (gestureEndTimer) {
+      clearTimeout(gestureEndTimer);
+      gestureEndTimer = null;
+    }
+    [smImg, fullImg].forEach((el) => {
+      if (el) el.classList.toggle('is-gesture-active', active);
+    });
+    if (active && autoClearMs > 0) {
+      gestureEndTimer = setTimeout(() => {
+        gestureEndTimer = null;
+        [smImg, fullImg].forEach((el) => {
+          if (el) el.classList.remove('is-gesture-active');
+        });
+      }, autoClearMs);
+    }
+  }
+
+  function applyViewerTransform(animateEase = false) {
+    const modal = document.getElementById('proofs-modal');
+    const stage = document.getElementById('proofs-viewer-stage');
+    const smImg = document.getElementById('proofs-viewer-img-sm');
+    const fullImg = document.getElementById('proofs-viewer-img');
+    if (!stage || !smImg || !fullImg) return;
+
+    const useEase = animateEase && !prefersReducedMotion;
+    const tx = viewerState.panX.toFixed(2);
+    const ty = viewerState.panY.toFixed(2);
+    const sc = viewerState.scale.toFixed(4);
+    const transformStr = `translate3d(${tx}px, ${ty}px, 0) scale(${sc})`;
+
+    [smImg, fullImg].forEach((imgEl) => {
+      if (viewerState.box) {
+        imgEl.style.width = `${viewerState.box.w.toFixed(1)}px`;
+        imgEl.style.height = `${viewerState.box.h.toFixed(1)}px`;
+      }
+      imgEl.classList.toggle('is-zoom-ease', useEase);
+      imgEl.style.transform = transformStr;
+    });
+
+    stage.classList.toggle('is-zoomed', viewerState.scale > 1.001);
+    if (modal) {
+      modal.dataset.scale = sc;
+      modal.dataset.maxScale = getViewerMaxScale().toFixed(3);
+    }
+  }
+
+  function zoomViewerToPoint(newScale, clientX, clientY, animateEase = true) {
+    const stage = document.getElementById('proofs-viewer-stage');
+    if (!stage) return;
+    const minScale = 1;
+    const maxScale = getViewerMaxScale();
+    const clampedScale = Math.max(minScale, Math.min(maxScale, newScale));
+    const oldScale = viewerState.scale;
+
+    if (clampedScale <= 1.001) {
+      viewerState.scale = 1;
+      viewerState.panX = 0;
+      viewerState.panY = 0;
+      applyViewerTransform(animateEase);
+      return;
+    }
+
+    const rect = stage.getBoundingClientRect();
+    const cx = rect.left + rect.width * 0.5;
+    const cy = rect.top + rect.height * 0.5;
+    const ptX = (typeof clientX === 'number') ? clientX : cx;
+    const ptY = (typeof clientY === 'number') ? clientY : cy;
+    const dx = ptX - cx;
+    const dy = ptY - cy;
+    const ratio = clampedScale / Math.max(0.001, oldScale);
+    const rawPanX = dx - (dx - viewerState.panX) * ratio;
+    const rawPanY = dy - (dy - viewerState.panY) * ratio;
+    const clamped = clampViewerPan(rawPanX, rawPanY, clampedScale);
+
+    viewerState.scale = clampedScale;
+    viewerState.panX = clamped.x;
+    viewerState.panY = clamped.y;
+    applyViewerTransform(animateEase);
+  }
+
+  function resetViewerZoom(animateEase = true) {
+    viewerState.scale = 1;
+    viewerState.panX = 0;
+    viewerState.panY = 0;
+    applyViewerTransform(animateEase);
+  }
+
+  function updateViewerMetaTexts() {
+    const modal = document.getElementById('proofs-modal');
+    const counterEl = document.getElementById('proofs-viewer-counter');
+    const closeBtn = document.getElementById('proofs-viewer-close');
+    const prevBtn = document.getElementById('proofs-viewer-prev');
+    const nextBtn = document.getElementById('proofs-viewer-next');
+    const smImg = document.getElementById('proofs-viewer-img-sm');
+    const fullImg = document.getElementById('proofs-viewer-img');
+    const captionEl = document.getElementById('proofs-viewer-caption');
+    const errorEl = document.getElementById('proofs-viewer-error');
 
     const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
-    titleEl.textContent = `${dict.proofsTitle || 'Link e prove'} · ${exp.title}`;
+    if (modal) modal.setAttribute('aria-label', dict.proofViewerLabel || 'Visualizzatore prove');
+    if (closeBtn) {
+      closeBtn.textContent = dict.proofsClose || '[ chiudi ]';
+      closeBtn.setAttribute('aria-label', currentLang === 'en' ? 'Close' : 'Chiudi');
+    }
+    if (prevBtn) prevBtn.setAttribute('aria-label', dict.proofPrevLabel || 'Prova precedente');
+    if (nextBtn) nextBtn.setAttribute('aria-label', dict.proofNextLabel || 'Prova successiva');
 
-    linksEl.innerHTML = exp.proofs.map((p) => `
-      <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="row-link proof-link-item mono">
-        <span class="row-link__left"><span class="row-link__title truncate">${p.url}</span></span>
-        <span class="row-link__right"><span class="row-link__arrow" aria-hidden="true">&rarr;</span></span>
-      </a>
-    `).join('');
+    if (!isProofsViewerOpen || !viewerState.key || !viewerState.items.length) return;
+    const items = viewerState.items;
+    const idx = viewerState.index;
+    const item = items[idx];
+    const exp = EXPERIENCE_DETAILS[viewerState.key];
+    const title = exp ? exp.title : viewerState.key;
 
+    if (counterEl) {
+      counterEl.textContent = `${pad2(idx + 1)} · ${pad2(items.length)}`;
+    }
+    const defaultAlt = (dict.proofAltTemplate || 'prova {i} di {n} · {title}')
+      .replace('{i}', pad2(idx + 1))
+      .replace('{n}', pad2(items.length))
+      .replace('{title}', title);
+    const resolvedAlt = (item.alt && item.alt.trim()) ? item.alt.trim() : defaultAlt;
+    if (smImg) smImg.alt = resolvedAlt;
+    if (fullImg) fullImg.alt = resolvedAlt;
+
+    const captionText = (item.caption && item.caption.trim())
+      ? item.caption.trim()
+      : ((item.alt && item.alt.trim()) ? item.alt.trim() : '');
+    if (captionEl) {
+      if (captionText) {
+        captionEl.textContent = captionText;
+        captionEl.hidden = false;
+      } else {
+        captionEl.textContent = '';
+        captionEl.hidden = true;
+      }
+    }
+    if (errorEl && !errorEl.hidden) {
+      errorEl.textContent = dict.proofUnavailable || 'immagine non disponibile';
+    }
+    if (modal) {
+      modal.dataset.exp = viewerState.key;
+      modal.dataset.index = String(idx + 1);
+      modal.dataset.total = String(items.length);
+    }
+  }
+
+  refreshProofsViewerUI = updateViewerMetaTexts;
+  layoutProofsViewer = () => {
+    if (!isProofsViewerOpen) return;
+    syncViewerNavHeight();
+    const item = viewerState.items[viewerState.index];
+    if (!item) return;
+    viewerState.box = computeFittedBox(item);
+    const clamped = clampViewerPan(viewerState.panX, viewerState.panY, viewerState.scale);
+    viewerState.panX = clamped.x;
+    viewerState.panY = clamped.y;
+    applyViewerTransform(false);
+  };
+
+  function showProofAt(targetIdx, syncHashMode = 'replace') {
+    const items = viewerState.items;
+    const key = viewerState.key;
+    if (!key || !items.length) return;
+
+    const total = items.length;
+    const idx = Math.max(0, Math.min(total - 1, targetIdx));
+    viewerState.index = idx;
+    const item = items[idx];
+    viewerState.naturalW = item.w || 0;
+    viewerState.naturalH = item.h || 0;
+
+    syncViewerNavHeight();
+    viewerState.box = computeFittedBox(item);
+    resetViewerZoom(false);
+    updateViewerMetaTexts();
+
+    if (syncHashMode === 'push') {
+      history.pushState({ exp: key, proof: idx + 1 }, '', `#esperienze/${key}/prove/${idx + 1}`);
+    } else if (syncHashMode === 'replace') {
+      history.replaceState({ exp: key, proof: idx + 1 }, '', `#esperienze/${key}/prove/${idx + 1}`);
+    }
+
+    const smImg = document.getElementById('proofs-viewer-img-sm');
+    const fullImg = document.getElementById('proofs-viewer-img');
+    const errorEl = document.getElementById('proofs-viewer-error');
+    if (!smImg || !fullImg || !errorEl) return;
+
+    if (crossfadeTimer) {
+      clearTimeout(crossfadeTimer);
+      crossfadeTimer = null;
+    }
+
+    const token = ++viewerLoadToken;
+    const baseDir = `assets/proofs/${key}/`;
+    const smUrl = `${baseDir}${item.sm}`;
+    const fullUrl = `${baseDir}${item.file}`;
+
+    const nextIdx = (idx + 1) % total;
+    const prevIdx = (idx - 1 + total) % total;
+    const protectedUrls = new Set([fullUrl]);
+    if (total > 1) {
+      protectedUrls.add(`${baseDir}${items[nextIdx].file}`);
+      protectedUrls.add(`${baseDir}${items[prevIdx].file}`);
+    }
+
+    errorEl.hidden = true;
+    errorEl.textContent = '';
+
+    fullImg.classList.remove('is-visible');
+    smImg.src = smUrl;
+    smImg.classList.add('is-visible');
+
+    const preloadNeighbors = () => {
+      if (total > 1) {
+        const nextUrl = `${baseDir}${items[nextIdx].file}`;
+        const prevUrl = `${baseDir}${items[prevIdx].file}`;
+        if (nextUrl !== fullUrl) loadDecodedProof(nextUrl, protectedUrls).catch(() => { });
+        if (prevUrl !== fullUrl && prevUrl !== nextUrl) loadDecodedProof(prevUrl, protectedUrls).catch(() => { });
+      }
+    };
+
+    loadDecodedProof(fullUrl, protectedUrls)
+      .then((loadedImg) => {
+        if (!isProofsViewerOpen || token !== viewerLoadToken) return;
+        viewerState.naturalW = loadedImg.naturalWidth || viewerState.naturalW;
+        viewerState.naturalH = loadedImg.naturalHeight || viewerState.naturalH;
+        viewerState.box = computeFittedBox(item);
+        applyViewerTransform(false);
+
+        fullImg.src = fullUrl;
+        const swapIn = () => {
+          if (!isProofsViewerOpen || token !== viewerLoadToken) return;
+          fullImg.classList.add('is-visible');
+          const fadeDelay = prefersReducedMotion ? 0 : 210;
+          crossfadeTimer = setTimeout(() => {
+            crossfadeTimer = null;
+            if (isProofsViewerOpen && token === viewerLoadToken) {
+              smImg.classList.remove('is-visible');
+            }
+          }, fadeDelay);
+          preloadNeighbors();
+        };
+        if (typeof fullImg.decode === 'function') {
+          fullImg.decode().then(swapIn).catch(swapIn);
+        } else {
+          swapIn();
+        }
+      })
+      .catch(() => {
+        if (!isProofsViewerOpen || token !== viewerLoadToken) return;
+        fullImg.classList.remove('is-visible');
+        smImg.classList.remove('is-visible');
+        const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
+        errorEl.textContent = dict.proofUnavailable || 'immagine non disponibile';
+        errorEl.hidden = false;
+        preloadNeighbors();
+      });
+  }
+
+  function stepProof(delta) {
+    if (!isProofsViewerOpen || !viewerState.items.length) return;
+    const total = viewerState.items.length;
+    if (total <= 1) return;
+    const nextIdx = (viewerState.index + delta + total) % total;
+    showProofAt(nextIdx, 'replace');
+  }
+
+  function stepZoom(factor) {
+    if (!isProofsViewerOpen) return;
+    setViewerGestureActive(true, 220);
+    zoomViewerToPoint(viewerState.scale * factor, null, null, true);
+  }
+
+  function openProofsModal(key, initialOneBasedIndex = 1, updateHistory = true, openerEl = null) {
+    const exp = EXPERIENCE_DETAILS[key];
+    const modal = document.getElementById('proofs-modal');
+    if (!exp || !exp.proofCount || !modal) return;
+
+    if (closeViewerTimer) {
+      clearTimeout(closeViewerTimer);
+      closeViewerTimer = null;
+    }
+
+    lastOpenerEl = openerEl || document.activeElement || document.getElementById('detail-proofs-btn');
+    const wasAlreadyOpen = isProofsViewerOpen;
+    isProofsViewerOpen = true;
+    const manifestPromise = fetchProofsManifest();
+
+    const scrollContainer = document.getElementById('scroll-container');
+    if (scrollContainer && !wasAlreadyOpen) {
+      savedViewerScrollTop = scrollContainer.scrollTop;
+      scrollContainer.classList.add('viewer-scroll-locked');
+    }
+
+    syncViewerNavHeight();
     modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
 
+    if (!wasAlreadyOpen) {
+      try {
+        window.dispatchEvent(new CustomEvent('proofsviewer:open', { detail: { exp: key } }));
+      } catch (e) { }
+      if (window.AvatarDirector && typeof window.AvatarDirector.onProofsOpen === 'function') {
+        window.AvatarDirector.onProofsOpen();
+      }
+      if (skinViewer && typeof skinViewer.render === 'function') {
+        try {
+          skinViewer.renderPaused = false;
+          skinViewer.render();
+        } catch (e) { }
+      }
+      if (window.AvatarRig && typeof window.AvatarRig.setPaused === 'function') {
+        window.AvatarRig.setPaused(true);
+      }
+      if (window.AvatarDirector && typeof window.AvatarDirector.setPaused === 'function') {
+        window.AvatarDirector.setPaused(true);
+      }
+      if (skinViewer) {
+        skinViewer.renderPaused = true;
+      }
+      setStarsPaused(true);
+    }
+
     requestAnimationFrame(() => {
+      if (!isProofsViewerOpen) return;
       modal.classList.add('modal-open');
+      void modal.offsetWidth;
+      const closeBtn = document.getElementById('proofs-viewer-close');
+      if (closeBtn && !wasAlreadyOpen) {
+        closeBtn.focus();
+      }
     });
+
+    manifestPromise
+      .then((manifest) => {
+        if (!isProofsViewerOpen) return;
+        const items = Array.isArray(manifest[key]) ? manifest[key] : [];
+        if (!items.length) {
+          closeProofsModal(updateHistory);
+          return;
+        }
+        viewerState.key = key;
+        viewerState.items = items;
+        const parsed = parseInt(initialOneBasedIndex, 10);
+        const oneBased = (Number.isFinite(parsed) && parsed >= 1 && parsed <= items.length) ? parsed : 1;
+        const syncMode = updateHistory ? 'push' : (oneBased !== parsed ? 'replace' : 'none');
+        showProofAt(oneBased - 1, syncMode);
+      })
+      .catch(() => {
+        if (!isProofsViewerOpen) return;
+        const errorEl = document.getElementById('proofs-viewer-error');
+        const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.it;
+        if (errorEl) {
+          errorEl.textContent = dict.proofUnavailable || 'immagine non disponibile';
+          errorEl.hidden = false;
+        }
+      });
   }
 
-  function closeProofsModal() {
+  function closeProofsModal(updateHistory = true) {
     const modal = document.getElementById('proofs-modal');
-    if (!modal) return;
+    if (!modal || (!isProofsViewerOpen && modal.style.display === 'none')) return;
+
+    const closingKey = viewerState.key || activeDetailId;
+    isProofsViewerOpen = false;
+    viewerLoadToken++;
 
     modal.classList.remove('modal-open');
-    setTimeout(() => {
-      modal.style.display = 'none';
-      modal.setAttribute('aria-hidden', 'true');
-    }, 300);
+    const hideDelay = prefersReducedMotion ? 0 : 200;
+    if (closeViewerTimer) clearTimeout(closeViewerTimer);
+    closeViewerTimer = setTimeout(() => {
+      closeViewerTimer = null;
+      if (!isProofsViewerOpen) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        const smImg = document.getElementById('proofs-viewer-img-sm');
+        const fullImg = document.getElementById('proofs-viewer-img');
+        if (smImg) {
+          smImg.classList.remove('is-visible');
+          smImg.removeAttribute('src');
+        }
+        if (fullImg) {
+          fullImg.classList.remove('is-visible');
+          fullImg.removeAttribute('src');
+        }
+      }
+    }, hideDelay);
+
+    const scrollContainer = document.getElementById('scroll-container');
+    if (scrollContainer) {
+      scrollContainer.classList.remove('viewer-scroll-locked');
+      scrollContainer.scrollTop = savedViewerScrollTop;
+    }
+
+    if (window.AvatarRig && typeof window.AvatarRig.setPaused === 'function') {
+      window.AvatarRig.setPaused(false);
+    }
+    if (window.AvatarDirector && typeof window.AvatarDirector.onProofsClose === 'function') {
+      window.AvatarDirector.onProofsClose();
+    }
+    if (skinViewer) {
+      skinViewer.renderPaused = document.hidden;
+    }
+    setStarsPaused(false);
+    try {
+      window.dispatchEvent(new CustomEvent('proofsviewer:close', { detail: { exp: closingKey } }));
+    } catch (e) { }
+
+    if (updateHistory && closingKey && window.location.hash.includes('/prove')) {
+      history.replaceState({ exp: closingKey }, '', `#esperienze/${closingKey}`);
+    }
+
+    const focusTarget = (lastOpenerEl && lastOpenerEl.isConnected)
+      ? lastOpenerEl
+      : document.getElementById('detail-proofs-btn');
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+      focusTarget.focus();
+    }
+    lastOpenerEl = null;
   }
 
   function initProofsModal() {
     const modal = document.getElementById('proofs-modal');
-    const closeBtn = document.getElementById('proofs-modal-close');
-    if (!modal) return;
+    const stage = document.getElementById('proofs-viewer-stage');
+    const closeBtn = document.getElementById('proofs-viewer-close');
+    const prevBtn = document.getElementById('proofs-viewer-prev');
+    const nextBtn = document.getElementById('proofs-viewer-next');
+    if (!modal || !stage) return;
 
-    if (closeBtn) {
-      closeBtn.addEventListener('click', closeProofsModal);
+    if (closeBtn) closeBtn.addEventListener('click', () => closeProofsModal(true));
+    if (prevBtn) prevBtn.addEventListener('click', () => stepProof(-1));
+    if (nextBtn) nextBtn.addEventListener('click', () => stepProof(1));
+
+    // Wheel zooms toward cursor
+    stage.addEventListener('wheel', (e) => {
+      if (!isProofsViewerOpen) return;
+      e.preventDefault();
+      setViewerGestureActive(true, 180);
+      const factor = Math.exp(-e.deltaY * 0.0022);
+      zoomViewerToPoint(viewerState.scale * factor, e.clientX, e.clientY, true);
+    }, { passive: false });
+
+    // Double-click toggles fit (1x) <-> 2.5x at cursor point
+    stage.addEventListener('dblclick', (e) => {
+      if (!isProofsViewerOpen) return;
+      e.preventDefault();
+      setViewerGestureActive(true, 200);
+      const target = (viewerState.scale > 1.05) ? 1 : Math.min(2.5, getViewerMaxScale());
+      zoomViewerToPoint(target, e.clientX, e.clientY, true);
+    });
+
+    // Pointer Events: 1-pointer drag/pan/swipe/double-tap & 2-pointer pinch-zoom
+    const activePointers = new Map();
+    let dragLastX = 0;
+    let dragLastY = 0;
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let swipeStartTime = 0;
+    let wasMultiTouch = false;
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+    let pinchPrevMidX = 0;
+    let pinchPrevMidY = 0;
+    let lastTapTime = 0;
+    let lastTapX = 0;
+    let lastTapY = 0;
+
+    function getPinchMetrics() {
+      const pts = Array.from(activePointers.values());
+      const a = pts[0];
+      const b = pts[1];
+      return {
+        dist: Math.hypot(b.x - a.x, b.y - a.y),
+        midX: (a.x + b.x) * 0.5,
+        midY: (a.y + b.y) * 0.5
+      };
     }
 
-    modal.addEventListener('click', (e) => {
-      if (e.target.classList.contains('proofs-backdrop') || e.target === modal) {
-        closeProofsModal();
+    stage.addEventListener('pointerdown', (e) => {
+      if (!isProofsViewerOpen) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      try { stage.setPointerCapture(e.pointerId); } catch (err) { }
+
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
+      setViewerGestureActive(true);
+
+      if (activePointers.size === 1) {
+        dragLastX = e.clientX;
+        dragLastY = e.clientY;
+        swipeStartX = e.clientX;
+        swipeStartY = e.clientY;
+        swipeStartTime = performance.now();
+        wasMultiTouch = false;
+        if (viewerState.scale > 1.001) {
+          stage.classList.add('is-dragging');
+        }
+      } else if (activePointers.size === 2) {
+        wasMultiTouch = true;
+        stage.classList.remove('is-dragging');
+        const m = getPinchMetrics();
+        pinchStartDist = Math.max(10, m.dist);
+        pinchStartScale = viewerState.scale;
+        pinchPrevMidX = m.midX;
+        pinchPrevMidY = m.midY;
+      }
+    });
+
+    stage.addEventListener('pointermove', (e) => {
+      if (!isProofsViewerOpen || !activePointers.has(e.pointerId)) return;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
+
+      if (activePointers.size === 2) {
+        const m = getPinchMetrics();
+        viewerState.panX += (m.midX - pinchPrevMidX);
+        viewerState.panY += (m.midY - pinchPrevMidY);
+        pinchPrevMidX = m.midX;
+        pinchPrevMidY = m.midY;
+        const targetScale = pinchStartScale * (m.dist / pinchStartDist);
+        zoomViewerToPoint(targetScale, m.midX, m.midY, false);
+      } else if (activePointers.size === 1 && !wasMultiTouch) {
+        if (viewerState.scale > 1.001) {
+          const dx = e.clientX - dragLastX;
+          const dy = e.clientY - dragLastY;
+          dragLastX = e.clientX;
+          dragLastY = e.clientY;
+          const clamped = clampViewerPan(viewerState.panX + dx, viewerState.panY + dy, viewerState.scale);
+          viewerState.panX = clamped.x;
+          viewerState.panY = clamped.y;
+          applyViewerTransform(false);
+        }
+      }
+    });
+
+    function onPointerEnd(e, isCancel) {
+      if (!activePointers.has(e.pointerId)) return;
+      const ended = activePointers.get(e.pointerId);
+      activePointers.delete(e.pointerId);
+      try {
+        if (stage.hasPointerCapture && stage.hasPointerCapture(e.pointerId)) {
+          stage.releasePointerCapture(e.pointerId);
+        }
+      } catch (err) { }
+
+      if (activePointers.size === 1) {
+        const remaining = Array.from(activePointers.values())[0];
+        dragLastX = remaining.x;
+        dragLastY = remaining.y;
+        return;
+      }
+
+      if (activePointers.size === 0) {
+        stage.classList.remove('is-dragging');
+        applyViewerTransform(true);
+        setViewerGestureActive(false);
+
+        if (!isCancel && !wasMultiTouch) {
+          const totalDx = e.clientX - swipeStartX;
+          const totalDy = e.clientY - swipeStartY;
+          const elapsed = performance.now() - swipeStartTime;
+          const moved = Math.hypot(totalDx, totalDy);
+
+          if (ended && ended.type !== 'mouse' && moved < 14 && elapsed < 320) {
+            const now = performance.now();
+            if ((now - lastTapTime) < 320 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 40) {
+              lastTapTime = 0;
+              setViewerGestureActive(true, 200);
+              const target = (viewerState.scale > 1.05) ? 1 : Math.min(2.5, getViewerMaxScale());
+              zoomViewerToPoint(target, e.clientX, e.clientY, true);
+              return;
+            }
+            lastTapTime = now;
+            lastTapX = e.clientX;
+            lastTapY = e.clientY;
+          } else if (viewerState.scale <= 1.001 && Math.abs(totalDx) >= 60 && Math.abs(totalDx) > Math.abs(totalDy) * 1.15) {
+            stepProof(totalDx < 0 ? 1 : -1);
+          }
+        }
+      }
+    }
+
+    stage.addEventListener('pointerup', (e) => onPointerEnd(e, false));
+    stage.addEventListener('pointercancel', (e) => onPointerEnd(e, true));
+
+    // Viewer keyboard controls & strict Tab focus trap
+    document.addEventListener('keydown', (e) => {
+      if (!isProofsViewerOpen) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeProofsModal(true);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        stepProof(-1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        stepProof(1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        showProofAt(0, 'replace');
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        showProofAt(Math.max(0, viewerState.items.length - 1), 'replace');
+      } else if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        stepZoom(1.35);
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        stepZoom(1 / 1.35);
+      } else if (e.key === '0') {
+        e.preventDefault();
+        setViewerGestureActive(true, 200);
+        resetViewerZoom(true);
+      } else if (e.key === 'Tab') {
+        const focusables = [closeBtn, prevBtn, nextBtn].filter((el) => el && !el.disabled && el.offsetParent !== null);
+        if (!focusables.length) return;
+        const activeIdx = focusables.indexOf(document.activeElement);
+        e.preventDefault();
+        if (e.shiftKey) {
+          const prevFocus = activeIdx <= 0 ? focusables[focusables.length - 1] : focusables[activeIdx - 1];
+          prevFocus.focus();
+        } else {
+          const nextFocus = (activeIdx < 0 || activeIdx >= focusables.length - 1) ? focusables[0] : focusables[activeIdx + 1];
+          nextFocus.focus();
+        }
       }
     });
   }
@@ -3778,6 +4544,9 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
   function handleRoute() {
     const hash = window.location.hash;
     if (!hash || hash === '' || hash === '#') {
+      if (isProofsViewerOpen) {
+        closeProofsModal(false);
+      }
       if (activeDetailId) {
         closeExperienceDetail(false);
       }
@@ -3786,9 +4555,11 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       return;
     }
 
-    if (hash.startsWith('#esperienze/')) {
-      const key = hash.replace('#esperienze/', '').toLowerCase();
-      if (EXPERIENCE_DETAILS[key]) {
+    const proofsMatch = hash.match(/^#esperienze\/([a-z0-9_-]+)\/prove(?:\/([^/]*))?$/i);
+    if (proofsMatch) {
+      const key = proofsMatch[1].toLowerCase();
+      const exp = EXPERIENCE_DETAILS[key];
+      if (exp) {
         const expSec = document.getElementById('esperienze');
         const scroller = document.getElementById('scroll-container');
         if (expSec && scroller) {
@@ -3796,11 +4567,47 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
         } else if (expSec) {
           expSec.scrollIntoView({ behavior: 'instant' });
         }
-        openExperienceDetail(key, false);
+        if (activeDetailId !== key) {
+          openExperienceDetail(key, false);
+        }
+        if (exp.proofCount > 0) {
+          const rawIdx = parseInt(proofsMatch[2] || '1', 10);
+          const validIdx = (Number.isFinite(rawIdx) && rawIdx >= 1 && rawIdx <= exp.proofCount) ? rawIdx : 1;
+          if (validIdx !== rawIdx || !proofsMatch[2]) {
+            history.replaceState({ exp: key, proof: validIdx }, '', `#esperienze/${key}/prove/${validIdx}`);
+          }
+          openProofsModal(key, validIdx, false);
+        }
         updateNavIndicator('esperienze');
         updateDocumentTitle('esperienze');
         return;
       }
+    }
+
+    if (hash.startsWith('#esperienze/')) {
+      const key = hash.replace('#esperienze/', '').toLowerCase();
+      if (EXPERIENCE_DETAILS[key]) {
+        if (isProofsViewerOpen) {
+          closeProofsModal(false);
+        }
+        const expSec = document.getElementById('esperienze');
+        const scroller = document.getElementById('scroll-container');
+        if (expSec && scroller) {
+          scroller.scrollTo({ top: expSec.offsetTop, behavior: 'instant' });
+        } else if (expSec) {
+          expSec.scrollIntoView({ behavior: 'instant' });
+        }
+        if (activeDetailId !== key) {
+          openExperienceDetail(key, false);
+        }
+        updateNavIndicator('esperienze');
+        updateDocumentTitle('esperienze');
+        return;
+      }
+    }
+
+    if (isProofsViewerOpen) {
+      closeProofsModal(false);
     }
 
     const secId = hash.replace('#', '');
@@ -3879,6 +4686,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     if (activeDetailId) {
       renderExperienceDetail(activeDetailId);
     }
+    refreshProofsViewerUI();
 
     updateCachedDimensions();
     computeSlotKeyframes();
@@ -3927,12 +4735,15 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
 
     sections.forEach((sec) => observer.observe(sec));
 
-    // Nav Links smooth scroll click
+    // Nav Links smooth scroll click (any nav action closes open proofs viewer first)
     document.querySelectorAll('.brand-mark, .nav-link, .mobile-link').forEach((link) => {
       link.addEventListener('click', (e) => {
         const targetId = link.getAttribute('href');
         if (targetId && targetId.startsWith('#')) {
           e.preventDefault();
+          if (isProofsViewerOpen) {
+            closeProofsModal(true);
+          }
           if (activeDetailId && targetId !== '#esperienze') {
             closeExperienceDetail(true);
           }
@@ -3973,6 +4784,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       updateNavIndicator(activeSectionId);
       if (!isIntroActive) fitHeroTitle();
       computeSlotKeyframes();
+      layoutProofsViewer();
     }, { passive: true });
 
     // Passive scroll listener for continuous scroll-driven flight
@@ -4005,6 +4817,9 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       updateMenuA11y(mqMobile);
 
       menuToggleBtn.addEventListener('click', () => {
+        if (isProofsViewerOpen) {
+          closeProofsModal(true);
+        }
         mobileMenu.classList.toggle('open');
         const isOpen = mobileMenu.classList.contains('open');
         menuToggleBtn.textContent = isOpen ? '[ × ]' : '[ ☰ ]';
@@ -4418,13 +5233,10 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     let isNavigating = false;
 
     window.addEventListener('keydown', (e) => {
-      // Escape key closes modal if open, else closes experience detail
+      if (isProofsViewerOpen) return;
+
+      // Escape key closes experience detail
       if (e.key === 'Escape') {
-        const modal = document.getElementById('proofs-modal');
-        if (modal && modal.style.display !== 'none' && modal.classList.contains('modal-open')) {
-          closeProofsModal();
-          return;
-        }
         if (activeDetailId) {
           closeExperienceDetail(true);
           return;

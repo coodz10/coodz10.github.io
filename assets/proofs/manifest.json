@@ -1,0 +1,77 @@
+{
+  "redismc": [
+    {
+      "file": "01.webp",
+      "sm": "01-sm.webp",
+      "w": 901,
+      "h": 1013,
+      "alt": "",
+      "blur": []
+    }
+  ],
+  "metamc": [
+    {
+      "file": "01.webp",
+      "sm": "01-sm.webp",
+      "w": 331,
+      "h": 181,
+      "alt": "",
+      "blur": []
+    },
+    {
+      "file": "02.webp",
+      "sm": "02-sm.webp",
+      "w": 2553,
+      "h": 1352,
+      "alt": "",
+      "blur": []
+    }
+  ],
+  "pixymc": [
+    {
+      "file": "01.webp",
+      "sm": "01-sm.webp",
+      "w": 1176,
+      "h": 728,
+      "alt": "",
+      "blur": []
+    },
+    {
+      "file": "02.webp",
+      "sm": "02-sm.webp",
+      "w": 789,
+      "h": 428,
+      "alt": "",
+      "blur": []
+    },
+    {
+      "file": "03.webp",
+      "sm": "03-sm.webp",
+      "w": 1284,
+      "h": 684,
+      "alt": "",
+      "blur": []
+    }
+  ],
+  "elysian": [
+    {
+      "file": "01.webp",
+      "sm": "01-sm.webp",
+      "w": 874,
+      "h": 993,
+      "alt": "",
+      "blur": []
+    }
+  ],
+  "syndicate": [],
+  "meowtools": [
+    {
+      "file": "01.webp",
+      "sm": "01-sm.webp",
+      "w": 2239,
+      "h": 1314,
+      "alt": "",
+      "blur": []
+    }
+  ]
+}

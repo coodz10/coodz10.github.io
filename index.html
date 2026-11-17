@@ -360,14 +360,20 @@
 
   </div>
 
-  <div id="proofs-modal" class="proofs-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display: none;">
-    <div class="proofs-backdrop"></div>
-    <div class="proofs-card mono">
-      <div class="proofs-header">
-        <h3 id="proofs-modal-title" class="proofs-title">Link e prove</h3>
-        <button id="proofs-modal-close" class="btn btn--secondary cursor-pointer" aria-label="Chiudi" data-i18n="proofsClose">[ chiudi ]</button>
-      </div>
-      <div id="proofs-modal-links" class="proofs-links-list"></div>
+  <div id="proofs-modal" class="proofs-viewer" role="dialog" aria-modal="true" aria-label="Visualizzatore prove" aria-hidden="true" style="display: none;">
+    <div class="proofs-viewer__top mono">
+      <span id="proofs-viewer-counter" class="proofs-viewer__counter" aria-live="polite" aria-atomic="true">01 · 01</span>
+      <button type="button" id="proofs-viewer-close" class="btn btn--secondary proofs-viewer__btn cursor-pointer" aria-label="Chiudi" data-i18n="proofsClose">[ chiudi ]</button>
+    </div>
+    <div id="proofs-viewer-stage" class="proofs-viewer__stage">
+      <img id="proofs-viewer-img-sm" class="proofs-viewer__img proofs-viewer__img--sm" alt="" draggable="false" />
+      <img id="proofs-viewer-img" class="proofs-viewer__img proofs-viewer__img--full" alt="" draggable="false" />
+      <div id="proofs-viewer-error" class="proofs-viewer__error mono" hidden></div>
+    </div>
+    <p id="proofs-viewer-caption" class="proofs-viewer__caption" hidden></p>
+    <div class="proofs-viewer__bottom mono">
+      <button type="button" id="proofs-viewer-prev" class="btn btn--secondary proofs-viewer__btn proofs-viewer__nav-btn cursor-pointer" aria-label="Prova precedente">[ &larr; ]</button>
+      <button type="button" id="proofs-viewer-next" class="btn btn--secondary proofs-viewer__btn proofs-viewer__nav-btn cursor-pointer" aria-label="Prova successiva">[ &rarr; ]</button>
     </div>
   </div>
 

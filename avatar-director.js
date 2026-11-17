@@ -123,6 +123,8 @@
   // Section & reading tracking
   let currentSectionId = 'home';
   let isDetailOpen = false;
+  let isProofsOpen = false;
+  let isPaused = false;
   let readingState = {
     active: false,
     column: 'left',
@@ -853,6 +855,11 @@
       return false;
     }
 
+    // Proofs viewer check: nod once on open, no extra gestures during zoom
+    if (isProofsOpen && name !== 'nod') {
+      return false;
+    }
+
     // Reduced motion check
     if (prefersReducedMotion && def.priority < PRIORITY_USER_ACTION) {
       return false;
@@ -935,7 +942,7 @@
   }
 
   function onHover(element, type) {
-    if (!element || prefersReducedMotion || isFlightActive) return;
+    if (!element || prefersReducedMotion || isFlightActive || isProofsOpen) return;
     lastUserInteractionTime = performance.now() / 1000;
 
     const rect = element.getBoundingClientRect();
@@ -1026,9 +1033,41 @@
     if (rig) rig.setPose('neutral');
   }
 
+  function onProofsOpen() {
+    isProofsOpen = true;
+    readingState.active = false;
+    lookMode = 'proofs';
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 960;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 540;
+    lookTargetScreen.x = vw * 0.5;
+    lookTargetScreen.y = vh * 0.5;
+    lookTargetSmooth.x = lookTargetScreen.x;
+    lookTargetSmooth.y = lookTargetScreen.y;
+    triggerGesture('nod', { force: true });
+    const rig = getRig();
+    if (rig) rig.setPose('rest');
+  }
+
+  function onProofsClose() {
+    isProofsOpen = false;
+    isPaused = false;
+    if (currentSectionId === 'chi_sono') {
+      lookMode = 'reading';
+      readingState.active = true;
+    } else if (currentSectionId === 'home') {
+      lookMode = 'mouse';
+    } else {
+      lookMode = 'ambient';
+    }
+  }
+
+  function setPaused(paused) {
+    isPaused = !!paused;
+  }
+
   function onPointerMove(clientX, clientY) {
     lastUserInteractionTime = performance.now() / 1000;
-    if (isTouchDevice) return; // Touch devices don't track hover mouse
+    if (isTouchDevice || isProofsOpen) return; // Touch devices don't track hover mouse
     if (lookMode === 'mouse' && currentSectionId === 'home') {
       lookTargetScreen.x = clientX;
       lookTargetScreen.y = clientY;
@@ -1199,6 +1238,7 @@
   }
 
   function update(dtRaw) {
+    if (isPaused) return;
     const t0 = (window.AvatarDebug && window.AvatarDebug.isPerfActive && window.AvatarDebug.isPerfActive()) ? performance.now() : 0;
     const dt = Math.max(0.001, Math.min(0.1, dtRaw));
     const nowSec = performance.now() / 1000;
@@ -1210,12 +1250,12 @@
     }
 
     // 1. Reading Gaze & Idle Timer Evaluation
-    if (lookMode === 'reading') {
+    if (lookMode === 'reading' && !isProofsOpen) {
       updateReadingGaze(dt, nowSec);
     }
 
     // Idle gestures in home section (every 6-11s, 3s cooldown)
-    if (currentSectionId === 'home' && !isFlightActive && !prefersReducedMotion && activeGestures.length === 0) {
+    if (currentSectionId === 'home' && !isProofsOpen && !isFlightActive && !prefersReducedMotion && activeGestures.length === 0) {
       const timeSinceUser = nowSec - lastUserInteractionTime;
       if (timeSinceUser >= CONFIG.IDLE.interactionCooldownSec) {
         idleTimer += dt;
@@ -1385,6 +1425,9 @@
     onAvatarClick,
     onDetailOpen,
     onDetailClose,
+    onProofsOpen,
+    onProofsClose,
+    setPaused,
     onPointerMove,
     updateFlightMotion,
     setAudioAnalyser,
@@ -1409,6 +1452,8 @@
         bodyYaw: currentBodyYaw,
         activeGestures: activeGestures.map((g) => g.def.name),
         isFlightActive,
+        isProofsOpen,
+        isPaused,
         currentSectionId
       };
     }

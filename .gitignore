@@ -8,3 +8,5 @@ chrome-profile*/
 cdp-prof-*/
 test_*.js
 prompt*.txt
+proofs-src/
+proofs-review.html
