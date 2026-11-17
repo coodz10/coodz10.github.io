@@ -78,7 +78,7 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
     WARP_STRENGTH: 28,         // Warp star streak length multiplier
 
     // Audio & Playlist (Web Audio routing with dynamics compressor + master gain)
-    AUDIO_VOLUME: 0.9,
+    AUDIO_VOLUME: 0.75,
     AUDIO_GAIN: 1.4,
     PLAYLIST: [
       { name: 'dorado', src: 'music/dorado.mp3' },
@@ -4915,7 +4915,8 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
 
         webAudioMasterGain = webAudioCtx.createGain();
         const isMuted = audioEl.muted || safeStorageGet('local', 'coodz_muted') === 'true';
-        const defaultGain = (CONFIG.AUDIO_VOLUME || 0.9) * (CONFIG.AUDIO_GAIN || 1.4);
+        const volVal = typeof CONFIG.AUDIO_VOLUME === 'number' ? CONFIG.AUDIO_VOLUME : 0.75;
+        const defaultGain = volVal * (CONFIG.AUDIO_GAIN || 1.4);
         webAudioMasterGain.gain.setValueAtTime(isMuted ? 0 : defaultGain, webAudioCtx.currentTime);
 
         webAudioSource.connect(webAudioCompressor);
@@ -5178,6 +5179,66 @@ console.log('ehi, stai guardando il codice. se ti serve qualcosa scrivimi su dis
       skipBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         skipNextTrack();
+      });
+    }
+
+    const volumeSlider = document.getElementById('audio-volume-slider');
+    const volumeVal = document.getElementById('audio-volume-val');
+    const savedVolStr = safeStorageGet('local', 'coodz_volume');
+    if (savedVolStr !== null && savedVolStr !== '') {
+      const parsedVol = parseFloat(savedVolStr);
+      if (!Number.isNaN(parsedVol) && parsedVol >= 0 && parsedVol <= 1) {
+        CONFIG.AUDIO_VOLUME = parsedVol;
+      }
+    }
+    const syncVolumeUI = (vol) => {
+      const pct = Math.round(Math.max(0, Math.min(1, vol)) * 100);
+      if (volumeSlider) volumeSlider.value = String(pct);
+      if (volumeVal) volumeVal.textContent = `${pct}%`;
+    };
+    syncVolumeUI(CONFIG.AUDIO_VOLUME);
+
+    if (volumeSlider) {
+      volumeSlider.addEventListener('pointerdown', (e) => e.stopPropagation());
+      volumeSlider.addEventListener('click', (e) => e.stopPropagation());
+      volumeSlider.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const pct = Math.max(0, Math.min(100, parseInt(volumeSlider.value, 10) || 0));
+        const vol = pct / 100;
+        CONFIG.AUDIO_VOLUME = vol;
+        safeStorageSet('local', 'coodz_volume', String(vol));
+        syncVolumeUI(vol);
+
+        initWebAudioGraph(audio);
+        if (webAudioCtx && webAudioCtx.state === 'suspended') {
+          webAudioCtx.resume().catch(() => { });
+        }
+
+        if (vol <= 0) {
+          safeStorageSet('local', 'coodz_muted', 'true');
+          audio.muted = true;
+          if (webAudioMasterGain && webAudioCtx) {
+            webAudioMasterGain.gain.cancelScheduledValues(webAudioCtx.currentTime);
+            webAudioMasterGain.gain.setValueAtTime(0, webAudioCtx.currentTime);
+          } else {
+            audio.volume = 0;
+          }
+          updateMuteBtnState();
+        } else {
+          safeStorageSet('local', 'coodz_muted', 'false');
+          audio.muted = false;
+          if (audio.paused) {
+            safePlayAudio(audio).catch(() => { });
+          }
+          if (webAudioMasterGain && webAudioCtx) {
+            const targetGain = vol * (CONFIG.AUDIO_GAIN || 1.4);
+            webAudioMasterGain.gain.cancelScheduledValues(webAudioCtx.currentTime);
+            webAudioMasterGain.gain.setTargetAtTime(targetGain, webAudioCtx.currentTime, 0.015);
+          } else {
+            audio.volume = vol;
+          }
+          updateMuteBtnState();
+        }
       });
     }
 
